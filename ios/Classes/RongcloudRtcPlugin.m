@@ -1,4 +1,5 @@
 #import "RongcloudRtcPlugin.h"
+#import "RCFlutterRTCWrapper.h"
 
 @implementation RongcloudRtcPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
@@ -7,14 +8,11 @@
             binaryMessenger:[registrar messenger]];
   RongcloudRtcPlugin* instance = [[RongcloudRtcPlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];
+  [[RCFlutterRTCWrapper sharedInstance] saveMethodChannel:channel];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
-  if ([@"getPlatformVersion" isEqualToString:call.method]) {
-    result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
-  } else {
-    result(FlutterMethodNotImplemented);
-  }
+    [[RCFlutterRTCWrapper sharedInstance] rtcHandleMethodCall:call result:result];
 }
 
 @end
