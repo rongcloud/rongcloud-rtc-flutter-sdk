@@ -1,0 +1,8 @@
+.vscode/
+android/.settings/
+.packages
+example/pubspec.lock
+pubspec.lock
+
+android/.classpath
+android/.project
