@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
+import 'index_page.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
@@ -23,6 +25,12 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
 
+    String appkey = "";
+    RongcloudRtcPlugin.init(appkey);
+
+    String imToken = "";
+    RongcloudRtcPlugin.connect(imToken);
+
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling
     // setState to update our non-existent appearance.
@@ -36,14 +44,11 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Center(
-          child: Text('Running on'),
-        ),
+      title: "flutter rtc demo",
+      theme: ThemeData(
+        primaryColor: Colors.blue,
       ),
+      home: IndexPage(),
     );
   }
 }

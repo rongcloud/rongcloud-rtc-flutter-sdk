@@ -12,6 +12,7 @@
 
 @interface RCFlutterRTCWrapper ()
 @property (nonatomic, strong) FlutterMethodChannel *channel;
+@property (nonatomic, strong) RongRTCRoom *rtcRoom;
 @end
 
 @implementation RCFlutterRTCWrapper
@@ -33,13 +34,11 @@
     }else if([RCFlutterRTCMethodKeyConnect isEqualToString:call.method]) {
         [self connect:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyJoinRTCRoom isEqualToString:call.method]) {
-        //todo
+        [self joinRTCRoom:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyLeaveRTCRoom isEqualToString:call.method]) {
-        //todo
+        [self leaveRTCRoom:call.arguments result:result];
     }
-//    if ([@"getPlatformVersion" isEqualToString:call.method]) {
-//        result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
-//    } else {
+//   else {
 //        result(FlutterMethodNotImplemented);
 //    }
 }
@@ -48,23 +47,49 @@
     if([arg isKindOfClass:[NSString class]]) {
         NSString *appkey = (NSString *)arg;
         [[RCIMClient sharedRCIMClient] initWithAppKey:appkey];
-         NSLog(@"ios init appkey %@",appkey);
+         NSLog(@"iOS init appkey %@",appkey);
     }
 }
 
 - (void)connect:(id)arg result:(FlutterResult)result {
-    NSLog(@"ios connect start");
+    NSLog(@"iOS connect start");
     if([arg isKindOfClass:[NSString class]]) {
         NSString *token = (NSString *)arg;
         [[RCIMClient sharedRCIMClient] connectWithToken:token success:^(NSString *userId) {
             result(@(0));
-            NSLog(@"ios connect end success");
+            NSLog(@"iOS connect end success");
         } error:^(RCConnectErrorCode status) {
             result(@(status));
-            NSLog(@"ios connect end error %@",@(status));
+            NSLog(@"iOS connect end error %@",@(status));
         } tokenIncorrect:^{
             result(@(RC_CONN_TOKEN_INCORRECT));
-            NSLog(@"ios connect end error %@",@(RC_CONN_TOKEN_INCORRECT));
+            NSLog(@"iOS connect end error %@",@(RC_CONN_TOKEN_INCORRECT));
+        }];
+    }
+}
+
+- (void)joinRTCRoom:(id)arg result:(FlutterResult)result {
+    NSLog(@"iOS joinRTCRoom start");
+    if([arg isKindOfClass:[NSString class]]) {
+        NSString *roomId = (NSString *)arg;
+        __weak typeof(self) ws = self;
+        [[RongRTCEngine sharedEngine] joinRoom:roomId completion:^(RongRTCRoom * _Nullable room, RongRTCCode code) {
+            if(!room) {
+                ws.rtcRoom = room;
+            }
+            result(@(code));
+            NSLog(@"iOS joinRTCRoom end %@",@(code));
+        }];
+    }
+}
+
+- (void)leaveRTCRoom:(id)arg result:(FlutterResult)result {
+    NSLog(@"iOS leaveRTCRoom start");
+    if([arg isKindOfClass:[NSString class]]) {
+        NSString *roomId = (NSString *)arg;
+        [[RongRTCEngine sharedEngine] leaveRoom:roomId completion:^(BOOL isSuccess, RongRTCCode code) {
+            result(@(code));
+            NSLog(@"iOS leaveRTCRoom end %@",@(code));
         }];
     }
 }
