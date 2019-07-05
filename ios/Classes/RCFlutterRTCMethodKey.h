@@ -13,4 +13,7 @@ static NSString * RCFlutterRTCMethodKeyConnect = @"Connect";
 static NSString * RCFlutterRTCMethodKeyJoinRTCRoom = @"JoinRTCRoom";
 static NSString * RCFlutterRTCMethodKeyLeaveRTCRoom = @"LeaveRTCRoom";
 
+
+//test key
+static NSString * RCFlutterRTCMethodKeyChangeViewColorTest = @"ChangeViewColorTest";
 #endif /* RCFlutterRTCMethodKey_h */

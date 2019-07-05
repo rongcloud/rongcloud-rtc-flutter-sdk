@@ -25,11 +25,15 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
 
-    String appkey = "";
+    String appkey = "uwd1c0sxuqp91";
     RongcloudRtcPlugin.init(appkey);
 
-    String imToken = "";
-    RongcloudRtcPlugin.connect(imToken);
+    String userId = "";
+
+    String imToken = "QFeDHnUj0p+yfSd0eVhuZBfAwc4ye6p3wLrH2GYZ2se8db55hvMKPsRLPhpNenUoBWz10lDdYEkVPflctZZMRRzlQpuhekwY";
+    int rc = await RongcloudRtcPlugin.connect(imToken);
+    print("连接 im " + rc.toString());
+
 
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling

@@ -10,7 +10,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 public class RongcloudRtcPlugin implements MethodCallHandler {
   /** Plugin registration. */
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(), "rongcloud_rtc_plugin");
+    final MethodChannel channel = new MethodChannel(registrar.messenger(), "plugins.rongcloud.im/rtc_plugin");
     channel.setMethodCallHandler(new RongcloudRtcPlugin());
   }
 

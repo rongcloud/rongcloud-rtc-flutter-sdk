@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:rongcloud_rtc_plugin/video_player.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+
 class CallPage extends StatefulWidget {
   final String roomId;
 
@@ -7,13 +10,25 @@ class CallPage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return new _CallPageState();
+    return new _CallPageState(this.roomId);
   }
 }
 
 class _CallPageState extends State<CallPage> {
 
   bool muted = false;
+
+  String roomId;
+
+  _CallPageState(String roomId) {
+    this.roomId = roomId;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    RongcloudRtcPlugin.joinRTCRoom(this.roomId);
+  }
 
   onMute() {
     print("onMute");
@@ -36,7 +51,7 @@ class _CallPageState extends State<CallPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: Stack(
-          children: <Widget>[_bottomToolbar()],
+          children: <Widget>[VideoPlayer.createPlatformView("flutter_ios0"),_bottomToolbar()],
         ),
       ),
     );

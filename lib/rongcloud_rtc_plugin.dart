@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-import 'rc_method_key.dart';
+import 'method_key.dart';
 
 class RongcloudRtcPlugin {
   static const MethodChannel _channel =
-      const MethodChannel('rongcloud_rtc_plugin');
+      const MethodChannel('plugins.rongcloud.im/rtc_plugin');
 
   static void init(String appKey) {
     _channel.invokeMethod(MethodKey.Init,appKey);
