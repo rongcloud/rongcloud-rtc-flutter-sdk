@@ -18,8 +18,14 @@
         
         NSDictionary *dic = args;
         NSString *userId = dic[@"userId"];
+        self.userId = userId;
         
-        self.videoView = [[UIView alloc] initWithFrame:frame];
+        CGFloat x = [dic[@"x"] floatValue];
+        CGFloat y = [dic[@"y"] floatValue];
+        CGFloat width = [dic[@"width"] floatValue];
+        CGFloat height = [dic[@"height"] floatValue];
+        
+        self.videoView = [[UIView alloc] initWithFrame:CGRectMake(x, 0, width, height)];
         self.videoView.backgroundColor = [UIColor redColor];
         
         self.viewId = viewId;

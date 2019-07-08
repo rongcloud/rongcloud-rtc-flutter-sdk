@@ -12,6 +12,9 @@ static NSString * RCFlutterRTCMethodKeyInit = @"Init";
 static NSString * RCFlutterRTCMethodKeyConnect = @"Connect";
 static NSString * RCFlutterRTCMethodKeyJoinRTCRoom = @"JoinRTCRoom";
 static NSString * RCFlutterRTCMethodKeyLeaveRTCRoom = @"LeaveRTCRoom";
+static NSString * RCFlutterRTCMethodKeyPublishAVStream = @"PublishAVStream";
+static NSString * RCFlutterRTCMethodKeyUnpublishAVStream = @"UnpublishAVStream";
+static NSString * RCFlutterRTCMethodKeyRenderVideoView = @"RenderVideoView";
 
 
 //test key

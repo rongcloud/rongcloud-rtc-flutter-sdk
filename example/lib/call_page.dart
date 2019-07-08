@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
-import 'package:rongcloud_rtc_plugin/video_player.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-class CallPage extends StatefulWidget {
-  final String roomId;
+import 'video_session.dart';
 
-  const CallPage({Key key,this.roomId}) : super(key:key);
+class CallPage extends StatefulWidget {
+  String roomId;
+
+  CallPage(String roomId) {
+    this.roomId = roomId;
+  }
 
   @override
   State<StatefulWidget> createState() {
@@ -15,6 +18,8 @@ class CallPage extends StatefulWidget {
 }
 
 class _CallPageState extends State<CallPage> {
+
+  List<VideoSession> _sessions = new List();
 
   bool muted = false;
 
@@ -27,7 +32,37 @@ class _CallPageState extends State<CallPage> {
   @override
   void initState() {
     super.initState();
-    RongcloudRtcPlugin.joinRTCRoom(this.roomId);
+    onJoinRTCRoom();
+  }
+
+  onJoinRTCRoom() async {
+    int code = await RongRtcEngine.joinRTCRoom(this.roomId);
+    if(code == 0) {
+      onPublishStream();
+    }
+    renderVideoView();
+  }
+
+  onPublishStream() {
+    RongRtcEngine.publishAVStream();
+
+    
+  }
+
+  renderVideoView() {
+    String userId = "flutter_ios0";
+    double x = 0.0;
+    double y = 0.0;
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+    Widget videoView =  VideoPlayer.createPlatformView(userId,x,y,width,height);
+    
+    VideoSession vs = new VideoSession();
+    vs.userId = userId;
+    vs.videoView = videoView;
+    _sessions.add(vs);
+
+    RongRtcEngine.renderVideoView(userId);
   }
 
   onMute() {
@@ -51,9 +86,21 @@ class _CallPageState extends State<CallPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: Stack(
-          children: <Widget>[VideoPlayer.createPlatformView("flutter_ios0"),_bottomToolbar()],
+          children: <Widget>[_getLocalUserView(),_bottomToolbar()],
         ),
       ),
+    );
+  }
+
+  Widget _getLocalUserView() {
+    double x = 0.0;
+    double y = MediaQuery.of(context).padding.top;
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+    return Container(
+      width: width,
+      height: height,
+      child: VideoPlayer.createPlatformView("flutter_ios0",x,y,width,height),
     );
   }
 

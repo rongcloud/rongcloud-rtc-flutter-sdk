@@ -10,7 +10,9 @@
     RongcloudRtcPlugin* instance = [[RongcloudRtcPlugin alloc] init];
     [registrar addMethodCallDelegate:instance channel:channel];
     [[RCFlutterRTCWrapper sharedInstance] saveMethodChannel:channel];
-    [registrar registerViewFactory:[[RCFlutterRTCViewFactory alloc] initWithMessenger:registrar.messenger] withId:@"plugins.rongcloud.im/rtc_view"];
+    RCFlutterRTCViewFactory * viewFactory = [RCFlutterRTCViewFactory sharedInstance];
+    [viewFactory initWithMessenger:registrar.messenger];
+    [registrar registerViewFactory:viewFactory withId:@"plugins.rongcloud.im/rtc_view"];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {

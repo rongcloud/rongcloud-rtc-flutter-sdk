@@ -6,7 +6,7 @@ class VideoPlayer  {
   static const MethodChannel _channel =
   const MethodChannel('plugins.rongcloud.im/rtc_view_plugin');
 
-  static Widget createPlatformView(String userId) {
+  static Widget createPlatformView(String userId,double x,double y,double width,double height) {
     if(TargetPlatform.iOS == defaultTargetPlatform) {
       return UiKitView(
         viewType: 'plugins.rongcloud.im/rtc_view',
@@ -15,6 +15,10 @@ class VideoPlayer  {
         },
         creationParams: <String,dynamic>{
           "userId":userId,
+          "x":x,
+          "y":y,
+          "width":width,
+          "height":height,
         },
         creationParamsCodec: new StandardMessageCodec(),
           
@@ -27,6 +31,10 @@ class VideoPlayer  {
         },
         creationParams: <String,dynamic>{
           "userId":userId,
+          "x":x,
+          "y":y,
+          "width":width,
+          "height":height,
         },
         creationParamsCodec: new StandardMessageCodec(),
       );

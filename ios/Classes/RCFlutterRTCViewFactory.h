@@ -11,7 +11,14 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCFlutterRTCViewFactory : NSObject<FlutterPlatformViewFactory>
-- (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messager;
+
++ (instancetype)sharedInstance;
+
+- (void)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messager;
+
+
+- (UIView *)getRenderVideoView:(NSString *)userId;
+
 @end
 
 NS_ASSUME_NONNULL_END

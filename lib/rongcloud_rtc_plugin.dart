@@ -1,27 +1,6 @@
-import 'dart:async';
+library rongcloud_rtc_plugin;
 
-import 'package:flutter/services.dart';
-
-import 'method_key.dart';
-
-class RongcloudRtcPlugin {
-  static const MethodChannel _channel =
-      const MethodChannel('plugins.rongcloud.im/rtc_plugin');
-
-  static void init(String appKey) {
-    _channel.invokeMethod(MethodKey.Init,appKey);
-  }
-  
-  static Future<int> connect(String imToken) async {
-    int code = await _channel.invokeMethod(MethodKey.Connect,imToken);
-    return code;
-  }
-
-  static void joinRTCRoom(String roomId) {
-    _channel.invokeMethod(MethodKey.JoinRTCRoom,roomId);
-  }
-
-  static void leaveRTCRoom(String roomId) {
-    _channel.invokeMethod(MethodKey.LeaveRTCRoom,roomId);
-  }
-}
+export 'src/method_key.dart';
+export 'src/rong_rtc_plugin.dart';
+export 'src/rong_rtc_engine.dart';
+export 'src/video_player.dart';

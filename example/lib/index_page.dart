@@ -26,7 +26,7 @@ class _IndexPageState extends State<IndexPage> {
           context,
           MaterialPageRoute(
               builder: (context) => new CallPage(
-                    roomId: _textController.text,
+                    _textController.text,
                   )));
     }
   }

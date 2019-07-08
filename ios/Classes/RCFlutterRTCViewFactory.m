@@ -8,6 +8,8 @@
 #import "RCFlutterRTCViewFactory.h"
 #import "RCFlutterRTCView.h"
 #import "RCFlutterRTCMethodKey.h"
+#import <RongRTCLib/RongRTCLib.h>
+#import "RCFlutterRTCView.h"
 
 @interface RCFlutterRTCViewFactory ()
 @property (nonatomic, strong) NSObject<FlutterBinaryMessenger>* messenger;
@@ -17,21 +19,25 @@
 @end
 
 @implementation RCFlutterRTCViewFactory
-- (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger> *)messager{
-    self = [super init];
-    if (self) {
-        self.viewDic = [[NSMutableDictionary alloc] init];
-        
-        self.messenger = messager;
-        
-        NSString* channelName = @"plugins.rongcloud.im/rtc_view_plugin";
-        self.channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:messager];
-        __weak __typeof__(self) weakSelf = self;
-        [self.channel setMethodCallHandler:^(FlutterMethodCall *  call, FlutterResult  result) {
-            [weakSelf onMethodCall:call result:result];
-        }];
-    }
-    return self;
++ (instancetype)sharedInstance {
+    static RCFlutterRTCViewFactory *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+- (void)initWithMessenger:(NSObject<FlutterBinaryMessenger> *)messager{
+    self.viewDic = [[NSMutableDictionary alloc] init];
+    
+    self.messenger = messager;
+    
+    NSString* channelName = @"plugins.rongcloud.im/rtc_view_plugin";
+    self.channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:messager];
+    __weak __typeof__(self) weakSelf = self;
+    [self.channel setMethodCallHandler:^(FlutterMethodCall *  call, FlutterResult  result) {
+        [weakSelf onMethodCall:call result:result];
+    }];
 }
 
 -(NSObject<FlutterMessageCodec> *)createArgsCodec{
@@ -43,7 +49,7 @@
     NSLog(@"ios 获取原生view 参数为 %@",args);
     RCFlutterRTCView *view = [[RCFlutterRTCView alloc] initWithWithFrame:frame viewIdentifier:viewId arguments:args binaryMessenger:self.messenger];
     
-    [self.viewDic setObject:view forKey:@(viewId)];
+    [self.viewDic setObject:view forKey:view.userId];
     
     return view;
 }
@@ -54,7 +60,14 @@
     }
 }
 
-- (RCFlutterRTCView *)getView:(int64_t)viewId {
-    return [self.viewDic objectForKey:@(viewId)];
+- (UIView *)getRenderVideoView:(NSString *)userId {
+    NSLog(@"%s",__func__);
+    UIView *view = nil;
+    if(!userId) {
+        return view;
+    }
+    RCFlutterRTCView *flutterView = [self.viewDic objectForKey:userId];
+    return flutterView.view;
 }
+
 @end
