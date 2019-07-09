@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
                    viewIdentifier:(int64_t)viewId
                         arguments:(id _Nullable)args
                   binaryMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
-@property (nonatomic, copy) NSString *userId;
+@property (nonatomic, assign) int64_t viewId;
 - (void)changeViewColor;
 @end
 

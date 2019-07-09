@@ -17,8 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messager;
 
 
-- (UIView *)getRenderVideoView:(NSString *)userId;
+- (UIView *)getRenderVideoView:(int)viewId;
 
+- (void)removeRenderVideoView:(int)viewId;
 @end
 
 NS_ASSUME_NONNULL_END

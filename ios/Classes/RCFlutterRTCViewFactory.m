@@ -49,7 +49,7 @@
     NSLog(@"ios 获取原生view 参数为 %@",args);
     RCFlutterRTCView *view = [[RCFlutterRTCView alloc] initWithWithFrame:frame viewIdentifier:viewId arguments:args binaryMessenger:self.messenger];
     
-    [self.viewDic setObject:view forKey:view.userId];
+    [self.viewDic setObject:view forKey:@(view.viewId)];
     
     return view;
 }
@@ -60,14 +60,18 @@
     }
 }
 
-- (UIView *)getRenderVideoView:(NSString *)userId {
+- (UIView *)getRenderVideoView:(int)viewId {
     NSLog(@"%s",__func__);
-    UIView *view = nil;
-    if(!userId) {
-        return view;
-    }
-    RCFlutterRTCView *flutterView = [self.viewDic objectForKey:userId];
+    RCFlutterRTCView *flutterView = [self.viewDic objectForKey:@(viewId)];
     return flutterView.view;
 }
 
+- (void)removeRenderVideoView:(int)viewId {
+    NSLog(@"%s",__func__);
+    RCFlutterRTCView *flutterView = [self.viewDic objectForKey:@(viewId)];
+    if(flutterView) {
+        [self.viewDic removeObjectForKey:@(viewId)];
+        [flutterView.view removeFromSuperview];
+    }
+}
 @end

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'index_page.dart';
+import 'user_data.dart';
 
 void main() => runApp(MyApp());
 
@@ -24,13 +25,9 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
 
-    String appkey = "uwd1c0sxuqp91";
-    RongRtcPlugin.init(appkey);
+    RongRtcEngine.init(AppKey);
 
-    String userId = "flutter_ios0";
-
-    String imToken = "QFeDHnUj0p+yfSd0eVhuZBfAwc4ye6p3wLrH2GYZ2se8db55hvMKPsRLPhpNenUoBWz10lDdYEkVPflctZZMRRzlQpuhekwY";
-    int rc = await RongRtcPlugin.connect(imToken);
+    int rc = await RongRtcEngine.connect(IMToken);
     print("连接 im " + rc.toString());
 
 

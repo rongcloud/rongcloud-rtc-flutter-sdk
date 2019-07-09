@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'video_session.dart';
+import 'user_data.dart';
 
 class CallPage extends StatefulWidget {
   String roomId;
@@ -20,6 +21,7 @@ class CallPage extends StatefulWidget {
 class _CallPageState extends State<CallPage> {
 
   List<VideoSession> _sessions = new List();
+  final _infoStrings = <String>[];
 
   bool muted = false;
 
@@ -30,39 +32,95 @@ class _CallPageState extends State<CallPage> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _sessions.forEach((session) {
+      RongRtcEngine.removeNativeView(session.viewId);
+    });
+    _sessions.clear();
+    RongRtcEngine.leaveRTCRoom(this.roomId);
+  }
+
+  @override
   void initState() {
     super.initState();
-    onJoinRTCRoom();
+    initialize();
   }
 
-  onJoinRTCRoom() async {
+  initialize() {
+    if(AppKey.isEmpty) {
+      setState(() {
+        _infoStrings.add("没有设置 Appkey，请在 user_data.dart 中设置");
+        _infoStrings.add("RongCloud RTC 未初始化");
+      });
+      return;
+    }
+
+    _onJoinRTCRoom();
+    _addRTCEventHandlers();
+    _renderLocalUser();
+  }
+  _renderLocalUser() {
+    _addRenderView(CurrentUserId,(viewId) {
+      RongRtcEngine.renderLocalVideo(viewId);
+    });
+  }
+
+  _subscribeAndRenderRemoteUser(String userId) {
+    RongRtcEngine.subscribeAVStream(userId);
+    _addRenderView(userId, (viewId) {
+      RongRtcEngine.renderRemoteVideo(viewId, userId);
+    });
+  }
+
+  _unsubscribeAndRemoveRemoteUser(String userId) {
+    RongRtcEngine.unsubscribeAVStream(userId);
+    _removeRenderView(userId);
+  }
+
+  _onJoinRTCRoom() async {
     int code = await RongRtcEngine.joinRTCRoom(this.roomId);
     if(code == 0) {
-      onPublishStream();
+      RongRtcEngine.publishAVStream();
+      _renderExistedRemoterUsersIfNeed();
     }
-    renderVideoView();
+
+    setState(() {
+      _infoStrings.add("join room "+this.roomId);
+    });
   }
 
-  onPublishStream() {
-    RongRtcEngine.publishAVStream();
-
-    
+  _renderExistedRemoterUsersIfNeed() async {
+    List userIds = await RongRtcEngine.getRemoteUsers(this.roomId);
+    if(userIds.length > 0) {
+      for(String uid in userIds) {
+        _subscribeAndRenderRemoteUser(uid);
+      }
+    }
   }
 
-  renderVideoView() {
-    String userId = "flutter_ios0";
-    double x = 0.0;
-    double y = 0.0;
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
-    Widget videoView =  VideoPlayer.createPlatformView(userId,x,y,width,height);
-    
-    VideoSession vs = new VideoSession();
-    vs.userId = userId;
-    vs.videoView = videoView;
-    _sessions.add(vs);
+  _addRenderView(String userId,Function (int viewId) finished){
+    Widget videoView =  RongRtcEngine.createPlatformView(userId,(viewId) {
+        setState(() {
+          _infoStrings.add("render video for user "+userId);
+          _getVideoSession(userId).viewId = viewId;
+          if (finished != null) {
+            finished(viewId);
+          }
+        });
+      }
+    );
+    VideoSession session = new VideoSession();
+    session.userId = userId;
+    session.view = videoView;
+    _sessions.add(session);
+  }
 
-    RongRtcEngine.renderVideoView(userId);
+  _removeRenderView(String userId) {
+    VideoSession session = _getVideoSession(userId);
+    if(session != null) {
+      _sessions.remove(session);
+    }
   }
 
   onMute() {
@@ -77,6 +135,34 @@ class _CallPageState extends State<CallPage> {
     print("onSwitchCamera");
   }
 
+  _addRTCEventHandlers() {
+    RongRtcEngine.onUserJoined = (String userId) {
+      setState(() {
+        _infoStrings.add("user did join "+userId);
+      });
+    };
+
+    RongRtcEngine.onUserLeaved = (String userId) {
+      RongRtcEngine.unsubscribeAVStream(userId);
+      setState(() {
+        _infoStrings.add("user did leave "+userId);
+        _infoStrings.add("unsubscribe stream of user "+userId);
+        _unsubscribeAndRemoveRemoteUser(userId);
+      });
+    };
+
+    RongRtcEngine.onOthersPublishStreams = (String userId) {
+      setState(() {
+        _infoStrings.add("user did publish stream "+userId);
+        _infoStrings.add("subscribe stream of user "+userId);
+
+        _subscribeAndRenderRemoteUser(userId);
+
+      });
+    };
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,22 +172,108 @@ class _CallPageState extends State<CallPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: Stack(
-          children: <Widget>[_getLocalUserView(),_bottomToolbar()],
+          children: <Widget>[_viewRows(),_panel(),_bottomToolbar()],
         ),
       ),
     );
   }
 
-  Widget _getLocalUserView() {
-    double x = 0.0;
-    double y = MediaQuery.of(context).padding.top;
-    double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+  VideoSession _getVideoSession(String userId) {
+    return _sessions.firstWhere((session) {
+      return session.userId == userId;
+    });
+  }
+
+  /// Helper function to get list of native views
+  List<Widget> _getRenderViews() {
+    return _sessions.map((session) => session.view).toList();
+  }
+
+  /// Video view wrapper
+  Widget _videoView(view) {
+    return Expanded(child: Container(child: view));
+  }
+
+  /// Video view row wrapper
+  Widget _expandedVideoRow(List<Widget> views) {
+    List<Widget> wrappedViews =
+        views.map((Widget view) => _videoView(view)).toList();
+    return Expanded(
+        child: Row(
+      children: wrappedViews,
+    ));
+  }
+
+  /// Video layout wrapper
+  Widget _viewRows() {
+    List<Widget> views = _getRenderViews();
+    switch (views.length) {
+      case 1:
+        return Container(
+            child: Column(
+          children: <Widget>[_videoView(views[0])],
+        ));
+      case 2:
+        return Container(
+            child: Column(
+          children: <Widget>[
+            _expandedVideoRow([views[0]]),
+            _expandedVideoRow([views[1]])
+          ],
+        ));
+      case 3:
+        return Container(
+            child: Column(
+          children: <Widget>[
+            _expandedVideoRow(views.sublist(0, 2)),
+            _expandedVideoRow(views.sublist(2, 3))
+          ],
+        ));
+      case 4:
+        return Container(
+            child: Column(
+          children: <Widget>[
+            _expandedVideoRow(views.sublist(0, 2)),
+            _expandedVideoRow(views.sublist(2, 4))
+          ],
+        ));
+      default:
+    }
+    return Container();
+  }
+
+  Widget _panel() {
     return Container(
-      width: width,
-      height: height,
-      child: VideoPlayer.createPlatformView("flutter_ios0",x,y,width,height),
-    );
+        padding: EdgeInsets.symmetric(vertical: 48),
+        alignment: Alignment.bottomCenter,
+        child: FractionallySizedBox(
+          heightFactor: 0.5,
+          child: Container(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: ListView.builder(
+                  reverse: true,
+                  itemCount: _infoStrings.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (_infoStrings.length == 0) {
+                      return null;
+                    }
+                    return Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 3, horizontal: 10),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Flexible(
+                              child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 2, horizontal: 5),
+                                  decoration: BoxDecoration(
+                                      color: Colors.yellowAccent,
+                                      borderRadius: BorderRadius.circular(5)),
+                                  child: Text(_infoStrings[index],
+                                      style:
+                                          TextStyle(color: Colors.blueGrey))))
+                        ]));
+                  })),
+        ));
   }
 
   Widget _bottomToolbar() {

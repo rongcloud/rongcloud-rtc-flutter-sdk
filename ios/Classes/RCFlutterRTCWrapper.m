@@ -11,7 +11,7 @@
 #import <RongIMLib/RongIMLib.h>
 #import <RongRTCLib/RongRTCLib.h>
 
-@interface RCFlutterRTCWrapper ()
+@interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate>
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, strong) RongRTCRoom *rtcRoom;
 @property (nonatomic, strong) RongRTCAVCapturer *capturer;
@@ -44,12 +44,23 @@
         [self publishAVStream:result];
     }else if([RCFlutterRTCMethodKeyUnpublishAVStream isEqualToString:call.method]) {
         [self unpublishAVStream:result];
-    }else if([RCFlutterRTCMethodKeyRenderVideoView isEqualToString:call.method]) {
-        [self renderVideoView:call.arguments];
+    }else if([RCFlutterRTCMethodKeyRenderLocalVideo isEqualToString:call.method]) {
+        [self renderLocalVideoView:call.arguments];
+    }else if([RCFlutterRTCMethodKeyRenderRemoteVideo isEqualToString:call.method]) {
+        [self renderRemoteVideoView:call.arguments];
+    }else if([RCFlutterRTCMethodKeyRemoveNativeView isEqualToString:call.method]) {
+        [self removeNativeView:call.arguments];
+    }else if([RCFlutterRTCMethodKeySubscribeAVStream isEqualToString:call.method]) {
+        [self subscribeAVStream:call.arguments];
+    }else if([RCFlutterRTCMethodKeyUnsubscribeAVStream isEqualToString:call.method]) {
+        [self unsubscribeAVStream:call.arguments];
+    }else if([RCFlutterRTCMethodKeyGetRemoteUsers isEqualToString:call.method]) {
+        [self getRemoteUsers:call.arguments result:result];
     }
-//   else {
-//        result(FlutterMethodNotImplemented);
-//    }
+    else {
+        NSLog(@"Error: iOS can't response methodname %@",call.method);
+        result(FlutterMethodNotImplemented);
+    }
 }
 
 - (void)initWithAppKey:(id)arg {
@@ -83,8 +94,9 @@
         NSString *roomId = (NSString *)arg;
         __weak typeof(self) ws = self;
         [[RongRTCEngine sharedEngine] joinRoom:roomId completion:^(RongRTCRoom * _Nullable room, RongRTCCode code) {
-            if(!room) {
+            if(room) {
                 ws.rtcRoom = room;
+                ws.rtcRoom.delegate = ws;
             }
             result(@(code));
             NSLog(@"iOS joinRTCRoom end %@",@(code));
@@ -125,11 +137,12 @@
     }];
 }
 
-- (void)renderVideoView:(id)arg {
+- (void)renderLocalVideoView:(id)arg {
     NSLog(@"%s",__func__);
-    if([arg isKindOfClass:[NSString class]]) {
-        NSString *userId = (NSString *)arg;
-        UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:userId];
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        int viewId = [dic[@"viewId"] intValue];
+        UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:viewId];
         if(view) {
             [self cancelRenderVideoInView:view];
             RongRTCLocalVideoView *localView = [[RongRTCLocalVideoView alloc] initWithFrame:view.bounds];
@@ -143,7 +156,123 @@
     }
 }
 
+- (void)renderRemoteVideoView:(id)arg  {
+    NSLog(@"%s",__func__);
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        
+        NSDictionary *dic = (NSDictionary *)arg;
+        int viewId = [dic[@"viewId"] intValue];
+        NSString *userId = dic[@"userId"];
+        
+        UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:viewId];
+        if(view) {
+            [self cancelRenderVideoInView:view];
+            for(RongRTCRemoteUser *remoteUser in self.rtcRoom.remoteUsers) {
+                if([userId isEqualToString:remoteUser.userId]) {
+                    [self renderVideoOnView:view forRemoteUser:remoteUser];
+                    break;
+                }
+            }
+        }
+    }
+}
+
+- (void)renderVideoOnView:(UIView *)view forRemoteUser:(RongRTCRemoteUser *)remoteUser {
+    for(RongRTCAVInputStream *stream in remoteUser.remoteAVStreams) {
+        if(RTCMediaTypeVideo == stream.streamType) {
+            RongRTCRemoteVideoView *remoteView = [[RongRTCRemoteVideoView alloc] initWithFrame:view.bounds];
+            remoteView.fillMode = RCVideoFillModeAspectFill;
+            [stream setVideoRender:remoteView]; 
+            [view addSubview:remoteView];
+            
+            return;
+        }
+    }
+}
+
+- (void)subscribeAVStream:(id)arg {
+    if([arg isKindOfClass:[NSString class]]) {
+        NSString *userId = (NSString *)arg;
+        RongRTCRemoteUser *user = [self getRemoteUser:userId];
+        if(user) {
+            [self.rtcRoom subscribeAVStream:user.remoteAVStreams tinyStreams:nil completion:^(BOOL isSuccess, RongRTCCode desc) {
+                
+            }];
+        }
+    }
+}
+
+- (void)unsubscribeAVStream:(id)arg {
+    if([arg isKindOfClass:[NSString class]]) {
+        NSString *userId = (NSString *)arg;
+        RongRTCRemoteUser *user = [self getRemoteUser:userId];
+        if(user) {
+            [self.rtcRoom unsubscribeAVStream:user.remoteAVStreams completion:^(BOOL isSuccess, RongRTCCode desc) {
+                
+            }];
+        }
+    }
+}
+
+- (void)getRemoteUsers:(id)arg result:(FlutterResult)result{
+    if([arg isKindOfClass:[NSString class]]) {
+        NSString *roomId = (NSString *)arg;
+        NSMutableArray<NSString *> *userIds = [NSMutableArray new];
+        if(![self.rtcRoom.roomId isEqualToString:roomId]) {
+            result(userIds);
+            return;
+        }
+        for(RongRTCRemoteUser *u in self.rtcRoom.remoteUsers) {
+            [userIds addObject:u.userId];
+        }
+        result(userIds);
+    }
+}
+
+- (void)removeNativeView:(id)arg {
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        int viewId = [dic[@"viewId"] intValue];
+        
+    }
+}
+
+#pragma mark - RongRTCRoomDelegate
+-(void)didJoinUser:(RongRTCRemoteUser*)user {
+    NSString *userId = user.userId;
+    if(userId) {
+        [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserJoined arguments:@{@"userId":userId}];
+    }
+}
+
+-(void)didLeaveUser:(RongRTCRemoteUser*)user {
+    NSString *userId = user.userId;
+    if(userId) {
+        [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserLeaved arguments:@{@"userId":userId}];
+    }
+}
+
+- (void)didPublishStreams:(NSArray <RongRTCAVInputStream *>*)streams {
+    if(streams.count > 0) {
+        RongRTCAVInputStream *stream = streams[0];
+        NSString *userId = stream.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyOthersPublishStreams arguments:@{@"userId":userId}];
+        }
+    }
+}
+
+
 #pragma mark - util method
+- (RongRTCRemoteUser *)getRemoteUser:(NSString *)userId {
+    for(RongRTCRemoteUser *user in self.rtcRoom.remoteUsers) {
+        if([userId isEqualToString:user.userId]) {
+            return user;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)cancelRenderVideoInView:(UIView *)view {
     BOOL canceled = NO;
     UIView *renderedView = nil;
