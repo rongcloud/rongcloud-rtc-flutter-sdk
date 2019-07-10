@@ -56,6 +56,12 @@
         [self unsubscribeAVStream:call.arguments];
     }else if([RCFlutterRTCMethodKeyGetRemoteUsers isEqualToString:call.method]) {
         [self getRemoteUsers:call.arguments result:result];
+    }else if([RCFlutterRTCMethodKeyMuteLocalAudio isEqualToString:call.method]) {
+        [self muteLocalAudio:call.arguments];
+    }else if([RCFlutterRTCMethodKeyMuteRemoteAudio isEqualToString:call.method]) {
+        [self muteRemoteAudio:call.arguments];
+    }else if([RCFlutterRTCMethodKeySwitchCamera isEqualToString:call.method]) {
+        [self switchCamera:call.arguments];
     }
     else {
         NSLog(@"Error: iOS can't response methodname %@",call.method);
@@ -233,8 +239,38 @@
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
-        
+        [[RCFlutterRTCViewFactory sharedInstance] removeRenderVideoView:viewId];
     }
+}
+
+
+- (void)muteLocalAudio:(id)arg {
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        BOOL muted = [dic[@"muted"] boolValue];
+        [self.capturer setMicrophoneDisable:muted];
+    }
+}
+
+- (void)muteRemoteAudio:(id)arg {
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        BOOL muted = [dic[@"muted"] boolValue];
+        NSString *userId = dic[@"userId"];
+        for(RongRTCRemoteUser *user in self.rtcRoom.remoteUsers) {
+            if([user.userId isEqualToString:userId]) {
+                for(RongRTCAVInputStream *stream in user.remoteAVStreams) {
+                    if(RTCMediaTypeAudio == stream.streamType) {
+                        stream.disable = muted;
+                    }
+                }
+            }
+        }
+    }
+}
+
+- (void)switchCamera:(id)arg {
+    [self.capturer switchCamera];
 }
 
 #pragma mark - RongRTCRoomDelegate

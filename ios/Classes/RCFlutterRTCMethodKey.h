@@ -21,6 +21,9 @@ static NSString * RCFlutterRTCMethodKeySubscribeAVStream = @"SubscribeAVStream";
 static NSString * RCFlutterRTCMethodKeyUnsubscribeAVStream = @"UnsubscribeAVStream";
 static NSString * RCFlutterRTCMethodKeyGetRemoteUsers = @"GetRemoteUsers";
 static NSString * RCFlutterRTCMethodKeyRemoveNativeView = @"RemoveNativeView";
+static NSString * RCFlutterRTCMethodKeyMuteLocalAudio = @"MuteLocalAudio";
+static NSString * RCFlutterRTCMethodKeyMuteRemoteAudio = @"MuteRemoteAudio";
+static NSString * RCFlutterRTCMethodKeySwitchCamera = @"SwitchCamera";
 
 //callbackkey 由 native 触发，native 响应
 static NSString * RCFlutterRTCMethodCallBackKeyUserJoined = @"UserJoinedCallBack";

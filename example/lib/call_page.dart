@@ -124,7 +124,13 @@ class _CallPageState extends State<CallPage> {
   }
 
   onMute() {
-    print("onMute");
+    this.muted = !this.muted;
+    RongRtcEngine.muteLocalAudio(this.muted);
+
+    setState(() {
+      String text = this.muted ? "mute" :"unmute";
+      _infoStrings.add(text+" local user audio ");
+    });
   }
 
   onHangUp() {
@@ -132,7 +138,11 @@ class _CallPageState extends State<CallPage> {
   }
 
   onSwitchCamera() {
-    print("onSwitchCamera");
+    RongRtcEngine.switchCamera();
+    
+    setState(() {
+      _infoStrings.add("switch local user camera");
+    });
   }
 
   _addRTCEventHandlers() {
@@ -281,6 +291,7 @@ class _CallPageState extends State<CallPage> {
       alignment: Alignment.bottomCenter,
       padding: EdgeInsets.symmetric(vertical: 50),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[__muteButton(),__hangUpButton(),__switchCameraButton()],
       ),
     );
@@ -290,12 +301,12 @@ class _CallPageState extends State<CallPage> {
     return RawMaterialButton(
       onPressed: () => onMute(),
       child: new Icon(
-        this.muted ? Icons.mic: Icons.mic_off,
+        this.muted ? Icons.mic_off: Icons.mic,
         color: this.muted ? Colors.white: Colors.blue,
         size: 20,
       ),
       shape:  new CircleBorder(),
-      elevation: 2/0,
+      elevation: 2.0,
       fillColor: this.muted ? Colors.blue: Colors.white,
       padding: EdgeInsets.all(12.0),
     );

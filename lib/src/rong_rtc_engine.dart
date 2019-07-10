@@ -44,6 +44,20 @@ class RongRtcEngine {
     _channel.invokeMethod(MethodKey.RenderRemoteVideo,map);
   }
 
+  static void muteLocalAudio(bool muted) {
+    Map map = {"muted":muted};
+    _channel.invokeMethod(MethodKey.MuteLocalAudio,map);
+  }
+
+  static void muteRemoteAudio(String userId,bool muted) {
+    Map map = {"userId":userId,"muted":muted};
+    _channel.invokeMethod(MethodKey.MuteRemoteAudio,map);
+  }
+
+  static void switchCamera() {
+    _channel.invokeMethod(MethodKey.SwitchCamera);
+  }
+
   static void removeNativeView(int viewId) {
     Map map = {"viewId":viewId};
     _channel.invokeMethod(MethodKey.RemoveNativeView,map);
@@ -56,6 +70,7 @@ class RongRtcEngine {
   static void unpublishAVStream() {
     _channel.invokeMethod(MethodKey.UnpublishAVStream);
   }
+
 
   static void subscribeAVStream(String userId) {
     _channel.invokeMethod(MethodKey.SubscribeAVStream,userId);

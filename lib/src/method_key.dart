@@ -11,6 +11,9 @@ class MethodKey {
   static const String UnsubscribeAVStream = "UnsubscribeAVStream";
   static const String GetRemoteUsers = "GetRemoteUsers";
   static const String RemoveNativeView = "RemoveNativeView";
+  static const String MuteLocalAudio = "MuteLocalAudio";
+  static const String MuteRemoteAudio = "MuteRemoteAudio";
+  static const String SwitchCamera = "SwitchCamera";
 }
 
 class MethodCallBackKey {
