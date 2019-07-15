@@ -35,10 +35,16 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "cn.rongcloud.rongcloud_rtc_plugin_example"
         minSdkVersion 16
-        targetSdkVersion 28
+        //无法连接 im 服务，参见 https://support.rongcloud.cn/ks/NTQw
+        targetSdkVersion 23
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        //
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
     }
 
     buildTypes {

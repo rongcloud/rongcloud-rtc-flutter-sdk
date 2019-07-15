@@ -12,14 +12,15 @@ public class RongcloudRtcPlugin implements MethodCallHandler {
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "plugins.rongcloud.im/rtc_plugin");
     channel.setMethodCallHandler(new RongcloudRtcPlugin());
+    RCFlutterRTCWrapper.getInstance().saveMethodChannel(channel);
+    RCFlutterRTCWrapper.getInstance().saveContext(registrar.context());
+    RCFlutterRTCViewFactory factory = RCFlutterRTCViewFactory.getInstance();
+    factory.initWithMessenger(registrar.messenger());
+    registrar.platformViewRegistry().registerViewFactory("plugins.rongcloud.im/rtc_view",factory);
   }
 
   @Override
   public void onMethodCall(MethodCall call, Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else {
-      result.notImplemented();
-    }
+    RCFlutterRTCWrapper.getInstance().onRTCMethodCall(call,result);
   }
 }

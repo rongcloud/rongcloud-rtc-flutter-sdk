@@ -16,6 +16,7 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        maven {url  "https://dl.bintray.com/rongcloud/maven"}
     }
 }
 
@@ -31,4 +32,10 @@ android {
     lintOptions {
         disable 'InvalidPackage'
     }
+
+}
+
+dependencies {
+    implementation 'cn.rongcloud.sdk:im_lib:2.9.20'
+    implementation 'cn.rongcloud.rtclib:rtc_lib:3.0.7'
 }
