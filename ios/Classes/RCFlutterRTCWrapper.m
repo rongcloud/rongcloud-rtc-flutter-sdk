@@ -150,7 +150,9 @@
         int viewId = [dic[@"viewId"] intValue];
         UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:viewId];
         if(view) {
+            //先把之前可能渲染的 view 给去掉，防止重复渲染
             [self cancelRenderVideoInView:view];
+            
             RongRTCLocalVideoView *localView = [[RongRTCLocalVideoView alloc] initWithFrame:view.bounds];
             localView.fillMode = RCVideoFillModeAspectFill;
             [self.capturer setVideoRender:localView];

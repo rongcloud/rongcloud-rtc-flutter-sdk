@@ -21,9 +21,12 @@ class CallPage extends StatefulWidget {
 class _CallPageState extends State<CallPage> {
 
   List<VideoSession> _sessions = new List();
-  final _infoStrings = <String>[];
-
+  List<String> _infos = new List();
+  VideoSession localUserSession ;
   bool muted = false;
+
+  double videoWidth = 100;
+  double videoHeight = 150;
 
   String roomId;
 
@@ -50,43 +53,26 @@ class _CallPageState extends State<CallPage> {
   initialize() {
     if(AppKey.isEmpty) {
       setState(() {
-        _infoStrings.add("没有设置 Appkey，请在 user_data.dart 中设置");
-        _infoStrings.add("RongCloud RTC 未初始化");
+        _addInfoString("没有设置 Appkey，请在 user_data.dart 中设置");
+        _addInfoString("RongCloud RTC 未初始化");
       });
       return;
     }
-
     _onJoinRTCRoom();
     _addRTCEventHandlers();
-    _renderLocalUser();
-  }
-  _renderLocalUser() {
-    _addRenderView(CurrentUserId,(viewId) {
-      RongRtcEngine.renderLocalVideo(viewId);
-    });
-  }
-
-  _subscribeAndRenderRemoteUser(String userId) {
-    RongRtcEngine.subscribeAVStream(userId);
-    _addRenderView(userId, (viewId) {
-      RongRtcEngine.renderRemoteVideo(viewId, userId);
-    });
-  }
-
-  _unsubscribeAndRemoveRemoteUser(String userId) {
-    RongRtcEngine.unsubscribeAVStream(userId);
-    _removeRenderView(userId);
   }
 
   _onJoinRTCRoom() async {
     int code = await RongRtcEngine.joinRTCRoom(this.roomId);
     if(code == 0) {
       RongRtcEngine.publishAVStream();
+
+      _renderLocalUser();
       _renderExistedRemoterUsersIfNeed();
     }
 
     setState(() {
-      _infoStrings.add("join room "+this.roomId);
+      _addInfoString("join room "+this.roomId);
     });
   }
 
@@ -99,14 +85,38 @@ class _CallPageState extends State<CallPage> {
     }
   }
 
-  _addRenderView(String userId,Function (int viewId) finished){
-    Widget videoView =  RongRtcEngine.createPlatformView(userId,(viewId) {
+  _addRTCEventHandlers() {
+    RongRtcEngine.onUserJoined = (String userId) {
+      setState(() {
+        _addInfoString("user did join:"+userId);
+      });
+    };
+
+    RongRtcEngine.onUserLeaved = (String userId) {
+      RongRtcEngine.unsubscribeAVStream(userId);
+      setState(() {
+        _addInfoString("user did leave:"+userId);
+        _addInfoString("unsubscribe stream of user:"+userId);
+        _unsubscribeAndRemoveRemoteUser(userId);
+      });
+    };
+
+    RongRtcEngine.onOthersPublishStreams = (String userId) {
+      setState(() {
+        _addInfoString("user did publish stream:"+userId);
+        _addInfoString("subscribe stream of user:"+userId);
+        _subscribeAndRenderRemoteUser(userId);
+      });
+    };
+  }
+
+  _subscribeAndRenderRemoteUser(String userId) {
+    RongRtcEngine.subscribeAVStream(userId);
+    Widget videoView =  RongRtcEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
         setState(() {
-          _infoStrings.add("render video for user "+userId);
+          _addInfoString("render video for user:"+userId);
           _getVideoSession(userId).viewId = viewId;
-          if (finished != null) {
-            finished(viewId);
-          }
+          RongRtcEngine.renderRemoteVideo(viewId, userId);
         });
       }
     );
@@ -116,11 +126,43 @@ class _CallPageState extends State<CallPage> {
     _sessions.add(session);
   }
 
-  _removeRenderView(String userId) {
+  _renderLocalUser() {
+    double screenWidth =  MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+    Widget videoView =  RongRtcEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
+        setState(() {
+          localUserSession.viewId = viewId;
+          _addInfoString("render video for user:"+CurrentUserId);
+          RongRtcEngine.renderLocalVideo(viewId);
+        });
+      }
+    );
+    VideoSession session = new VideoSession();
+    session.userId = CurrentUserId;
+    session.view = videoView;
+    localUserSession = session;
+  }
+
+  _unsubscribeAndRemoveRemoteUser(String userId) {
+    RongRtcEngine.unsubscribeAVStream(userId);
     VideoSession session = _getVideoSession(userId);
     if(session != null) {
       _sessions.remove(session);
     }
+  }
+
+  VideoSession _getVideoSession(String userId) {
+    return _sessions.firstWhere((session) {
+      return session.userId == userId;
+    });
+  }
+
+  onSwitchCamera() {
+    RongRtcEngine.switchCamera();
+    
+    setState(() {
+      _addInfoString("switch local user camera");
+    });
   }
 
   onMute() {
@@ -129,49 +171,114 @@ class _CallPageState extends State<CallPage> {
 
     setState(() {
       String text = this.muted ? "mute" :"unmute";
-      _infoStrings.add(text+" local user audio ");
+      _addInfoString(text+" local user audio ");
     });
   }
 
   onHangUp() {
-    print("onHangUp");
+    Navigator.pop(context);
   }
 
-  onSwitchCamera() {
-    RongRtcEngine.switchCamera();
-    
-    setState(() {
-      _infoStrings.add("switch local user camera");
-    });
+  void _addInfoString(String info) {
+    _infos.add(info);
+    print(info);
   }
 
-  _addRTCEventHandlers() {
-    RongRtcEngine.onUserJoined = (String userId) {
-      setState(() {
-        _infoStrings.add("user did join "+userId);
-      });
-    };
+  Widget _getVideoContainer(double width ,double hegiht, Widget childView) {
+    Widget view = Container(
+      width: width,
+      height: hegiht,
+      color: Colors.blue,
+    );
 
-    RongRtcEngine.onUserLeaved = (String userId) {
-      RongRtcEngine.unsubscribeAVStream(userId);
-      setState(() {
-        _infoStrings.add("user did leave "+userId);
-        _infoStrings.add("unsubscribe stream of user "+userId);
-        _unsubscribeAndRemoveRemoteUser(userId);
-      });
-    };
+    if(childView == null) {
+      return view;
+    }
 
-    RongRtcEngine.onOthersPublishStreams = (String userId) {
-      setState(() {
-        _infoStrings.add("user did publish stream "+userId);
-        _infoStrings.add("subscribe stream of user "+userId);
-
-        _subscribeAndRenderRemoteUser(userId);
-
-      });
-    };
+    view = childView;
+    return Container(
+      width: width,
+      height: hegiht,
+      color: Colors.blue,
+      child: view,
+    ); 
   }
 
+  Widget _getListView() {
+    return Container(
+        height: videoHeight,
+        width: videoWidth,
+        padding: new EdgeInsets.fromLTRB(10, 0, 10, 0),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _sessions.length,
+          itemBuilder: (BuildContext context,int index) {
+            if(_sessions.length == 0) {
+              return null;
+            }
+            return _getVideoContainer(videoWidth,videoHeight,_sessions[index].view);
+          },
+        ),
+      );
+  }
+
+  Widget _getFullScreenView(){
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+    Widget view = Container(
+      width: screenWidth,
+      height: screenHeight,
+      color: Colors.blue,
+    );
+
+    if(localUserSession == null) {
+      return view;
+    }
+    if(localUserSession.view == null) {
+      return view;
+    }
+
+    view =  localUserSession.view;
+    return Container(
+      width: screenWidth,
+      height: screenHeight,
+      color: Colors.blue,
+      child: view,
+    );
+  }
+
+  Widget _getInfoListView() {
+    return Container(
+      width: 500,
+      height: 500,
+      padding: EdgeInsets.fromLTRB(10, 300, 200, 50),
+      alignment: Alignment.bottomCenter,
+      child: ListView.builder(
+        scrollDirection: Axis.vertical,
+          itemCount: _infos.length,
+          itemBuilder: (BuildContext context,int index) {
+            if(_infos.length == 0) {
+              return null;
+            }
+            return Padding(
+              padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+              child: Row(
+                children: <Widget>[
+                  Flexible(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.yellow
+                      ),
+                      child: Text(_infos[index],style: TextStyle(color: Colors.black)),
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,111 +289,13 @@ class _CallPageState extends State<CallPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: Stack(
-          children: <Widget>[_viewRows(),_panel(),_bottomToolbar()],
+          children: <Widget>[_getFullScreenView(),_getListView(),_getInfoListView(),_getBottomToolbar()],
         ),
       ),
     );
   }
 
-  VideoSession _getVideoSession(String userId) {
-    return _sessions.firstWhere((session) {
-      return session.userId == userId;
-    });
-  }
-
-  /// Helper function to get list of native views
-  List<Widget> _getRenderViews() {
-    return _sessions.map((session) => session.view).toList();
-  }
-
-  /// Video view wrapper
-  Widget _videoView(view) {
-    return Expanded(child: Container(child: view));
-  }
-
-  /// Video view row wrapper
-  Widget _expandedVideoRow(List<Widget> views) {
-    List<Widget> wrappedViews =
-        views.map((Widget view) => _videoView(view)).toList();
-    return Expanded(
-        child: Row(
-      children: wrappedViews,
-    ));
-  }
-
-  /// Video layout wrapper
-  Widget _viewRows() {
-    List<Widget> views = _getRenderViews();
-    switch (views.length) {
-      case 1:
-        return Container(
-            child: Column(
-          children: <Widget>[_videoView(views[0])],
-        ));
-      case 2:
-        return Container(
-            child: Column(
-          children: <Widget>[
-            _expandedVideoRow([views[0]]),
-            _expandedVideoRow([views[1]])
-          ],
-        ));
-      case 3:
-        return Container(
-            child: Column(
-          children: <Widget>[
-            _expandedVideoRow(views.sublist(0, 2)),
-            _expandedVideoRow(views.sublist(2, 3))
-          ],
-        ));
-      case 4:
-        return Container(
-            child: Column(
-          children: <Widget>[
-            _expandedVideoRow(views.sublist(0, 2)),
-            _expandedVideoRow(views.sublist(2, 4))
-          ],
-        ));
-      default:
-    }
-    return Container();
-  }
-
-  Widget _panel() {
-    return Container(
-        padding: EdgeInsets.symmetric(vertical: 48),
-        alignment: Alignment.bottomCenter,
-        child: FractionallySizedBox(
-          heightFactor: 0.5,
-          child: Container(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: ListView.builder(
-                  reverse: true,
-                  itemCount: _infoStrings.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (_infoStrings.length == 0) {
-                      return null;
-                    }
-                    return Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 3, horizontal: 10),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Flexible(
-                              child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 2, horizontal: 5),
-                                  decoration: BoxDecoration(
-                                      color: Colors.yellowAccent,
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: Text(_infoStrings[index],
-                                      style:
-                                          TextStyle(color: Colors.blueGrey))))
-                        ]));
-                  })),
-        ));
-  }
-
-  Widget _bottomToolbar() {
+  Widget _getBottomToolbar() {
     return Container(
       alignment: Alignment.bottomCenter,
       padding: EdgeInsets.symmetric(vertical: 50),

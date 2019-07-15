@@ -92,7 +92,7 @@ class RongRtcEngine {
   static void Function(String methodName,int code) onError;
 
 
-  static Widget createPlatformView(String userId,Function(int viewId) created) {
+  static Widget createPlatformView(String userId,int width,int height,Function(int viewId) created) {
     if(TargetPlatform.iOS == defaultTargetPlatform) {
       return UiKitView(
         viewType: 'plugins.rongcloud.im/rtc_view',
@@ -102,7 +102,9 @@ class RongRtcEngine {
           }
         },
         creationParams: <String,dynamic>{
-          "userId":userId
+          "userId":userId,
+          "width":width,
+          "height":height
         },
         creationParamsCodec: new StandardMessageCodec(),
           
@@ -116,7 +118,9 @@ class RongRtcEngine {
           }
         },
         creationParams: <String,dynamic>{
-          "userId":userId
+          "userId":userId,
+          "width":width,
+          "height":height,
         },
         creationParamsCodec: new StandardMessageCodec(),
       );

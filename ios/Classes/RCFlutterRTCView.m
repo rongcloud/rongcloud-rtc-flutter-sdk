@@ -9,20 +9,19 @@
 
 @interface RCFlutterRTCView ()
 @property (nonatomic, strong) UIView *videoView;
+@property (nonatomic, assign) int64_t viewId;
 @end
 
 @implementation RCFlutterRTCView
 - (instancetype)initWithWithFrame:(CGRect)frame viewIdentifier:(int64_t)viewId arguments:(id)args binaryMessenger:(NSObject<FlutterBinaryMessenger> *)messenger{
     if ([super init]) {
         
-//        NSDictionary *dic = args;
-//        int viewId = [dic[@"viewId"] intValue];
+        NSDictionary *dic = args;
+        int width = [dic[@"width"] intValue];
+        int height = [dic[@"height"] intValue];
         self.viewId = viewId;
-        
-        CGFloat width = 100;
-        CGFloat height = 150;
         self.videoView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
-        self.videoView.backgroundColor = [UIColor redColor];
+        self.videoView.backgroundColor = [UIColor clearColor];
         
     }
     
@@ -31,12 +30,5 @@
 
 -(UIView *)view{
     return self.videoView;
-}
-
-- (void)changeViewColor{
-    NSLog(@"iOS changeColor");
-    NSArray *colors = @[[UIColor redColor],[UIColor greenColor],[UIColor yellowColor],[UIColor brownColor]];
-    int index = arc4random()%colors.count;
-    self.videoView.backgroundColor = colors[index];
 }
 @end

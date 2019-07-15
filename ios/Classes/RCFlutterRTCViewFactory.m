@@ -49,7 +49,7 @@
     NSLog(@"ios 获取原生view 参数为 %@",args);
     RCFlutterRTCView *view = [[RCFlutterRTCView alloc] initWithWithFrame:frame viewIdentifier:viewId arguments:args binaryMessenger:self.messenger];
     
-    [self.viewDic setObject:view forKey:@(view.viewId)];
+    [self.viewDic setObject:view forKey:@(viewId)];
     
     return view;
 }
