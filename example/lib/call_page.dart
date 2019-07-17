@@ -214,7 +214,7 @@ class _CallPageState extends State<CallPage> {
   Widget _getListView() {
     return Container(
         height: videoHeight,
-        width: videoWidth,
+        width: MediaQuery.of(context).size.width,
         padding: new EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
