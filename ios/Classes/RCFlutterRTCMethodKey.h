@@ -29,7 +29,6 @@ static NSString * RCFlutterRTCMethodKeySwitchCamera = @"SwitchCamera";
 static NSString * RCFlutterRTCMethodCallBackKeyUserJoined = @"UserJoinedCallBack";
 static NSString * RCFlutterRTCMethodCallBackKeyUserLeaved = @"UserLeavedCallBack";
 static NSString * RCFlutterRTCMethodCallBackKeyOthersPublishStreams = @"OthersPublishStreamsCallBack";
+static NSString *RCMethodCallBackKeyConnectionStatusChange = @"ConnectionStatusChangeCallBack";
 
-//test key
-static NSString * RCFlutterRTCMethodKeyChangeViewColorTest = @"ChangeViewColorTest";
 #endif /* RCFlutterRTCMethodKey_h */

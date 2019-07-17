@@ -11,7 +11,7 @@
 #import <RongIMLib/RongIMLib.h>
 #import <RongRTCLib/RongRTCLib.h>
 
-@interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate>
+@interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate,RCConnectionStatusChangeDelegate>
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, strong) RongRTCRoom *rtcRoom;
 @property (nonatomic, strong) RongRTCAVCapturer *capturer;
@@ -73,6 +73,7 @@
     if([arg isKindOfClass:[NSString class]]) {
         NSString *appkey = (NSString *)arg;
         [[RCIMClient sharedRCIMClient] initWithAppKey:appkey];
+        [[RCIMClient sharedRCIMClient] setRCConnectionStatusChangeDelegate:self];
          NSLog(@"iOS init appkey %@",appkey);
     }
 }
@@ -273,6 +274,12 @@
 
 - (void)switchCamera:(id)arg {
     [self.capturer switchCamera];
+}
+
+#pragma mark - RCConnectionStatusChangeDelegate
+- (void)onConnectionStatusChanged:(RCConnectionStatus)status {
+    NSDictionary *dic = @{@"status":@(status)};
+    [self.channel invokeMethod:RCMethodCallBackKeyConnectionStatusChange arguments:dic];
 }
 
 #pragma mark - RongRTCRoomDelegate

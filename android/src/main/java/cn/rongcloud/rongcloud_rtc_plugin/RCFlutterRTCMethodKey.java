@@ -20,4 +20,6 @@ public class RCFlutterRTCMethodKey {
     static String UserJoinedCallBack = "UserJoinedCallBack";
     static String UserLeavedCallBack = "UserLeavedCallBack";
     static String OthersPublishStreamsCallBack = "OthersPublishStreamsCallBack";
+
+    static String MethodCallBackKeyConnectionStatusChange = "ConnectionStatusChangeCallBack";
 }

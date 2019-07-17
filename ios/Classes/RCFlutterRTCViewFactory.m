@@ -55,9 +55,7 @@
 }
 
 -(void)onMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result{
-    if([RCFlutterRTCMethodKeyChangeViewColorTest isEqualToString:call.method]) {
-//        [self changeViewColor];
-    }
+    
 }
 
 - (UIView *)getRenderVideoView:(int)viewId {

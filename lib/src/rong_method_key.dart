@@ -21,4 +21,5 @@ class MethodCallBackKey {
   static const String UserJoined = "UserJoinedCallBack";
   static const String UserLeaved = "UserLeavedCallBack";
   static const String OthersPublishStreams = "OthersPublishStreamsCallBack";
+  static const String ConnectionStatusChange = 'ConnectionStatusChangeCallBack';
 }

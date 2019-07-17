@@ -102,11 +102,18 @@ class _CallPageState extends State<CallPage> {
     };
 
     RongRtcEngine.onOthersPublishStreams = (String userId) {
+      _subscribeAndRenderRemoteUser(userId);
       setState(() {
         _addInfoString("user did publish stream:"+userId);
         _addInfoString("subscribe stream of user:"+userId);
-        _subscribeAndRenderRemoteUser(userId);
       });
+    };
+
+    RongRtcEngine.onConnectionStatusChange = (int connectionStatus) {
+      if(RCConnectionStatus.KickedByOtherClient == connectionStatus) {
+        print("该账号在其他设备登录，当前账号已离线");
+        onHangUp();
+      }
     };
   }
 
@@ -114,7 +121,7 @@ class _CallPageState extends State<CallPage> {
     RongRtcEngine.subscribeAVStream(userId);
     Widget videoView =  RongRtcEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
         setState(() {
-          _addInfoString("render video for user:"+userId);
+          _addInfoString("render remote video for user:"+userId);
           _getVideoSession(userId).viewId = viewId;
           RongRtcEngine.renderRemoteVideo(viewId, userId);
         });
@@ -132,7 +139,7 @@ class _CallPageState extends State<CallPage> {
     Widget videoView =  RongRtcEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
         setState(() {
           localUserSession.viewId = viewId;
-          _addInfoString("render video for user:"+CurrentUserId);
+          _addInfoString("render local video for user:"+CurrentUserId);
           RongRtcEngine.renderLocalVideo(viewId);
         });
       }

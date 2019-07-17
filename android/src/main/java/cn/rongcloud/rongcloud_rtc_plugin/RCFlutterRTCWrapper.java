@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import android.util.Log;
 import android.view.ViewGroup;
 
 import cn.rongcloud.rtc.RTCErrorCode;
@@ -30,7 +32,6 @@ public class RCFlutterRTCWrapper {
     private Context context;
     private RongRTCRoom rtcRoom;
     private RongRTCCapture capture;
-    RongRTCVideoView localView;
 
     private RCFlutterRTCWrapper() {
 
@@ -95,6 +96,8 @@ public class RCFlutterRTCWrapper {
         if(arg instanceof String) {
             String appkey = String.valueOf(arg);
             RongIMClient.init(this.context,appkey);
+
+            setConnectStatusListener();
         }
     }
 
@@ -221,7 +224,7 @@ public class RCFlutterRTCWrapper {
             Map param = (Map)arg;
             int viewId = (Integer) param.get("viewId");
             RongRTCVideoView view = RCFlutterRTCViewFactory.getInstance().getRenderVideoView(viewId);
-            localView = view;
+            //todo
             if(view != null) {
                 getCapture().setRongRTCVideoView(view);
                 getCapture().startCameraCapture();
@@ -387,6 +390,19 @@ public class RCFlutterRTCWrapper {
         this.capture.switchCamera();
     }
 
+    private void setConnectStatusListener() {
+        RongIMClient.setConnectionStatusListener(new RongIMClient.ConnectionStatusListener() {
+            @Override
+            public void onChanged(ConnectionStatus connectionStatus) {
+                final String LOG_TAG = "ConnectionStatusChanged";
+                RCLog.i(LOG_TAG+" status:"+String.valueOf(connectionStatus.getValue()));
+                Map map = new HashMap();
+                map.put("status",connectionStatus.getValue());
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.MethodCallBackKeyConnectionStatusChange,map);
+            }
+        });
+    }
+
     private class RTCEventsListener implements RongRTCEventsListener {
 
         @Override
@@ -441,12 +457,12 @@ public class RCFlutterRTCWrapper {
 
         @Override
         public void onVideoTrackAdd(String s, String s1) {
-
+            Log.i("checkonVideoTrackAdd",s+":"+s1);
         }
 
         @Override
         public void onFirstFrameDraw(String s, String s1) {
-
+            Log.i("checkonFirstFrameDraw",s+":"+s1);
         }
 
         @Override
