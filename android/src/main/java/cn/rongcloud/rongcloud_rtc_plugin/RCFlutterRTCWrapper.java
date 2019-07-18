@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import android.util.Log;
-import android.view.ViewGroup;
 
 import cn.rongcloud.rtc.RTCErrorCode;
 import cn.rongcloud.rtc.RongRTCEngine;

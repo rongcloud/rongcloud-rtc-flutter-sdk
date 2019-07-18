@@ -72,4 +72,20 @@
         [flutterView.view removeFromSuperview];
     }
 }
+
+- (void)updateVideoView:(int)viewId size:(CGSize)size {
+    NSLog(@"%s",__func__);
+    RCFlutterRTCView *flutterView = [self.viewDic objectForKey:@(viewId)];
+    if(flutterView && flutterView.view) {
+        CGRect bounds = flutterView.view.bounds;
+        bounds.size = size;
+        flutterView.view.frame = bounds;
+        for (UIView *subv in flutterView.view.subviews) {
+            if([subv isKindOfClass:RongRTCLocalVideoView.class] ||
+               [subv isKindOfClass:RongRTCRemoteVideoView.class]) {
+                subv.frame = bounds;
+            }
+        }
+    }
+}
 @end

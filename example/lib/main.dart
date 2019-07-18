@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 
 import 'index_page.dart';
 import 'user_data.dart';
@@ -24,10 +24,9 @@ class _MyAppState extends State<MyApp> {
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
+    RongcloudImPlugin.init(AppKey);
 
-    RongRtcEngine.init(AppKey);
-
-    int rc = await RongRtcEngine.connect(IMToken);
+    int rc = await RongcloudImPlugin.connect(IMToken);
     print("连接 im " + rc.toString());
 
 

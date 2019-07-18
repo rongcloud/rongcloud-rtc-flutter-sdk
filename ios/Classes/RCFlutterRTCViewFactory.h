@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (UIView *)getRenderVideoView:(int)viewId;
 
 - (void)removeRenderVideoView:(int)viewId;
+
+- (void)updateVideoView:(int)viewId size:(CGSize)size;
 @end
 
 NS_ASSUME_NONNULL_END

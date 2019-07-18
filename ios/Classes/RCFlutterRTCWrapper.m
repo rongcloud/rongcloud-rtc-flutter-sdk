@@ -62,6 +62,8 @@
         [self muteRemoteAudio:call.arguments];
     }else if([RCFlutterRTCMethodKeySwitchCamera isEqualToString:call.method]) {
         [self switchCamera:call.arguments];
+    }else if([@"updateVideoViewSize" isEqualToString:call.method]) {
+        [self updateVideoViewSize:call.arguments];
     }
     else {
         NSLog(@"Error: iOS can't response methodname %@",call.method);
@@ -196,6 +198,16 @@
             
             return;
         }
+    }
+}
+
+- (void)updateVideoViewSize:(id)arg {
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        int viewId = [dic[@"viewId"] intValue];
+        int width = [dic[@"width"] intValue];
+        int height = [dic[@"height"] intValue];
+        [[RCFlutterRTCViewFactory sharedInstance] updateVideoView:viewId size:CGSizeMake(width, height)];
     }
 }
 

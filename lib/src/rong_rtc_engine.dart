@@ -10,17 +10,8 @@ class RongRtcEngine {
   static const MethodChannel _channel =
       const MethodChannel('plugins.rongcloud.im/rtc_plugin');
 
-  static void init(String appKey) {
-    _addMethodCallHandler();
-    _channel.invokeMethod(MethodKey.Init,appKey);
-  }
-  
-  static Future<int> connect(String imToken) async {
-    int code = await _channel.invokeMethod(MethodKey.Connect,imToken);
-    return code;
-  }
-
   static Future<int> joinRTCRoom(String roomId) async {
+    _addMethodCallHandler();
     int code = await _channel.invokeMethod(MethodKey.JoinRTCRoom,roomId);
     return code;
   }
@@ -50,6 +41,11 @@ class RongRtcEngine {
     _channel.invokeMethod(MethodKey.MuteLocalAudio,map);
   }
 
+  static void updateVideoViewSize(int viewId,int width,int height) {
+    Map map = {"viewId":viewId,"width":width,"height":height};
+    _channel.invokeMethod("updateVideoViewSize",map);
+  }
+
   static void muteRemoteAudio(String userId,bool muted) {
     Map map = {"userId":userId,"muted":muted};
     _channel.invokeMethod(MethodKey.MuteRemoteAudio,map);
@@ -60,6 +56,9 @@ class RongRtcEngine {
   }
 
   static void removeNativeView(int viewId) {
+    if(viewId == null) {
+      return;
+    }
     Map map = {"viewId":viewId};
     _channel.invokeMethod(MethodKey.RemoveNativeView,map);
   }
