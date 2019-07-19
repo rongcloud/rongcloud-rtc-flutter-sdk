@@ -62,6 +62,9 @@ class _CallPageState extends State<CallPage> {
       });
       return;
     }
+    
+    RongRtcEngine.config(RongRtcConfig.defaultConfig());
+
     _onJoinRTCRoom();
     _addRTCEventHandlers();
   }

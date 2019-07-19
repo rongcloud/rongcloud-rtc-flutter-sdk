@@ -9,6 +9,8 @@ import java.util.Map;
 
 import android.util.Log;
 
+import com.example.rongcloud_im_plugin.RCFlutterConfig;
+
 import cn.rongcloud.rtc.RTCErrorCode;
 import cn.rongcloud.rtc.RongRTCEngine;
 import cn.rongcloud.rtc.callback.JoinRoomUICallBack;
@@ -57,6 +59,8 @@ public class RCFlutterRTCWrapper {
             initWithAppkey(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.Connect)) {
             connect(call.arguments,result);
+        }else if(call.method.equals(RCFlutterRTCMethodKey.Config)) {
+            config(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.JoinRTCRoom)) {
             joinRTCRoom(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.LeaveRTCRoom)) {
@@ -126,6 +130,13 @@ public class RCFlutterRTCWrapper {
                     result.success(errorCode.getValue());
                 }
             });
+        }
+    }
+
+    private void config(Object arg) {
+        if(arg instanceof Map) {
+            Map map = (Map)arg;
+            RCFlutterRTCConfig.getInstance().updateParam(map);
         }
     }
 
@@ -227,6 +238,7 @@ public class RCFlutterRTCWrapper {
             RongRTCVideoView view = RCFlutterRTCViewFactory.getInstance().getRenderVideoView(viewId);
             //todo
             if(view != null) {
+                getCapture().setRTCConfig(RCFlutterRTCConfig.getInstance().getRTCConfig());
                 getCapture().setRongRTCVideoView(view);
                 getCapture().startCameraCapture();
             }

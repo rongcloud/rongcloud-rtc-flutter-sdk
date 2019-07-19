@@ -11,6 +11,7 @@
 //key 由 flutter 触发，native 响应
 static NSString * RCFlutterRTCMethodKeyInit = @"Init";
 static NSString * RCFlutterRTCMethodKeyConnect = @"Connect";
+static NSString * RCFlutterRTCMethodKeyConfig = @"Config";
 static NSString * RCFlutterRTCMethodKeyJoinRTCRoom = @"JoinRTCRoom";
 static NSString * RCFlutterRTCMethodKeyLeaveRTCRoom = @"LeaveRTCRoom";
 static NSString * RCFlutterRTCMethodKeyPublishAVStream = @"PublishAVStream";
@@ -24,6 +25,8 @@ static NSString * RCFlutterRTCMethodKeyRemoveNativeView = @"RemoveNativeView";
 static NSString * RCFlutterRTCMethodKeyMuteLocalAudio = @"MuteLocalAudio";
 static NSString * RCFlutterRTCMethodKeyMuteRemoteAudio = @"MuteRemoteAudio";
 static NSString * RCFlutterRTCMethodKeySwitchCamera = @"SwitchCamera";
+static NSString * RCFlutterRTCMethodKeyExchangeVideo = @"ExchangeVideo";
+
 
 //callbackkey 由 native 触发，native 响应
 static NSString * RCFlutterRTCMethodCallBackKeyUserJoined = @"UserJoinedCallBack";

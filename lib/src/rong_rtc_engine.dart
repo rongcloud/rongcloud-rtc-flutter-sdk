@@ -5,10 +5,16 @@ import 'dart:async';
 
 import 'rong_method_key.dart';
 import 'connection_status_convert.dart';
+import 'rong_rtc_config.dart';
 
 class RongRtcEngine {
   static const MethodChannel _channel =
       const MethodChannel('plugins.rongcloud.im/rtc_plugin');
+    
+  static void config(RongRtcConfig config) {
+    Map conf = config.toMap();
+    _channel.invokeMethod(MethodKey.Config,conf);
+  }
 
   static Future<int> joinRTCRoom(String roomId) async {
     _addMethodCallHandler();
@@ -48,7 +54,7 @@ class RongRtcEngine {
 
   static void exchangeVideo(int viewId1,int viewId2) {
     Map map = {"viewId1":viewId1,"viewId2":viewId2};
-    _channel.invokeMethod("exchangeVideo",map);
+    _channel.invokeMethod(MethodKey.ExchangeVideo,map);
   }
 
   static void muteRemoteAudio(String userId,bool muted) {

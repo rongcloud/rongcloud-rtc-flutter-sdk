@@ -8,6 +8,7 @@
 #import "RCFlutterRTCWrapper.h"
 #import "RCFlutterRTCMethodKey.h"
 #import "RCFlutterRTCViewFactory.h"
+#import "RCFlutterRTCConfig.h"
 #import <RongIMLib/RongIMLib.h>
 #import <RongRTCLib/RongRTCLib.h>
 
@@ -15,7 +16,6 @@
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, strong) RongRTCRoom *rtcRoom;
 @property (nonatomic, strong) RongRTCAVCapturer *capturer;
-@property (nonatomic, strong) RongRTCVideoCaptureParam * captureParam;
 @end
 
 @implementation RCFlutterRTCWrapper
@@ -36,6 +36,8 @@
         [self initWithAppKey:call.arguments];
     }else if([RCFlutterRTCMethodKeyConnect isEqualToString:call.method]) {
         [self connect:call.arguments result:result];
+    }else if([RCFlutterRTCMethodKeyConfig isEqualToString:call.method]) {
+        [self config:call.arguments];
     }else if([RCFlutterRTCMethodKeyJoinRTCRoom isEqualToString:call.method]) {
         [self joinRTCRoom:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyLeaveRTCRoom isEqualToString:call.method]) {
@@ -64,7 +66,7 @@
         [self switchCamera:call.arguments];
     }else if([@"updateVideoViewSize" isEqualToString:call.method]) {
         [self updateVideoViewSize:call.arguments];
-    }else if([@"exchangeVideo" isEqualToString:call.method]) {
+    }else if([RCFlutterRTCMethodKeyExchangeVideo isEqualToString:call.method]) {
         [self exchangeVideo:call.arguments];
     }
     else {
@@ -96,6 +98,14 @@
             result(@(RC_CONN_TOKEN_INCORRECT));
             NSLog(@"iOS connect end error %@",@(RC_CONN_TOKEN_INCORRECT));
         }];
+    }
+}
+
+- (void)config:(id)arg {
+    NSLog(@"iOS config %@",arg);
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        [[RCFlutterRTCConfig sharedConfig] updateParam:dic];
     }
 }
 
@@ -164,7 +174,7 @@
         localView.fillMode = RCVideoFillModeAspectFill;
         [self.capturer setVideoRender:localView];
         
-        [self.capturer setCaptureParam:self.captureParam];
+        [self.capturer setCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
         [self.capturer startCapture];
     }
 }
@@ -365,11 +375,5 @@
         _capturer = [RongRTCAVCapturer sharedInstance];
     }
     return _capturer;
-}
-- (RongRTCVideoCaptureParam *)captureParam {
-    if(!_captureParam) {
-        _captureParam = [[RongRTCVideoCaptureParam alloc] init];
-    }
-    return _captureParam;
 }
 @end

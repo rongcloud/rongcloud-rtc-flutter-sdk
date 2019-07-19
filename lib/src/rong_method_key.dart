@@ -1,6 +1,7 @@
 class MethodKey {
   static const String Init = "Init";
   static const String Connect = "Connect";
+  static const String Config = "Config";
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String LeaveRTCRoom = "LeaveRTCRoom";
   static const String PublishAVStream = "PublishAVStream";
@@ -14,6 +15,7 @@ class MethodKey {
   static const String MuteLocalAudio = "MuteLocalAudio";
   static const String MuteRemoteAudio = "MuteRemoteAudio";
   static const String SwitchCamera = "SwitchCamera";
+  static const String ExchangeVideo = "ExchangeVideo";
 }
 
 class MethodCallBackKey {

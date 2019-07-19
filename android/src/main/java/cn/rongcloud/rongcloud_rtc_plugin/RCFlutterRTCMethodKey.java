@@ -3,6 +3,7 @@ package cn.rongcloud.rongcloud_rtc_plugin;
 public class RCFlutterRTCMethodKey {
     static String Init = "Init";
     static String Connect = "Connect";
+    static String Config = "Config";
     static String JoinRTCRoom = "JoinRTCRoom";
     static String LeaveRTCRoom = "LeaveRTCRoom";
     static String PublishAVStream = "PublishAVStream";
