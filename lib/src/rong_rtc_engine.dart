@@ -46,6 +46,11 @@ class RongRtcEngine {
     _channel.invokeMethod("updateVideoViewSize",map);
   }
 
+  static void exchangeVideo(int viewId1,int viewId2) {
+    Map map = {"viewId1":viewId1,"viewId2":viewId2};
+    _channel.invokeMethod("exchangeVideo",map);
+  }
+
   static void muteRemoteAudio(String userId,bool muted) {
     Map map = {"userId":userId,"muted":muted};
     _channel.invokeMethod(MethodKey.MuteRemoteAudio,map);

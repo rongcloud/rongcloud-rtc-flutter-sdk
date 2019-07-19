@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Flutter/Flutter.h>
+@class RCFlutterRTCView;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -14,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedInstance;
 - (void)saveMethodChannel:(FlutterMethodChannel *)channel;
 - (void)rtcHandleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result;
+
+- (void)renderLocalVideoViewAt:(RCFlutterRTCView *)view;
+- (void)renderRemoteVideoAt:(RCFlutterRTCView *)view forUser:(NSString *)userId;
 @end
 
 NS_ASSUME_NONNULL_END

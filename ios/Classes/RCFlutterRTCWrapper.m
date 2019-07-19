@@ -64,6 +64,8 @@
         [self switchCamera:call.arguments];
     }else if([@"updateVideoViewSize" isEqualToString:call.method]) {
         [self updateVideoViewSize:call.arguments];
+    }else if([@"exchangeVideo" isEqualToString:call.method]) {
+        [self exchangeVideo:call.arguments];
     }
     else {
         NSLog(@"Error: iOS can't response methodname %@",call.method);
@@ -151,19 +153,19 @@
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
-        UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:viewId];
-        if(view) {
-            //先把之前可能渲染的 view 给去掉，防止重复渲染
-            [self cancelRenderVideoInView:view];
-            
-            RongRTCLocalVideoView *localView = [[RongRTCLocalVideoView alloc] initWithFrame:view.bounds];
-            localView.fillMode = RCVideoFillModeAspectFill;
-            [self.capturer setVideoRender:localView];
-            [view insertSubview:localView atIndex:0];
-            
-            [self.capturer setCaptureParam:self.captureParam];
-            [self.capturer startCapture];
-        }
+        RCFlutterRTCView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderFlutterView:viewId];
+        [self renderLocalVideoViewAt:view];
+    }
+}
+
+- (void)renderLocalVideoViewAt:(RCFlutterRTCView *)view {
+    if(view) {
+        RongRTCLocalVideoView *localView = (RongRTCLocalVideoView *)view.renderView;
+        localView.fillMode = RCVideoFillModeAspectFill;
+        [self.capturer setVideoRender:localView];
+        
+        [self.capturer setCaptureParam:self.captureParam];
+        [self.capturer startCapture];
     }
 }
 
@@ -175,26 +177,28 @@
         int viewId = [dic[@"viewId"] intValue];
         NSString *userId = dic[@"userId"];
         
-        UIView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderVideoView:viewId];
-        if(view) {
-            [self cancelRenderVideoInView:view];
-            for(RongRTCRemoteUser *remoteUser in self.rtcRoom.remoteUsers) {
-                if([userId isEqualToString:remoteUser.userId]) {
-                    [self renderVideoOnView:view forRemoteUser:remoteUser];
-                    break;
-                }
+        RCFlutterRTCView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderFlutterView:viewId];
+        [self renderRemoteVideoAt:view forUser:userId];
+    }
+}
+
+- (void)renderRemoteVideoAt:(RCFlutterRTCView *)view forUser:(NSString *)userId{
+    if(view) {
+        for(RongRTCRemoteUser *remoteUser in self.rtcRoom.remoteUsers) {
+            if([userId isEqualToString:remoteUser.userId]) {
+                [self renderVideoOnView:view forRemoteUser:remoteUser];
+                break;
             }
         }
     }
 }
 
-- (void)renderVideoOnView:(UIView *)view forRemoteUser:(RongRTCRemoteUser *)remoteUser {
+- (void)renderVideoOnView:(RCFlutterRTCView *)flutterView forRemoteUser:(RongRTCRemoteUser *)remoteUser {
     for(RongRTCAVInputStream *stream in remoteUser.remoteAVStreams) {
         if(RTCMediaTypeVideo == stream.streamType) {
-            RongRTCRemoteVideoView *remoteView = [[RongRTCRemoteVideoView alloc] initWithFrame:view.bounds];
+            RongRTCRemoteVideoView *remoteView = (RongRTCRemoteVideoView *)flutterView.renderView;
             remoteView.fillMode = RCVideoFillModeAspectFill;
-            [stream setVideoRender:remoteView]; 
-            [view addSubview:remoteView];
+            [stream setVideoRender:remoteView];
             
             return;
         }
@@ -208,6 +212,15 @@
         int width = [dic[@"width"] intValue];
         int height = [dic[@"height"] intValue];
         [[RCFlutterRTCViewFactory sharedInstance] updateVideoView:viewId size:CGSizeMake(width, height)];
+    }
+}
+
+- (void)exchangeVideo:(id)arg {
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        int viewId1 = [dic[@"viewId1"] intValue];
+        int viewId2 = [dic[@"viewId2"] intValue];
+        [[RCFlutterRTCViewFactory sharedInstance] exchangeVideo:viewId1 with:viewId2];
     }
 }
 

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Flutter/Flutter.h>
+#import "RCFlutterRTCView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,11 +18,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messager;
 
 
-- (UIView *)getRenderVideoView:(int)viewId;
+- (RCFlutterRTCView *)getRenderFlutterView:(int)viewId;
 
 - (void)removeRenderVideoView:(int)viewId;
 
 - (void)updateVideoView:(int)viewId size:(CGSize)size;
+
+- (void)exchangeVideo:(int)viewId1 with:(int)viewId2;
 @end
 
 NS_ASSUME_NONNULL_END

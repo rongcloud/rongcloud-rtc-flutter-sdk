@@ -20,13 +20,17 @@ class CallPage extends StatefulWidget {
 
 class _CallPageState extends State<CallPage> {
 
+
   List<VideoSession> _sessions = new List();
   List<String> _infos = new List();
-  VideoSession localUserSession ;
+  VideoSession mainSession ;
   bool muted = false;
 
   double videoWidth = 100;
   double videoHeight = 150;
+
+  double screenWidth;
+  double screenHeight;
 
   String roomId;
 
@@ -66,6 +70,9 @@ class _CallPageState extends State<CallPage> {
     int code = await RongRtcEngine.joinRTCRoom(this.roomId);
     if(code == 0) {
       RongRtcEngine.publishAVStream();
+
+      screenWidth = MediaQuery.of(context).size.width;
+      screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
       _renderLocalUser();
       _renderExistedRemoterUsersIfNeed();
@@ -134,11 +141,9 @@ class _CallPageState extends State<CallPage> {
   }
 
   _renderLocalUser() {
-    double screenWidth =  MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
     Widget videoView =  RongRtcEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
         setState(() {
-          localUserSession.viewId = viewId;
+          mainSession.viewId = viewId;
           _addInfoString("render local video for user:"+CurrentUserId);
           RongRtcEngine.renderLocalVideo(viewId);
         });
@@ -147,7 +152,9 @@ class _CallPageState extends State<CallPage> {
     VideoSession session = new VideoSession();
     session.userId = CurrentUserId;
     session.view = videoView;
-    localUserSession = session;
+    mainSession = session;
+    mainSession.width = screenWidth;
+    mainSession.height = screenHeight;
   }
 
   _unsubscribeAndRemoveRemoteUser(String userId) {
@@ -191,23 +198,38 @@ class _CallPageState extends State<CallPage> {
     print(info);
   }
 
-  Widget _getVideoContainer(double width ,double hegiht, Widget childView) {
-    Widget view = Container(
-      width: width,
-      height: hegiht,
-      color: Colors.blue,
-    );
+  onTapSmallVideoView(int index) {
+    RongRtcEngine.exchangeVideo(mainSession.viewId, _sessions[index].viewId);
+    print("GestureDetector onTap");
+  }
 
-    if(childView == null) {
-      return view;
+  Widget _getVideoContainer(int index) {
+    VideoSession session = _sessions[index];
+
+    if(session.view == null) {
+      return Container(
+        width: session.width,
+        height: session.height,
+        color: Colors.blue,
+      );
     }
 
-    view = childView;
+    GestureDetector ges = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        onTapSmallVideoView(index);
+      },
+    );
+
     return Container(
-      width: width,
-      height: hegiht,
+      width: session.width,
+      height: session.height,
       color: Colors.blue,
-      child: view,
+      child: Stack(
+        children: <Widget>[
+          session.view,ges
+        ],
+      ),
     ); 
   }
 
@@ -215,7 +237,7 @@ class _CallPageState extends State<CallPage> {
     return Container(
         height: videoHeight,
         width: MediaQuery.of(context).size.width,
-        padding: new EdgeInsets.fromLTRB(10, 0, 10, 0),
+        padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: _sessions.length,
@@ -223,34 +245,38 @@ class _CallPageState extends State<CallPage> {
             if(_sessions.length == 0) {
               return null;
             }
-            return _getVideoContainer(videoWidth,videoHeight,_sessions[index].view);
+            _sessions[index].width = videoWidth;
+            _sessions[index].height = videoHeight;
+            return _getVideoContainer(index);
           },
         ),
       );
   }
 
-  Widget _getFullScreenView(){
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
-    Widget view = Container(
-      width: screenWidth,
-      height: screenHeight,
-      color: Colors.blue,
-    );
-
-    if(localUserSession == null) {
-      return view;
-    }
-    if(localUserSession.view == null) {
-      return view;
+  Widget _getMainVideoView(){
+    double width = 0;
+    double height = 0;
+    if(mainSession != null) {
+      width = mainSession.width;
+      height = mainSession.height;
+    }else {
+      width = MediaQuery.of(context).size.width;
+      height = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
     }
 
-    view =  localUserSession.view;
+    if(mainSession == null || mainSession.view == null) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.blue,
+      );
+    }
+
     return Container(
-      width: screenWidth,
-      height: screenHeight,
+      width: width,
+      height: height,
       color: Colors.blue,
-      child: view,
+      child: mainSession.view,
     );
   }
 
@@ -296,7 +322,7 @@ class _CallPageState extends State<CallPage> {
       backgroundColor: Colors.black,
       body: Center(
         child: Stack(
-          children: <Widget>[_getFullScreenView(),_getListView(),_getInfoListView(),_getBottomToolbar()],
+          children: <Widget>[_getMainVideoView(),_getListView(),_getInfoListView(),_getBottomToolbar()],
         ),
       ),
     );
