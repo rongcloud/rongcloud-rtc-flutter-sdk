@@ -69,12 +69,11 @@ class _CallPageState extends State<CallPage> {
   _onJoinRTCRoom() async {
     int code = await RongRtcEngine.joinRTCRoom(this.roomId);
     if(code == 0) {
-      RongRtcEngine.publishAVStream();
-
       screenWidth = MediaQuery.of(context).size.width;
       screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
       _renderLocalUser();
+
       _renderExistedRemoterUsersIfNeed();
     }
 
@@ -146,6 +145,7 @@ class _CallPageState extends State<CallPage> {
           mainSession.viewId = viewId;
           _addInfoString("render local video for user:"+CurrentUserId);
           RongRtcEngine.renderLocalVideo(viewId);
+          RongRtcEngine.publishAVStream();
         });
       }
     );

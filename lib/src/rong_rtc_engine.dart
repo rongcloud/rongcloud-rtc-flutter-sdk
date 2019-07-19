@@ -25,7 +25,7 @@ class RongRtcEngine {
     List userIds = await _channel.invokeMethod(MethodKey.GetRemoteUsers,roomId);
     return userIds;
   }
-
+  ///必须在 publishAVStream 前调用
   static void renderLocalVideo(int viewId) {
     Map map = {"viewId":viewId};
     _channel.invokeMethod(MethodKey.RenderLocalVideo,map);
@@ -68,6 +68,7 @@ class RongRtcEngine {
     _channel.invokeMethod(MethodKey.RemoveNativeView,map);
   }
 
+  ///必须在 renderLocalVideo 后调用
   static void publishAVStream() {
     _channel.invokeMethod(MethodKey.PublishAVStream);
   }
