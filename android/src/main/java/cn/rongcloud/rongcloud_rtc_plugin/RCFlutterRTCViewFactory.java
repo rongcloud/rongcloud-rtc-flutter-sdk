@@ -58,4 +58,27 @@ public class RCFlutterRTCViewFactory extends PlatformViewFactory {
             viewMap.remove(viewId);
         }
     }
+
+    //切换渲染的时候，将 两个 flutter view 的 userId 和 renderView 交换，renderView 需要更改 size
+    public void exchangeVideo(int viewId1,int viewId2) {
+        //iOS 的做法
+        RCFlutterRTCView flutterView1 = (RCFlutterRTCView)viewMap.get(viewId1);
+        RCFlutterRTCView flutterView2 = (RCFlutterRTCView)viewMap.get(viewId2);
+
+        //交换 userId
+        String tmpUserId = flutterView1.getUserId();
+        flutterView1.updateUserId(flutterView2.getUserId());
+        flutterView2.updateUserId(tmpUserId);
+
+        //交换 renderView
+        RongRTCVideoView renderView1 = flutterView1.getVideoView();
+        RongRTCVideoView renderView2 = flutterView2.getVideoView();
+
+        flutterView1.unbindRenderView();
+        flutterView2.unbindRenderView();
+
+        flutterView1.bindRenderView(renderView2,flutterView1.getViewParent());
+        flutterView2.bindRenderView(renderView1,flutterView2.getViewParent());
+
+    }
 }

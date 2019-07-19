@@ -83,6 +83,8 @@ public class RCFlutterRTCWrapper {
             muteRemoteAudio(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.SwitchCamera)) {
             switchCamera(call.arguments);
+        }else if(call.method.equals(RCFlutterRTCMethodKey.ExchangeVideo)) {
+            exchangeVideo(call.arguments);
         }
         else {
             result.notImplemented();
@@ -389,6 +391,15 @@ public class RCFlutterRTCWrapper {
         this.capture.switchCamera();
     }
 
+    private void exchangeVideo(Object arg) {
+        if(arg instanceof Map) {
+            Map map = (Map)arg;
+            int viewId1 = (Integer) map.get("viewId1");
+            int viewId2 = (Integer) map.get("viewId2");
+            RCFlutterRTCViewFactory.getInstance().exchangeVideo(viewId1,viewId2);
+        }
+    }
+
     private void setConnectStatusListener() {
         RongIMClient.setConnectionStatusListener(new RongIMClient.ConnectionStatusListener() {
             @Override
@@ -481,5 +492,9 @@ public class RCFlutterRTCWrapper {
             capture.init(context);
         }
         return capture;
+    }
+
+    public Context getContext() {
+        return context;
     }
 }

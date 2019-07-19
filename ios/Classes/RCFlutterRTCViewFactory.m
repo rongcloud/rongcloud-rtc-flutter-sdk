@@ -90,8 +90,8 @@
     }
 }
 
+//切换渲染的时候，将 两个 flutter view 的 userId 和 renderView 交换，renderView 需要更改 size
 - (void)exchangeVideo:(int)viewId1 with:(int)viewId2 {
-    //切换渲染的时候，将 两个 flutter view 的 userId 和 renderView 交换，renderView 需要更改 size
     RCFlutterRTCView *flutterView1 = [self.viewDic objectForKey:@(viewId1)];
     RCFlutterRTCView *flutterView2 = [self.viewDic objectForKey:@(viewId2)];
     

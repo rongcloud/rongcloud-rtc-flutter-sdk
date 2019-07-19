@@ -41,10 +41,10 @@ class RongRtcEngine {
     _channel.invokeMethod(MethodKey.MuteLocalAudio,map);
   }
 
-  static void updateVideoViewSize(int viewId,int width,int height) {
-    Map map = {"viewId":viewId,"width":width,"height":height};
-    _channel.invokeMethod("updateVideoViewSize",map);
-  }
+  // static void updateVideoViewSize(int viewId,int width,int height) {
+  //   Map map = {"viewId":viewId,"width":width,"height":height};
+  //   _channel.invokeMethod("updateVideoViewSize",map);
+  // }
 
   static void exchangeVideo(int viewId1,int viewId2) {
     Map map = {"viewId1":viewId1,"viewId2":viewId2};

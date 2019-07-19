@@ -17,11 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
                         arguments:(id _Nullable)args
                   binaryMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
 
-@property (nonatomic, strong, readonly) UIView *videoView;
 @property (nonatomic, copy, readonly) NSString *userId;
-@property (nonatomic, assign, readonly) int64_t viewId;
-@property (nonatomic, assign, readonly) int width;
-@property (nonatomic, assign, readonly) int height;
 @property (nonatomic, strong, readonly) RongRTCVideoPreviewView *renderView;
 
 - (void)bindRenderView:(RongRTCVideoPreviewView *)renderView;
