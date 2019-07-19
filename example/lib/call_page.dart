@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 
 import 'video_session.dart';
 import 'user_data.dart';
@@ -62,7 +63,7 @@ class _CallPageState extends State<CallPage> {
       });
       return;
     }
-    
+
     RongRtcEngine.config(RongRtcConfig.defaultConfig());
 
     _onJoinRTCRoom();
@@ -118,7 +119,7 @@ class _CallPageState extends State<CallPage> {
       });
     };
 
-    RongRtcEngine.onConnectionStatusChange = (int connectionStatus) {
+    RongcloudImPlugin.onConnectionStatusChange = (int connectionStatus) {
       if(RCConnectionStatus.KickedByOtherClient == connectionStatus) {
         print("该账号在其他设备登录，当前账号已离线");
         onHangUp();

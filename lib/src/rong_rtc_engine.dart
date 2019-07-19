@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import 'rong_method_key.dart';
-import 'connection_status_convert.dart';
 import 'rong_rtc_config.dart';
 
 class RongRtcEngine {
@@ -101,6 +100,8 @@ class RongRtcEngine {
 
   static void Function(String userId) onOthersPublishStreams;
 
+  static void Function(String userId) onOthersUnpublishStreams;
+
   static void Function(String methodName,int code) onError;
 
 
@@ -141,7 +142,6 @@ class RongRtcEngine {
     return null;
   }
 
-  static Function(int connectionStatus) onConnectionStatusChange;
 
   static void _addMethodCallHandler() {
 
@@ -163,12 +163,9 @@ class RongRtcEngine {
             onOthersPublishStreams(arg["userId"]);
           }
           break;
-        case MethodCallBackKey.ConnectionStatusChange:
-          if (onConnectionStatusChange != null) {
-            Map map = call.arguments;
-            int code = map["status"];
-            int status = ConnectionStatusConvert.convert(code);
-            onConnectionStatusChange(status);
+        case MethodCallBackKey.OthersUnpublishStreams:
+          if(onOthersUnpublishStreams != null) {
+            onOthersUnpublishStreams(arg["userId"]);
           }
           break;
       }

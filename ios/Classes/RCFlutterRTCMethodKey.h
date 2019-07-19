@@ -9,8 +9,6 @@
 #define RCFlutterRTCMethodKey_h
 
 //key 由 flutter 触发，native 响应
-static NSString * RCFlutterRTCMethodKeyInit = @"Init";
-static NSString * RCFlutterRTCMethodKeyConnect = @"Connect";
 static NSString * RCFlutterRTCMethodKeyConfig = @"Config";
 static NSString * RCFlutterRTCMethodKeyJoinRTCRoom = @"JoinRTCRoom";
 static NSString * RCFlutterRTCMethodKeyLeaveRTCRoom = @"LeaveRTCRoom";
@@ -32,6 +30,6 @@ static NSString * RCFlutterRTCMethodKeyExchangeVideo = @"ExchangeVideo";
 static NSString * RCFlutterRTCMethodCallBackKeyUserJoined = @"UserJoinedCallBack";
 static NSString * RCFlutterRTCMethodCallBackKeyUserLeaved = @"UserLeavedCallBack";
 static NSString * RCFlutterRTCMethodCallBackKeyOthersPublishStreams = @"OthersPublishStreamsCallBack";
-static NSString *RCMethodCallBackKeyConnectionStatusChange = @"ConnectionStatusChangeCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyOthersUnpublishStreams = @"OthersUnpublishStreamsCallBack";
 
 #endif /* RCFlutterRTCMethodKey_h */

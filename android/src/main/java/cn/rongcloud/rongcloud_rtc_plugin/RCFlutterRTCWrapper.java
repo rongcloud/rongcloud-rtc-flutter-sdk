@@ -55,11 +55,7 @@ public class RCFlutterRTCWrapper {
     }
 
     public void onRTCMethodCall(MethodCall call, MethodChannel.Result result) {
-        if (call.method.equals(RCFlutterRTCMethodKey.Init)) {
-            initWithAppkey(call.arguments);
-        }else if(call.method.equals(RCFlutterRTCMethodKey.Connect)) {
-            connect(call.arguments,result);
-        }else if(call.method.equals(RCFlutterRTCMethodKey.Config)) {
+        if(call.method.equals(RCFlutterRTCMethodKey.Config)) {
             config(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.JoinRTCRoom)) {
             joinRTCRoom(call.arguments,result);
@@ -95,43 +91,6 @@ public class RCFlutterRTCWrapper {
         }
     }
 
-    private void initWithAppkey(Object arg) {
-        RCLog.i("init");
-        RCLog.i("param "+arg.toString());
-        if(arg instanceof String) {
-            String appkey = String.valueOf(arg);
-            RongIMClient.init(this.context,appkey);
-
-            setConnectStatusListener();
-        }
-    }
-
-    private void connect(Object arg, final MethodChannel.Result result) {
-        RCLog.i("connect start");
-        RCLog.i("param "+arg.toString());
-        if(arg instanceof String) {
-            String token = String.valueOf(arg);
-            RongIMClient.connect(token, new RongIMClient.ConnectCallback() {
-                @Override
-                public void onTokenIncorrect() {
-                    RCLog.e("connect end error 31004");
-                    result.success(31004);
-                }
-
-                @Override
-                public void onSuccess(String s) {
-                    RCLog.i("connect success");
-                    result.success(0);
-                }
-
-                @Override
-                public void onError(RongIMClient.ErrorCode errorCode) {
-                    RCLog.e(" connect end error " + errorCode.getValue());
-                    result.success(errorCode.getValue());
-                }
-            });
-        }
-    }
 
     private void config(Object arg) {
         if(arg instanceof Map) {
@@ -412,19 +371,6 @@ public class RCFlutterRTCWrapper {
         }
     }
 
-    private void setConnectStatusListener() {
-        RongIMClient.setConnectionStatusListener(new RongIMClient.ConnectionStatusListener() {
-            @Override
-            public void onChanged(ConnectionStatus connectionStatus) {
-                final String LOG_TAG = "ConnectionStatusChanged";
-                RCLog.i(LOG_TAG+" status:"+String.valueOf(connectionStatus.getValue()));
-                Map map = new HashMap();
-                map.put("status",connectionStatus.getValue());
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.MethodCallBackKeyConnectionStatusChange,map);
-            }
-        });
-    }
-
     private class RTCEventsListener implements RongRTCEventsListener {
 
         @Override
@@ -438,17 +384,22 @@ public class RCFlutterRTCWrapper {
         }
 
         @Override
+        public void onRemoteUserUnPublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
+            String userId = rongRTCRemoteUser.getUserId();
+            if(userId != null) {
+                Map map = new HashMap();
+                map.put("userId",userId);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.OthersUnpublishStreamsCallBack,map);
+            }
+        }
+
+        @Override
         public void onRemoteUserAudioStreamMute(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
 
         }
 
         @Override
         public void onRemoteUserVideoStreamEnabled(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
-
-        }
-
-        @Override
-        public void onRemoteUserUnPublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
 
         }
 
@@ -474,7 +425,12 @@ public class RCFlutterRTCWrapper {
 
         @Override
         public void onUserOffline(RongRTCRemoteUser rongRTCRemoteUser) {
-
+            String userId = rongRTCRemoteUser.getUserId();
+            if(userId != null) {
+                Map map = new HashMap();
+                map.put("userId",userId);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
+            }
         }
 
         @Override

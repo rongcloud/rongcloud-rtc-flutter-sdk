@@ -1,8 +1,6 @@
 package cn.rongcloud.rongcloud_rtc_plugin;
 
 public class RCFlutterRTCMethodKey {
-    static String Init = "Init";
-    static String Connect = "Connect";
     static String Config = "Config";
     static String JoinRTCRoom = "JoinRTCRoom";
     static String LeaveRTCRoom = "LeaveRTCRoom";
@@ -22,6 +20,5 @@ public class RCFlutterRTCMethodKey {
     static String UserJoinedCallBack = "UserJoinedCallBack";
     static String UserLeavedCallBack = "UserLeavedCallBack";
     static String OthersPublishStreamsCallBack = "OthersPublishStreamsCallBack";
-
-    static String MethodCallBackKeyConnectionStatusChange = "ConnectionStatusChangeCallBack";
+    static String OthersUnpublishStreamsCallBack = "OthersUnpublishStreamsCallBack";
 }

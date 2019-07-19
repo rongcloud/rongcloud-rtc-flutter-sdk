@@ -1,6 +1,4 @@
 class MethodKey {
-  static const String Init = "Init";
-  static const String Connect = "Connect";
   static const String Config = "Config";
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String LeaveRTCRoom = "LeaveRTCRoom";
@@ -23,5 +21,5 @@ class MethodCallBackKey {
   static const String UserJoined = "UserJoinedCallBack";
   static const String UserLeaved = "UserLeavedCallBack";
   static const String OthersPublishStreams = "OthersPublishStreamsCallBack";
-  static const String ConnectionStatusChange = 'ConnectionStatusChangeCallBack';
+  static const String OthersUnpublishStreams = "OthersUnpublishStreamsCallBack";
 }

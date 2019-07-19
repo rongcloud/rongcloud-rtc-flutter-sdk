@@ -12,7 +12,7 @@
 #import <RongIMLib/RongIMLib.h>
 #import <RongRTCLib/RongRTCLib.h>
 
-@interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate,RCConnectionStatusChangeDelegate>
+@interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate>
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, strong) RongRTCRoom *rtcRoom;
 @property (nonatomic, strong) RongRTCAVCapturer *capturer;
@@ -32,11 +32,7 @@
     self.channel = channel;
 }
 - (void)rtcHandleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
-    if([RCFlutterRTCMethodKeyInit isEqualToString:call.method]) {
-        [self initWithAppKey:call.arguments];
-    }else if([RCFlutterRTCMethodKeyConnect isEqualToString:call.method]) {
-        [self connect:call.arguments result:result];
-    }else if([RCFlutterRTCMethodKeyConfig isEqualToString:call.method]) {
+    if([RCFlutterRTCMethodKeyConfig isEqualToString:call.method]) {
         [self config:call.arguments];
     }else if([RCFlutterRTCMethodKeyJoinRTCRoom isEqualToString:call.method]) {
         [self joinRTCRoom:call.arguments result:result];
@@ -72,32 +68,6 @@
     else {
         NSLog(@"Error: iOS can't response methodname %@",call.method);
         result(FlutterMethodNotImplemented);
-    }
-}
-
-- (void)initWithAppKey:(id)arg {
-    if([arg isKindOfClass:[NSString class]]) {
-        NSString *appkey = (NSString *)arg;
-        [[RCIMClient sharedRCIMClient] initWithAppKey:appkey];
-        [[RCIMClient sharedRCIMClient] setRCConnectionStatusChangeDelegate:self];
-         NSLog(@"iOS init appkey %@",appkey);
-    }
-}
-
-- (void)connect:(id)arg result:(FlutterResult)result {
-    NSLog(@"iOS connect start");
-    if([arg isKindOfClass:[NSString class]]) {
-        NSString *token = (NSString *)arg;
-        [[RCIMClient sharedRCIMClient] connectWithToken:token success:^(NSString *userId) {
-            result(@(0));
-            NSLog(@"iOS connect end success");
-        } error:^(RCConnectErrorCode status) {
-            result(@(status));
-            NSLog(@"iOS connect end error %@",@(status));
-        } tokenIncorrect:^{
-            result(@(RC_CONN_TOKEN_INCORRECT));
-            NSLog(@"iOS connect end error %@",@(RC_CONN_TOKEN_INCORRECT));
-        }];
     }
 }
 
@@ -311,12 +281,6 @@
     [self.capturer switchCamera];
 }
 
-#pragma mark - RCConnectionStatusChangeDelegate
-- (void)onConnectionStatusChanged:(RCConnectionStatus)status {
-    NSDictionary *dic = @{@"status":@(status)};
-    [self.channel invokeMethod:RCMethodCallBackKeyConnectionStatusChange arguments:dic];
-}
-
 #pragma mark - RongRTCRoomDelegate
 -(void)didJoinUser:(RongRTCRemoteUser*)user {
     NSString *userId = user.userId;
@@ -339,6 +303,17 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyOthersPublishStreams arguments:@{@"userId":userId}];
         }
+    }
+}
+
+- (void)didUnpublishStreams:(NSArray<RongRTCAVInputStream *>*)streams {
+    if(streams.count > 0) {
+        RongRTCAVInputStream *stream = streams[0];
+        NSString *userId = stream.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyOthersUnpublishStreams arguments:@{@"userId":userId}];
+        }
+        
     }
 }
 
