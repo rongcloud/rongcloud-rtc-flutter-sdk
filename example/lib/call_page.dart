@@ -166,9 +166,12 @@ class _CallPageState extends State<CallPage> {
   }
 
   VideoSession _getVideoSession(String userId) {
-    return _sessions.firstWhere((session) {
-      return session.userId == userId;
-    });
+    for(VideoSession sess in _sessions) {
+      if(sess.userId == userId) {
+        return sess;
+      }
+    }
+    return null;
   }
 
   onSwitchCamera() {
@@ -200,6 +203,9 @@ class _CallPageState extends State<CallPage> {
 
   onTapSmallVideoView(int index) {
     RongRtcEngine.exchangeVideo(mainSession.viewId, _sessions[index].viewId);
+    String tmpUserId = mainSession.userId;
+    mainSession.userId = _sessions[index].userId;
+    _sessions[index].userId = tmpUserId;
     print("GestureDetector onTap");
   }
 
