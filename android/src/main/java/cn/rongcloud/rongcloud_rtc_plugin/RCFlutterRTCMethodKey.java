@@ -19,6 +19,10 @@ public class RCFlutterRTCMethodKey {
 
     static String UserJoinedCallBack = "UserJoinedCallBack";
     static String UserLeavedCallBack = "UserLeavedCallBack";
-    static String OthersPublishStreamsCallBack = "OthersPublishStreamsCallBack";
-    static String OthersUnpublishStreamsCallBack = "OthersUnpublishStreamsCallBack";
+    static String RemoteUserPublishStreamsCallBack = "RemoteUserPublishStreamsCallBack";
+    static String RemoteUserUnpublishStreamsCallBack = "RemoteUserUnpublishStreamsCallBack";
+    static String RemoteUserVideoEnabledCallBack = "RemoteUserVideoEnabledCallBack";
+    static String RemoteUserAudioEnabledCallBack = "RemoteUserAudioEnabledCallBack";
+    static String RemoteUserFirstKeyframeCallBack = "RemoteUserFirstKeyframeCallBack";
+
 }

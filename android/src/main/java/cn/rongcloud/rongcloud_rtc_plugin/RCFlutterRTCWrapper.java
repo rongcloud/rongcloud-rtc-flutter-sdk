@@ -379,7 +379,7 @@ public class RCFlutterRTCWrapper {
             if(userId != null) {
                 Map map = new HashMap();
                 map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.OthersPublishStreamsCallBack,map);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserPublishStreamsCallBack,map);
             }
         }
 
@@ -389,18 +389,30 @@ public class RCFlutterRTCWrapper {
             if(userId != null) {
                 Map map = new HashMap();
                 map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.OthersUnpublishStreamsCallBack,map);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
             }
         }
 
         @Override
         public void onRemoteUserAudioStreamMute(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
-
+            String userId = rongRTCRemoteUser.getUserId();
+            if(userId != null) {
+                Map map = new HashMap();
+                map.put("userId",userId);
+                map.put("enable",b);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserAudioEnabledCallBack,map);
+            }
         }
 
         @Override
         public void onRemoteUserVideoStreamEnabled(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
-
+            String userId = rongRTCRemoteUser.getUserId();
+            if(userId != null) {
+                Map map = new HashMap();
+                map.put("userId",userId);
+                map.put("enable",b);
+                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserVideoEnabledCallBack,map);
+            }
         }
 
         @Override
@@ -439,8 +451,17 @@ public class RCFlutterRTCWrapper {
         }
 
         @Override
-        public void onFirstFrameDraw(String s, String s1) {
-            Log.i("checkonFirstFrameDraw",s+":"+s1);
+        public void onFirstFrameDraw(String userId, String tag) {
+            if(userId == null || RongIMClient.getInstance().getCurrentUserId() == null) {
+                return;
+            }
+            if(userId.equals(RongIMClient.getInstance().getCurrentUserId())) {
+                // do nothing 和 iOS 同步，iOS 不会回调自己的第一关键帧的到达
+                return;
+            }
+            Map map = new HashMap();
+            map.put("userId",userId);
+            methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserFirstKeyframeCallBack,map);
         }
 
         @Override

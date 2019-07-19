@@ -111,11 +111,17 @@ class _CallPageState extends State<CallPage> {
       });
     };
 
-    RongRtcEngine.onOthersPublishStreams = (String userId) {
+    RongRtcEngine.onRemoteUserPublishStreams = (String userId) {
       _subscribeAndRenderRemoteUser(userId);
       setState(() {
         _addInfoString("user did publish stream:"+userId);
         _addInfoString("subscribe stream of user:"+userId);
+      });
+    };
+
+    RongRtcEngine.onRemoteUserUnpublishStreams = (String userId) {
+      setState(() {
+        _addInfoString("user did unpublish stream:"+userId);
       });
     };
 

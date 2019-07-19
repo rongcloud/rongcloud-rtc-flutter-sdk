@@ -29,7 +29,10 @@ static NSString * RCFlutterRTCMethodKeyExchangeVideo = @"ExchangeVideo";
 //callbackkey 由 native 触发，native 响应
 static NSString * RCFlutterRTCMethodCallBackKeyUserJoined = @"UserJoinedCallBack";
 static NSString * RCFlutterRTCMethodCallBackKeyUserLeaved = @"UserLeavedCallBack";
-static NSString * RCFlutterRTCMethodCallBackKeyOthersPublishStreams = @"OthersPublishStreamsCallBack";
-static NSString * RCFlutterRTCMethodCallBackKeyOthersUnpublishStreams = @"OthersUnpublishStreamsCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams = @"RemoteUserPublishStreamsCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyRemoteUserUnpublishStreams = @"RemoteUserUnpublishStreamsCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyRemoteUserVideoEnabled = @"RemoteUserVideoEnabledCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyRemoteUserAudioEnabled = @"RemoteUserAudioEnabledCallBack";
+static NSString * RCFlutterRTCMethodCallBackKeyRemoteUserFirstKeyframe = @"RemoteUserFirstKeyframeCallBack";
 
 #endif /* RCFlutterRTCMethodKey_h */

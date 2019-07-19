@@ -12,38 +12,38 @@ class RongRtcEngine {
     
   static void config(RongRtcConfig config) {
     Map conf = config.toMap();
-    _channel.invokeMethod(MethodKey.Config,conf);
+    _channel.invokeMethod(RCRtcMethodKey.Config,conf);
   }
 
   static Future<int> joinRTCRoom(String roomId) async {
     _addMethodCallHandler();
-    int code = await _channel.invokeMethod(MethodKey.JoinRTCRoom,roomId);
+    int code = await _channel.invokeMethod(RCRtcMethodKey.JoinRTCRoom,roomId);
     return code;
   }
 
   static Future<int> leaveRTCRoom(String roomId) async {
-    int code = await _channel.invokeMethod(MethodKey.LeaveRTCRoom,roomId);
+    int code = await _channel.invokeMethod(RCRtcMethodKey.LeaveRTCRoom,roomId);
     return code;
   }
 
   static Future<List> getRemoteUsers(String roomId) async {
-    List userIds = await _channel.invokeMethod(MethodKey.GetRemoteUsers,roomId);
+    List userIds = await _channel.invokeMethod(RCRtcMethodKey.GetRemoteUsers,roomId);
     return userIds;
   }
   ///必须在 publishAVStream 前调用
   static void renderLocalVideo(int viewId) {
     Map map = {"viewId":viewId};
-    _channel.invokeMethod(MethodKey.RenderLocalVideo,map);
+    _channel.invokeMethod(RCRtcMethodKey.RenderLocalVideo,map);
   }
 
   static void renderRemoteVideo(int viewId,String userId) {
     Map map = {"viewId":viewId,"userId":userId};
-    _channel.invokeMethod(MethodKey.RenderRemoteVideo,map);
+    _channel.invokeMethod(RCRtcMethodKey.RenderRemoteVideo,map);
   }
 
   static void muteLocalAudio(bool muted) {
     Map map = {"muted":muted};
-    _channel.invokeMethod(MethodKey.MuteLocalAudio,map);
+    _channel.invokeMethod(RCRtcMethodKey.MuteLocalAudio,map);
   }
 
   // static void updateVideoViewSize(int viewId,int width,int height) {
@@ -53,16 +53,16 @@ class RongRtcEngine {
 
   static void exchangeVideo(int viewId1,int viewId2) {
     Map map = {"viewId1":viewId1,"viewId2":viewId2};
-    _channel.invokeMethod(MethodKey.ExchangeVideo,map);
+    _channel.invokeMethod(RCRtcMethodKey.ExchangeVideo,map);
   }
 
   static void muteRemoteAudio(String userId,bool muted) {
     Map map = {"userId":userId,"muted":muted};
-    _channel.invokeMethod(MethodKey.MuteRemoteAudio,map);
+    _channel.invokeMethod(RCRtcMethodKey.MuteRemoteAudio,map);
   }
 
   static void switchCamera() {
-    _channel.invokeMethod(MethodKey.SwitchCamera);
+    _channel.invokeMethod(RCRtcMethodKey.SwitchCamera);
   }
 
   static void removeNativeView(int viewId) {
@@ -70,25 +70,25 @@ class RongRtcEngine {
       return;
     }
     Map map = {"viewId":viewId};
-    _channel.invokeMethod(MethodKey.RemoveNativeView,map);
+    _channel.invokeMethod(RCRtcMethodKey.RemoveNativeView,map);
   }
 
   ///必须在 renderLocalVideo 后调用
   static void publishAVStream() {
-    _channel.invokeMethod(MethodKey.PublishAVStream);
+    _channel.invokeMethod(RCRtcMethodKey.PublishAVStream);
   }
 
   static void unpublishAVStream() {
-    _channel.invokeMethod(MethodKey.UnpublishAVStream);
+    _channel.invokeMethod(RCRtcMethodKey.UnpublishAVStream);
   }
 
 
   static void subscribeAVStream(String userId) {
-    _channel.invokeMethod(MethodKey.SubscribeAVStream,userId);
+    _channel.invokeMethod(RCRtcMethodKey.SubscribeAVStream,userId);
   }
 
   static void unsubscribeAVStream(String userId) {
-    _channel.invokeMethod(MethodKey.UnsubscribeAVStream,userId);
+    _channel.invokeMethod(RCRtcMethodKey.UnsubscribeAVStream,userId);
   }
 
 
@@ -98,9 +98,15 @@ class RongRtcEngine {
 
   static void Function(String userId) onUserLeaved;
 
-  static void Function(String userId) onOthersPublishStreams;
+  static void Function(String userId) onRemoteUserPublishStreams;
 
-  static void Function(String userId) onOthersUnpublishStreams;
+  static void Function(String userId) onRemoteUserUnpublishStreams;
+
+  static void Function(String userId,bool enable) onRemoteUserVideoEnabled;
+
+  static void Function(String userId,bool enable) onRemoteUserAudioEnabled;
+
+  static void Function(String userId) onRemoteUserFirstKeyframeReceived;
 
   static void Function(String methodName,int code) onError;
 
@@ -148,24 +154,39 @@ class RongRtcEngine {
     _channel.setMethodCallHandler((MethodCall call) {
       Map arg = call.arguments;
       switch (call.method) {
-        case MethodCallBackKey.UserJoined:
+        case RCRtcMethodCallBackKey.UserJoined:
           if(onUserJoined != null) {
             onUserJoined(arg["userId"]);
           }
           break;
-        case MethodCallBackKey.UserLeaved:
+        case RCRtcMethodCallBackKey.UserLeaved:
           if(onUserLeaved != null) {
             onUserLeaved(arg["userId"]);
           }
           break;
-        case MethodCallBackKey.OthersPublishStreams:
-          if(onOthersPublishStreams != null) {
-            onOthersPublishStreams(arg["userId"]);
+        case RCRtcMethodCallBackKey.RemoteUserPublishStreams:
+          if(onRemoteUserPublishStreams != null) {
+            onRemoteUserPublishStreams(arg["userId"]);
           }
           break;
-        case MethodCallBackKey.OthersUnpublishStreams:
-          if(onOthersUnpublishStreams != null) {
-            onOthersUnpublishStreams(arg["userId"]);
+        case RCRtcMethodCallBackKey.RemoteUserUnpublishStreams:
+          if(onRemoteUserUnpublishStreams != null) {
+            onRemoteUserUnpublishStreams(arg["userId"]);
+          }
+          break;
+        case RCRtcMethodCallBackKey.RemoteUserVideoEnabled:
+          if(onRemoteUserVideoEnabled != null) {
+            onRemoteUserVideoEnabled(arg["userId"],arg["enable"]);
+          }
+          break;
+        case RCRtcMethodCallBackKey.RemoteUserAudioEnabled:
+          if(onRemoteUserAudioEnabled != null) {
+            onRemoteUserVideoEnabled(arg["userId"],arg["enable"]);
+          }
+          break;
+        case RCRtcMethodCallBackKey.RemoteUserFirstKeyframe:
+          if(onRemoteUserFirstKeyframeReceived != null) {
+            onRemoteUserFirstKeyframeReceived(arg["userId"]);
           }
           break;
       }

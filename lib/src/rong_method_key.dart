@@ -1,4 +1,4 @@
-class MethodKey {
+class RCRtcMethodKey {
   static const String Config = "Config";
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String LeaveRTCRoom = "LeaveRTCRoom";
@@ -16,10 +16,13 @@ class MethodKey {
   static const String ExchangeVideo = "ExchangeVideo";
 }
 
-class MethodCallBackKey {
+class RCRtcMethodCallBackKey {
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String UserJoined = "UserJoinedCallBack";
   static const String UserLeaved = "UserLeavedCallBack";
-  static const String OthersPublishStreams = "OthersPublishStreamsCallBack";
-  static const String OthersUnpublishStreams = "OthersUnpublishStreamsCallBack";
+  static const String RemoteUserPublishStreams = "RemoteUserPublishStreamsCallBack";
+  static const String RemoteUserUnpublishStreams = "RemoteUserUnpublishStreamsCallBack";
+  static const String RemoteUserVideoEnabled = "RemoteUserVideoEnabledCallBack";
+  static const String RemoteUserAudioEnabled = "RemoteUserAudioEnabledCallBack";
+  static const String RemoteUserFirstKeyframe = "RemoteUserFirstKeyframeCallBack";
 }

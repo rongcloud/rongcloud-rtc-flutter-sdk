@@ -23,12 +23,7 @@
 
 - (void)updateParam:(NSDictionary *)dic {
     int videoSize = [dic[@"videoSize"] intValue];
-    int cameraType = [dic[@"cameraType"] intValue];
-    BOOL turnOnCamera = [dic[@"turnOnCamera"] boolValue];
-    
     self.captureParam.videoSizePreset = [self genVideoSizePreset:videoSize];
-    self.captureParam.camera = [self genCameraType:cameraType];
-    self.captureParam.turnOnCamera = turnOnCamera;
 }
 
 - (RongRTCVideoSizePreset)genVideoSizePreset:(int)value {
@@ -60,18 +55,6 @@
             break;
     }
     return size;
-}
-
-- (RongRTCDeviceCamera)genCameraType:(int)value {
-    RongRTCDeviceCamera type = RongRTCCaptureDeviceFront;
-    if(1 == type) {
-        type = RongRTCCaptureDeviceFront;
-    }else if(2 == type) {
-        type = RongRTCCaptureDeviceBack;
-    }else {
-        //todo
-    }
-    return type;
 }
 
 - (RongRTCVideoCaptureParam *)captureParam {

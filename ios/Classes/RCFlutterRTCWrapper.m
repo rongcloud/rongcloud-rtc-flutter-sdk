@@ -301,7 +301,7 @@
         RongRTCAVInputStream *stream = streams[0];
         NSString *userId = stream.userId;
         if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyOthersPublishStreams arguments:@{@"userId":userId}];
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams arguments:@{@"userId":userId}];
         }
     }
 }
@@ -311,9 +311,36 @@
         RongRTCAVInputStream *stream = streams[0];
         NSString *userId = stream.userId;
         if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyOthersUnpublishStreams arguments:@{@"userId":userId}];
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserUnpublishStreams arguments:@{@"userId":userId}];
         }
         
+    }
+}
+
+- (void)stream:(RongRTCAVInputStream*)stream didAudioMute:(BOOL)mute {
+    if(stream) {
+        NSString *userId = stream.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserAudioEnabled arguments:@{@"userId":userId,@"enable":@(!mute)}];
+        }
+    }
+}
+
+- (void)stream:(RongRTCAVInputStream*)stream didVideoEnable:(BOOL)enable {
+    if(stream) {
+        NSString *userId = stream.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserVideoEnabled arguments:@{@"userId":userId,@"enable":@(enable)}];
+        }
+    }
+}
+
+- (void)didReportFirstKeyframe:(RongRTCAVInputStream *)stream {
+    if(stream) {
+        NSString *userId = stream.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserFirstKeyframe arguments:@{@"userId":userId}];
+        }
     }
 }
 
