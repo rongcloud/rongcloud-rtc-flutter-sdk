@@ -1,6 +1,8 @@
 package cn.rongcloud.rongcloud_rtc_plugin;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,9 +30,10 @@ public class RCFlutterRTCWrapper {
     private Context context;
     private RongRTCRoom rtcRoom;
     private RongRTCCapture capture;
+    private Handler mMainHandler = null;
 
     private RCFlutterRTCWrapper() {
-
+        mMainHandler = new Handler(Looper.getMainLooper());
     }
 
     private static class SingleHolder {
@@ -387,88 +390,129 @@ public class RCFlutterRTCWrapper {
 
         @Override
         public void onRemoteUserPublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserPublishStreamsCallBack,map);
-            }
-            String LOG_TAG = "onUserStreamPublished ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserPublishStreamsCallBack,map);
+                    }
+                    String LOG_TAG = "onUserStreamPublished ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+                }
+            });
         }
 
         @Override
         public void onRemoteUserUnPublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
-            }
-            String LOG_TAG = "onUserStreamUnpublished ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
+                    }
+                    String LOG_TAG = "onUserStreamUnpublished ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+
+                }
+            });
         }
 
         @Override
         public void onRemoteUserAudioStreamMute(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                map.put("enable",b);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserAudioEnabledCallBack,map);
-            }
-            String LOG_TAG = "onUserAudioEnabled ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            final boolean enable = b;
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        map.put("enable",enable);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserAudioEnabledCallBack,map);
+                    }
+                    String LOG_TAG = "onUserAudioEnabled ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+                }
+            });
+
         }
 
         @Override
         public void onRemoteUserVideoStreamEnabled(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                map.put("enable",b);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserVideoEnabledCallBack,map);
-            }
-            String LOG_TAG = "onUserVideoEnabled ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            final boolean enable = b;
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        map.put("enable",enable);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserVideoEnabledCallBack,map);
+                    }
+                    String LOG_TAG = "onUserVideoEnabled ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+
+                }
+            });
         }
 
         @Override
         public void onUserJoined(RongRTCRemoteUser rongRTCRemoteUser) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserJoinedCallBack,map);
-            }
-            String LOG_TAG = "onUserJoined ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserJoinedCallBack,map);
+                    }
+                    String LOG_TAG = "onUserJoined ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+                }
+            });
         }
 
         @Override
         public void onUserLeft(RongRTCRemoteUser rongRTCRemoteUser) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
-            }
-            String LOG_TAG = "onUserLeaved ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
+                    }
+                    String LOG_TAG = "onUserLeaved ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+                }
+            });
+
         }
 
         @Override
         public void onUserOffline(RongRTCRemoteUser rongRTCRemoteUser) {
-            String userId = rongRTCRemoteUser.getUserId();
-            if(userId != null) {
-                Map map = new HashMap();
-                map.put("userId",userId);
-                methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
-            }
-            String LOG_TAG = "onUserLeaved ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
+                    }
+                    String LOG_TAG = "onUserLeaved ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+                }
+            });
         }
 
         @Override
@@ -485,12 +529,19 @@ public class RCFlutterRTCWrapper {
                 // 和 iOS 同步，iOS 不会回调自己的第一关键帧的到达
                 return;
             }
-            Map map = new HashMap();
-            map.put("userId",userId);
-            methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserFirstKeyframeCallBack,map);
+            final String fUserId = userId;
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Map map = new HashMap();
+                    map.put("userId",fUserId);
+                    methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserFirstKeyframeCallBack,map);
 
-            String LOG_TAG = "onUserFirstKeyframeReceived ";
-            RCLog.i(LOG_TAG + "user:"+userId);
+                    String LOG_TAG = "onUserFirstKeyframeReceived ";
+                    RCLog.i(LOG_TAG + "user:"+fUserId);
+                }
+            });
+
         }
 
         @Override

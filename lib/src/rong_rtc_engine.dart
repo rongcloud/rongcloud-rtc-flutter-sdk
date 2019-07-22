@@ -129,15 +129,21 @@ class RongRTCEngine {
   /// 订阅远端用户的音视频流
   /// 
   /// [userId] 远端用户 id
-  static void subscribeAVStream(String userId,Function (int code) finished) {
-    _channel.invokeMethod(RCRTCMethodKey.SubscribeAVStream,userId);
+  static void subscribeAVStream(String userId,Function (int code) finished) async {
+    int code = await _channel.invokeMethod(RCRTCMethodKey.SubscribeAVStream,userId);
+    if(finished != null) {
+      finished(code);
+    }
   }
 
   /// 取消订阅远端用户的音视频流
   /// 
   /// [userId] 远端用户 id
-  static void unsubscribeAVStream(String userId,Function (int code) finished) {
-    _channel.invokeMethod(RCRTCMethodKey.UnsubscribeAVStream,userId);
+  static void unsubscribeAVStream(String userId,Function (int code) finished) async {
+    int code = await _channel.invokeMethod(RCRTCMethodKey.UnsubscribeAVStream,userId);
+    if(finished != null) {
+      finished(code);
+    }
   }
 
   /// 有远端用户加入的回调

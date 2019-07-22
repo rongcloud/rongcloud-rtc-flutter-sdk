@@ -122,6 +122,12 @@ class _CallPageState extends State<CallPage> {
 
     ///有用户离开
     RongRTCEngine.onUserLeaved = (String userId) {
+      //如果离开的用户在主视频区显示，那么将当前用户的视频和主视频切换之后，再将离开用户的视频关闭
+      if(userId == mainSession.userId) {
+        mainSession.userId = CurrentUserId;
+        _getVideoSession(CurrentUserId).userId = userId;
+        RongRTCEngine.exchangeVideo(mainSession.viewId, _getVideoSession(userId).viewId);
+      }
       ///取消已经订阅的音视频流
       RongRTCEngine.unsubscribeAVStream(userId,(int code) {
         setState(() {
@@ -161,22 +167,23 @@ class _CallPageState extends State<CallPage> {
   _subscribeAndRenderRemoteUser(String userId) {
     ///订阅远端用户的流
     RongRTCEngine.subscribeAVStream(userId,(int code) {
-      if(code == RongRTCCode.Success) {
-          /// 创建 platform view
-          Widget videoView = RongRTCEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
-            setState(() {
-              _addInfoString("render remote video for user:"+userId);
-              _getVideoSession(userId).viewId = viewId;
-              RongRTCEngine.renderRemoteVideo(userId, viewId);
+      setState(() {
+          if(code == RongRTCCode.Success) {
+            /// 创建 platform view
+            Widget videoView = RongRTCEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
+              setState(() {
+                _addInfoString("render remote video for user:"+userId);
+                _getVideoSession(userId).viewId = viewId;
+                RongRTCEngine.renderRemoteVideo(userId, viewId);
+              });
             });
-          }
-        );
-        ///相关数据加入 session 中
-        VideoSession session = new VideoSession();
-        session.userId = userId;
-        session.view = videoView;
-        _sessions.add(session);
-      } 
+            ///相关数据加入 session 中
+            VideoSession session = new VideoSession();
+            session.userId = userId;
+            session.view = videoView;
+            _sessions.add(session);
+        } 
+      });
     });
     
   }
@@ -207,11 +214,9 @@ class _CallPageState extends State<CallPage> {
   ///取消订阅并移除远端用户视频流
   _unsubscribeAndRemoveRemoteUser(String userId) {
     RongRTCEngine.unsubscribeAVStream(userId,(int code) {
-      if(code == RongRTCCode.Success) {
-        VideoSession session = _getVideoSession(userId);
-        if(session != null) {
-          _sessions.remove(session);
-        }
+      VideoSession session = _getVideoSession(userId);
+      if(session != null) {
+        _sessions.remove(session);
       }
     });
     

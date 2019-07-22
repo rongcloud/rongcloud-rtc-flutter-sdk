@@ -88,12 +88,14 @@
         NSString *roomId = (NSString *)arg;
         __weak typeof(self) ws = self;
         [[RongRTCEngine sharedEngine] joinRoom:roomId completion:^(RongRTCRoom * _Nullable room, RongRTCCode code) {
-            if(room) {
-                ws.rtcRoom = room;
-                ws.rtcRoom.delegate = ws;
-            }
-            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
-            result(@(code));
+            [ws runOnMainThread:^{
+                if(room) {
+                    ws.rtcRoom = room;
+                    ws.rtcRoom.delegate = ws;
+                }
+                [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
+                result(@(code));
+            }];
         }];
     }
 }
@@ -103,9 +105,12 @@
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         NSString *roomId = (NSString *)arg;
+        __weak typeof(self) ws = self;
         [[RongRTCEngine sharedEngine] leaveRoom:roomId completion:^(BOOL isSuccess, RongRTCCode code) {
-            result(@(code));
-            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
+            [ws runOnMainThread:^{
+                result(@(code));
+                [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
+            }];
         }];
     }
 }
@@ -118,9 +123,12 @@
         [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
+    __weak typeof(self) ws = self;
     [self.rtcRoom publishDefaultAVStream:^(BOOL isSuccess, RongRTCCode desc) {
-        result(@(desc));
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+        [ws runOnMainThread:^{
+            result(@(desc));
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+        }];
     }];
 }
 
@@ -132,9 +140,12 @@
         [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
+    __weak typeof(self) ws = self;
     [self.rtcRoom unpublishDefaultAVStream:^(BOOL isSuccess, RongRTCCode desc) {
-        result(@(desc));
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+        [ws runOnMainThread:^{
+            result(@(desc));
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+        }];
     }];
 }
 
@@ -253,9 +264,12 @@
         NSString *userId = (NSString *)arg;
         RongRTCRemoteUser *user = [self getRemoteUser:userId];
         if(user) {
+            __weak typeof(self) ws = self;
             [self.rtcRoom unsubscribeAVStream:user.remoteAVStreams completion:^(BOOL isSuccess, RongRTCCode desc) {
-                result(@(desc));
-                [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+                [ws runOnMainThread:^{
+                    result(@(desc));
+                    [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
+                }];
             }];
         }else {
             result(@(RongRTCCodeInvalidUserId));
@@ -331,79 +345,93 @@
 
 #pragma mark - RongRTCRoomDelegate
 -(void)didJoinUser:(RongRTCRemoteUser*)user {
-    NSString *userId = user.userId;
-    if(userId) {
-        [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserJoined arguments:@{@"userId":userId}];
-    }
-    NSString *LOG_TAG = @"onUserJoined";
-    [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
+    [self runOnMainThread:^{
+        NSString *userId = user.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserJoined arguments:@{@"userId":userId}];
+        }
+        NSString *LOG_TAG = @"onUserJoined";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
+    }];
 }
 
 -(void)didLeaveUser:(RongRTCRemoteUser*)user {
-    NSString *userId = user.userId;
-    if(userId) {
-        [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserLeaved arguments:@{@"userId":userId}];
-    }
-    NSString *LOG_TAG = @"onUserLeaved";
-    [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
+    [self runOnMainThread:^{
+        NSString *userId = user.userId;
+        if(userId) {
+            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserLeaved arguments:@{@"userId":userId}];
+        }
+        NSString *LOG_TAG = @"onUserLeaved";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
+    }];
 }
 
 - (void)didPublishStreams:(NSArray <RongRTCAVInputStream *>*)streams {
-    if(streams.count > 0) {
-        RongRTCAVInputStream *stream = streams[0];
-        NSString *userId = stream.userId;
-        if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams arguments:@{@"userId":userId}];
+    [self runOnMainThread:^{
+        if(streams.count > 0) {
+            RongRTCAVInputStream *stream = streams[0];
+            NSString *userId = stream.userId;
+            if(userId) {
+                [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams arguments:@{@"userId":userId}];
+            }
+            NSString *LOG_TAG = @"onUserStreamPublished";
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
         }
-        NSString *LOG_TAG = @"onUserStreamPublished";
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
-    }
+    }];
 }
 
 - (void)didUnpublishStreams:(NSArray<RongRTCAVInputStream *>*)streams {
-    if(streams.count > 0) {
-        RongRTCAVInputStream *stream = streams[0];
-        NSString *userId = stream.userId;
-        if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserUnpublishStreams arguments:@{@"userId":userId}];
+    [self runOnMainThread:^{
+        if(streams.count > 0) {
+            RongRTCAVInputStream *stream = streams[0];
+            NSString *userId = stream.userId;
+            if(userId) {
+                [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserUnpublishStreams arguments:@{@"userId":userId}];
+            }
+            NSString *LOG_TAG = @"onUserStreamUnpublished";
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
+            
         }
-        NSString *LOG_TAG = @"onUserStreamUnpublished";
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
-        
-    }
+    }];
 }
 
 - (void)stream:(RongRTCAVInputStream*)stream didAudioMute:(BOOL)mute {
-    if(stream) {
-        NSString *userId = stream.userId;
-        if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserAudioEnabled arguments:@{@"userId":userId,@"enable":@(!mute)}];
+    [self runOnMainThread:^{
+        if(stream) {
+            NSString *userId = stream.userId;
+            if(userId) {
+                [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserAudioEnabled arguments:@{@"userId":userId,@"enable":@(!mute)}];
+            }
+            NSString *LOG_TAG = @"onUserAudioEnabled";
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
         }
-        NSString *LOG_TAG = @"onUserAudioEnabled";
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
-    }
+    }];
 }
 
 - (void)stream:(RongRTCAVInputStream*)stream didVideoEnable:(BOOL)enable {
-    if(stream) {
-        NSString *userId = stream.userId;
-        if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserVideoEnabled arguments:@{@"userId":userId,@"enable":@(enable)}];
+    [self runOnMainThread:^{
+        if(stream) {
+            NSString *userId = stream.userId;
+            if(userId) {
+                [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserVideoEnabled arguments:@{@"userId":userId,@"enable":@(enable)}];
+            }
+            NSString *LOG_TAG = @"onUserVideoEnabled";
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
         }
-        NSString *LOG_TAG = @"onUserVideoEnabled";
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
-    }
+    }];
 }
 
 - (void)didReportFirstKeyframe:(RongRTCAVInputStream *)stream {
-    if(stream) {
-        NSString *userId = stream.userId;
-        if(userId) {
-            [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserFirstKeyframe arguments:@{@"userId":userId}];
+    [self runOnMainThread:^{    
+        if(stream) {
+            NSString *userId = stream.userId;
+            if(userId) {
+                [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserFirstKeyframe arguments:@{@"userId":userId}];
+            }
+            NSString *LOG_TAG = @"onUserFirstKeyframeReceived";
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
         }
-        NSString *LOG_TAG = @"onUserFirstKeyframeReceived";
-        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
-    }
+    }];
 }
 
 
@@ -431,6 +459,20 @@
         canceled = YES;
     }
     return canceled;
+}
+
+- (void)runOnMainThread:(void(^)(void))block {
+    if ([NSThread currentThread].isMainThread) {
+        if (block) {
+            block();
+        }
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (block) {
+                block();
+            }
+        });
+    }
 }
 
 #pragma mark - getter
