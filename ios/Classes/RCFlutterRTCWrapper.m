@@ -49,9 +49,9 @@
     }else if([RCFlutterRTCMethodKeyRemoveNativeView isEqualToString:call.method]) {
         [self removeNativeView:call.arguments];
     }else if([RCFlutterRTCMethodKeySubscribeAVStream isEqualToString:call.method]) {
-        [self subscribeAVStream:call.arguments];
+        [self subscribeAVStream:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyUnsubscribeAVStream isEqualToString:call.method]) {
-        [self unsubscribeAVStream:call.arguments];
+        [self unsubscribeAVStream:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyGetRemoteUsers isEqualToString:call.method]) {
         [self getRemoteUsers:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyMuteLocalAudio isEqualToString:call.method]) {
@@ -204,26 +204,38 @@
     }
 }
 
-- (void)subscribeAVStream:(id)arg {
+- (void)subscribeAVStream:(id)arg result:(FlutterResult)result{
     if([arg isKindOfClass:[NSString class]]) {
+        if(!self.rtcRoom) {
+            result(@(RongRTCCodeNotInRoom));
+            return;
+        }
         NSString *userId = (NSString *)arg;
         RongRTCRemoteUser *user = [self getRemoteUser:userId];
         if(user) {
             [self.rtcRoom subscribeAVStream:user.remoteAVStreams tinyStreams:nil completion:^(BOOL isSuccess, RongRTCCode desc) {
-                
+                result(@(desc));
             }];
+        }else {
+            result(@(RongRTCCodeInvalidUserId));
         }
     }
 }
 
-- (void)unsubscribeAVStream:(id)arg {
+- (void)unsubscribeAVStream:(id)arg result:(FlutterResult)result{
     if([arg isKindOfClass:[NSString class]]) {
+        if(!self.rtcRoom) {
+            result(@(RongRTCCodeNotInRoom));
+            return;
+        }
         NSString *userId = (NSString *)arg;
         RongRTCRemoteUser *user = [self getRemoteUser:userId];
         if(user) {
             [self.rtcRoom unsubscribeAVStream:user.remoteAVStreams completion:^(BOOL isSuccess, RongRTCCode desc) {
-                
+                result(@(desc));
             }];
+        }else {
+            result(@(RongRTCCodeInvalidUserId));
         }
     }
 }

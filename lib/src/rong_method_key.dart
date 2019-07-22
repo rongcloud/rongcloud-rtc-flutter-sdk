@@ -1,4 +1,4 @@
-class RCRtcMethodKey {
+class RCRTCMethodKey {
   static const String Config = "Config";
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String LeaveRTCRoom = "LeaveRTCRoom";
@@ -16,7 +16,7 @@ class RCRtcMethodKey {
   static const String ExchangeVideo = "ExchangeVideo";
 }
 
-class RCRtcMethodCallBackKey {
+class RCRTCMethodCallBackKey {
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String UserJoined = "UserJoinedCallBack";
   static const String UserLeaved = "UserLeavedCallBack";

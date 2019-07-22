@@ -43,10 +43,10 @@ class _CallPageState extends State<CallPage> {
   void dispose() {
     super.dispose();
     _sessions.forEach((session) {
-      RongRtcEngine.removeNativeView(session.viewId);
+      RongRtcEngine.removePlatformView(session.viewId);
     });
     _sessions.clear();
-    RongRtcEngine.leaveRTCRoom(this.roomId);
+    RongRtcEngine.leaveRTCRoom(this.roomId,null);
   }
 
   @override
@@ -71,19 +71,21 @@ class _CallPageState extends State<CallPage> {
   }
 
   _onJoinRTCRoom() async {
-    int code = await RongRtcEngine.joinRTCRoom(this.roomId);
-    if(code == 0) {
-      screenWidth = MediaQuery.of(context).size.width;
-      screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
+    RongRtcEngine.joinRTCRoom(this.roomId,(int code) {
+      if(code == 0) {
+        screenWidth = MediaQuery.of(context).size.width;
+        screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
 
-      _renderLocalUser();
+        _renderLocalUser();
+        _renderExistedRemoterUsersIfNeed();
 
-      _renderExistedRemoterUsersIfNeed();
-    }
-
-    setState(() {
-      _addInfoString("join room "+this.roomId);
+        setState(() {
+          _addInfoString("join room "+this.roomId);
+        });
+      }
     });
+    
+
   }
 
   _renderExistedRemoterUsersIfNeed() async {
@@ -103,15 +105,16 @@ class _CallPageState extends State<CallPage> {
     };
 
     RongRtcEngine.onUserLeaved = (String userId) {
-      RongRtcEngine.unsubscribeAVStream(userId);
-      setState(() {
-        _addInfoString("user did leave:"+userId);
-        _addInfoString("unsubscribe stream of user:"+userId);
-        _unsubscribeAndRemoveRemoteUser(userId);
+      RongRtcEngine.unsubscribeAVStream(userId,(int code) {
+        setState(() {
+          _addInfoString("user did leave:"+userId);
+          _addInfoString("unsubscribe stream of user:"+userId);
+          _unsubscribeAndRemoveRemoteUser(userId);
+        });
       });
     };
 
-    RongRtcEngine.onRemoteUserPublishStreams = (String userId) {
+    RongRtcEngine.onRemoteUserStreamPublished = (String userId) {
       _subscribeAndRenderRemoteUser(userId);
       setState(() {
         _addInfoString("user did publish stream:"+userId);
@@ -119,7 +122,7 @@ class _CallPageState extends State<CallPage> {
       });
     };
 
-    RongRtcEngine.onRemoteUserUnpublishStreams = (String userId) {
+    RongRtcEngine.onRemoteUserStreamUnpublished = (String userId) {
       setState(() {
         _addInfoString("user did unpublish stream:"+userId);
       });
@@ -134,19 +137,23 @@ class _CallPageState extends State<CallPage> {
   }
 
   _subscribeAndRenderRemoteUser(String userId) {
-    RongRtcEngine.subscribeAVStream(userId);
-    Widget videoView =  RongRtcEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
-        setState(() {
-          _addInfoString("render remote video for user:"+userId);
-          _getVideoSession(userId).viewId = viewId;
-          RongRtcEngine.renderRemoteVideo(viewId, userId);
-        });
-      }
-    );
-    VideoSession session = new VideoSession();
-    session.userId = userId;
-    session.view = videoView;
-    _sessions.add(session);
+    RongRtcEngine.subscribeAVStream(userId,(int code) {
+      if(code == RongRTCCode.Success) {
+          Widget videoView =  RongRtcEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
+            setState(() {
+              _addInfoString("render remote video for user:"+userId);
+              _getVideoSession(userId).viewId = viewId;
+              RongRtcEngine.renderRemoteVideo(userId, viewId);
+            });
+          }
+        );
+        VideoSession session = new VideoSession();
+        session.userId = userId;
+        session.view = videoView;
+        _sessions.add(session);
+      } 
+    });
+    
   }
 
   _renderLocalUser() {
@@ -155,7 +162,11 @@ class _CallPageState extends State<CallPage> {
           mainSession.viewId = viewId;
           _addInfoString("render local video for user:"+CurrentUserId);
           RongRtcEngine.renderLocalVideo(viewId);
-          RongRtcEngine.publishAVStream();
+          RongRtcEngine.publishAVStream((int code) {
+            setState(() {
+              _addInfoString("local user publish av stream:"+code.toString());
+            });
+          });
         });
       }
     );
@@ -168,11 +179,15 @@ class _CallPageState extends State<CallPage> {
   }
 
   _unsubscribeAndRemoveRemoteUser(String userId) {
-    RongRtcEngine.unsubscribeAVStream(userId);
-    VideoSession session = _getVideoSession(userId);
-    if(session != null) {
-      _sessions.remove(session);
-    }
+    RongRtcEngine.unsubscribeAVStream(userId,(int code) {
+      if(code == RongRTCCode.Success) {
+        VideoSession session = _getVideoSession(userId);
+        if(session != null) {
+          _sessions.remove(session);
+        }
+      }
+    });
+    
   }
 
   VideoSession _getVideoSession(String userId) {
