@@ -80,7 +80,7 @@ public class RCFlutterRTCWrapper {
         }else if(call.method.equals(RCFlutterRTCMethodKey.MuteRemoteAudio)) {
             muteRemoteAudio(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.SwitchCamera)) {
-            switchCamera(call.arguments);
+            switchCamera();
         }else if(call.method.equals(RCFlutterRTCMethodKey.ExchangeVideo)) {
             exchangeVideo(call.arguments);
         }
@@ -91,6 +91,8 @@ public class RCFlutterRTCWrapper {
 
 
     private void config(Object arg) {
+        final String LOG_TAG = "config " ;
+        RCLog.i(LOG_TAG+" start");
         if(arg instanceof Map) {
             Map map = (Map)arg;
             RCFlutterRTCConfig.getInstance().updateParam(map);
@@ -98,8 +100,8 @@ public class RCFlutterRTCWrapper {
     }
 
     private void joinRTCRoom(Object arg, final MethodChannel.Result result) {
-        RCLog.i("joinRTCRoom start");
-        RCLog.i("param "+arg.toString());
+        final String LOG_TAG = "joinRTCRoom " ;
+        RCLog.i(LOG_TAG+" start param:"+arg.toString());
         if(arg instanceof String) {
             String roomId = String.valueOf(arg);
             RongRTCEngine.getInstance().joinRoom(roomId, new JoinRoomUICallBack() {
@@ -107,13 +109,13 @@ public class RCFlutterRTCWrapper {
                 protected void onUiSuccess(RongRTCRoom rongRTCRoom) {
                     rtcRoom = rongRTCRoom;
                     rtcRoom.registerEventsListener(new RTCEventsListener());
-                    RCLog.i("joinRTCRoom success");
+                    RCLog.i(LOG_TAG+" success");
                     result.success(0);
                 }
 
                 @Override
                 protected void onUiFailed(RTCErrorCode rtcErrorCode) {
-                    RCLog.e("joinRTCRoom error "+ rtcErrorCode.getValue());
+                    RCLog.e(LOG_TAG+"joinRTCRoom error:"+ rtcErrorCode.getValue());
                     result.success(rtcErrorCode.getValue());
                 }
             });
@@ -121,20 +123,20 @@ public class RCFlutterRTCWrapper {
     }
 
     private void leaveRTCRoom(Object arg, final MethodChannel.Result result) {
-        RCLog.i("leaveRTCRoom start");
-        RCLog.i("param "+arg.toString());
+        final String LOG_TAG = "leaveRTCRoom " ;
+        RCLog.i(LOG_TAG+" start param:"+arg.toString());
         if(arg instanceof String) {
             String roomId = String.valueOf(arg);
             RongRTCEngine.getInstance().quitRoom(roomId, new RongRTCResultUICallBack() {
                 @Override
                 public void onUiSuccess() {
-                    RCLog.i("leaveRTCRoom success ");
+                    RCLog.i(LOG_TAG+" success ");
                     result.success(0);
                 }
 
                 @Override
                 public void onUiFailed(RTCErrorCode rtcErrorCode) {
-                    RCLog.e("leaveRTCRoom error "+ rtcErrorCode.getValue());
+                    RCLog.e(LOG_TAG+" error:"+ rtcErrorCode.getValue());
                     result.success(rtcErrorCode.getValue());
                 }
             });
@@ -142,53 +144,54 @@ public class RCFlutterRTCWrapper {
     }
 
     private void publishAVStream(final MethodChannel.Result result) {
-        RCLog.i("publishAVStream start");
+        final String LOG_TAG = "publishAVStream " ;
+        RCLog.i(LOG_TAG+" start");
         if(this.rtcRoom == null || this.rtcRoom.getLocalUser() == null) {
-            RCLog.e("publishAVStream error " + RTCErrorCode.RongRTCCodeNotInRoom.getValue());
+            RCLog.e(LOG_TAG+" error:" + RTCErrorCode.RongRTCCodeNotInRoom.getValue());
             result.success(RTCErrorCode.RongRTCCodeNotInRoom.getValue());
             return;
         }
         this.rtcRoom.getLocalUser().publishDefaultAVStream(new RongRTCResultUICallBack() {
             @Override
             public void onUiSuccess() {
-                RCLog.i("publishAVStream success");
+                RCLog.i(LOG_TAG+" success");
                 result.success(0);
             }
 
             @Override
             public void onUiFailed(RTCErrorCode rtcErrorCode) {
-                RCLog.e("publishAVStream error "+ rtcErrorCode.getValue());
+                RCLog.e(LOG_TAG+" error:"+ rtcErrorCode.getValue());
                 result.success(rtcErrorCode.getValue());
             }
         });
     }
 
     private void unpublishAVStream(final MethodChannel.Result result) {
-        RCLog.i("unpublishAVStream start");
+        final String LOG_TAG = "unpublishAVStream " ;
+        RCLog.i(LOG_TAG+" start");
         if(this.rtcRoom == null || this.rtcRoom.getLocalUser() == null) {
-            RCLog.e("unpublishAVStream error " + RTCErrorCode.RongRTCCodeNotInRoom.getValue());
+            RCLog.e(LOG_TAG+" error " + RTCErrorCode.RongRTCCodeNotInRoom.getValue());
             result.success(RTCErrorCode.RongRTCCodeNotInRoom.getValue());
             return;
         }
         this.rtcRoom.getLocalUser().unPublishDefaultAVStream(new RongRTCResultUICallBack() {
             @Override
             public void onUiSuccess() {
-                RCLog.i("unpublishAVStream success");
+                RCLog.i(LOG_TAG+" success ");
                 result.success(0);
             }
 
             @Override
             public void onUiFailed(RTCErrorCode rtcErrorCode) {
-                RCLog.e("unpublishAVStream error "+ rtcErrorCode.getValue());
+                RCLog.e(LOG_TAG+" error:"+ rtcErrorCode.getValue());
                 result.success(rtcErrorCode.getValue());
             }
         });
     }
 
     private void renderLocalVideo(Object arg) {
-        String LOG_TAG = "renderLocalVideo " ;
-        RCLog.i(LOG_TAG + "start");
-        RCLog.i("param "+arg.toString());
+        final String LOG_TAG = "renderLocalVideo " ;
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof Map) {
             Map param = (Map)arg;
             int viewId = (Integer) param.get("viewId");
@@ -203,9 +206,8 @@ public class RCFlutterRTCWrapper {
     }
 
     private void renderRemoteVideo(Object arg) {
-        String LOG_TAG = "renderRemoteVideo " ;
-        RCLog.i(LOG_TAG + "start");
-        RCLog.i(LOG_TAG +"param "+arg.toString());
+        final String LOG_TAG = "renderRemoteVideo " ;
+        RCLog.i(LOG_TAG + "start param "+arg.toString());
 
         if(arg instanceof Map) {
             if(this.rtcRoom == null || this.rtcRoom.getRemoteUsers() == null) {
@@ -217,7 +219,6 @@ public class RCFlutterRTCWrapper {
             String userId = (String)param.get("userId");
             RongRTCVideoView view = RCFlutterRTCViewFactory.getInstance().getRenderVideoView(viewId);
             if(view != null) {
-
                 for(String uId : this.rtcRoom.getRemoteUsers().keySet()) {
                     if(uId.equals(userId)) {
                         renderViewForRemoteUser(view,this.rtcRoom.getRemoteUser(uId));
@@ -245,7 +246,7 @@ public class RCFlutterRTCWrapper {
 
     private void removePlatformView(Object arg) {
         String LOG_TAG = "removePlatformView " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof Map) {
             Map param = (Map)arg;
             int viewId = (Integer) param.get("viewId");
@@ -254,7 +255,7 @@ public class RCFlutterRTCWrapper {
     }
 
     private void subscribeAVStream(Object arg, final MethodChannel.Result result) {
-        String LOG_TAG = "subscribeAVStream " ;
+        final String LOG_TAG = "subscribeAVStream " ;
         RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
@@ -272,13 +273,13 @@ public class RCFlutterRTCWrapper {
             this.rtcRoom.subscribeAvStream(user.getRemoteAVStreams(), new RongRTCResultUICallBack() {
                 @Override
                 public void onUiSuccess() {
-                    RCLog.i("subscribeAVStream success ");
+                    RCLog.i(LOG_TAG + " success ");
                     result.success(0);
                 }
 
                 @Override
                 public void onUiFailed(RTCErrorCode rtcErrorCode) {
-                    RCLog.e("subscribeAVStream error "+ rtcErrorCode.getValue());
+                    RCLog.e(LOG_TAG + " error:"+ rtcErrorCode.getValue());
                     result.success(rtcErrorCode.getValue());
                 }
             });
@@ -286,7 +287,7 @@ public class RCFlutterRTCWrapper {
     }
 
     private void unsubscribeAVStream(Object arg, final MethodChannel.Result result) {
-        String LOG_TAG = "unsubscribeAVStream " ;
+        final String LOG_TAG = "unsubscribeAVStream " ;
         RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
@@ -304,13 +305,13 @@ public class RCFlutterRTCWrapper {
             this.rtcRoom.unSubscribeAVStream(user.getRemoteAVStreams(), new RongRTCResultUICallBack() {
                 @Override
                 public void onUiSuccess() {
-                    RCLog.i("unsubscribeAVStream success ");
+                    RCLog.i(LOG_TAG + " success ");
                     result.success(0);
                 }
 
                 @Override
                 public void onUiFailed(RTCErrorCode rtcErrorCode) {
-                    RCLog.e("unsubscribeAVStream error "+ rtcErrorCode.getValue());
+                    RCLog.e(LOG_TAG + " error :"+ rtcErrorCode.getValue());
                     result.success(rtcErrorCode.getValue());
                 }
             });
@@ -318,7 +319,7 @@ public class RCFlutterRTCWrapper {
     }
 
     private void getRemoteUsers(Object arg, MethodChannel.Result result) {
-        String LOG_TAG = "getRemoteUsers " ;
+        final String LOG_TAG = "getRemoteUsers " ;
         RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String roomId = String.valueOf(arg);
@@ -366,9 +367,9 @@ public class RCFlutterRTCWrapper {
         }
     }
 
-    private void switchCamera(Object arg) {
+    private void switchCamera() {
         String LOG_TAG = "switchCamera " ;
-        RCLog.i(LOG_TAG + "start param:"+arg.toString());
+        RCLog.i(LOG_TAG + "start");
         if(this.capture == null) {
             return;
         }
