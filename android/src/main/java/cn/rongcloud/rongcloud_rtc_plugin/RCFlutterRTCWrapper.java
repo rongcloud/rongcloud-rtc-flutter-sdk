@@ -72,9 +72,9 @@ public class RCFlutterRTCWrapper {
         }else if(call.method.equals(RCFlutterRTCMethodKey.RemoveNativeView)) {
             removeNativeView(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.SubscribeAVStream)) {
-            subscribeAVStream(call.arguments);
+            subscribeAVStream(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.UnsubscribeAVStream)) {
-            unsubscribeAVStream(call.arguments);
+            unsubscribeAVStream(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.GetRemoteUsers)) {
             getRemoteUsers(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.MuteLocalAudio)) {
@@ -255,13 +255,19 @@ public class RCFlutterRTCWrapper {
         }
     }
 
-    private void subscribeAVStream(Object arg) {
+    private void subscribeAVStream(Object arg, final MethodChannel.Result result) {
         String LOG_TAG = "subscribeAVStream " ;
         RCLog.i(LOG_TAG + "start");
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
-            if(this.rtcRoom == null || this.rtcRoom.getRemoteUser(userId) == null) {
-                RCLog.e(LOG_TAG+"not in room or remote user doesn't exist :"+userId);
+            if (this.rtcRoom == null) {
+                RCLog.e(LOG_TAG + "user not in room :" + userId);
+                result.success(RTCErrorCode.RongRTCCodeNotInRoom.getValue());
+                return;
+            }
+            if(this.rtcRoom.getRemoteUser(userId) == null) {
+                RCLog.e(LOG_TAG + "user doesn't exist :" + userId);
+                result.success(RTCErrorCode.RongRTCCodeInvalidUserId.getValue());
                 return;
             }
             RongRTCRemoteUser user = this.rtcRoom.getRemoteUser(userId);
@@ -269,23 +275,31 @@ public class RCFlutterRTCWrapper {
                 @Override
                 public void onUiSuccess() {
                     RCLog.i("subscribeAVStream success ");
+                    result.success(0);
                 }
 
                 @Override
                 public void onUiFailed(RTCErrorCode rtcErrorCode) {
                     RCLog.e("subscribeAVStream error "+ rtcErrorCode.getValue());
+                    result.success(rtcErrorCode.getValue());
                 }
             });
         }
     }
 
-    private void unsubscribeAVStream(Object arg) {
+    private void unsubscribeAVStream(Object arg, final MethodChannel.Result result) {
         String LOG_TAG = "unsubscribeAVStream " ;
         RCLog.i(LOG_TAG + "start");
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
-            if (this.rtcRoom == null || this.rtcRoom.getRemoteUser(userId) == null) {
-                RCLog.e(LOG_TAG + "not in room or remote user doesn't exist :" + userId);
+            if (this.rtcRoom == null) {
+                RCLog.e(LOG_TAG + "user not in room :" + userId);
+                result.success(RTCErrorCode.RongRTCCodeNotInRoom.getValue());
+                return;
+            }
+            if(this.rtcRoom.getRemoteUser(userId) == null) {
+                RCLog.e(LOG_TAG + "remote user doesn't exist :" + userId);
+                result.success(RTCErrorCode.RongRTCCodeInvalidUserId.getValue());
                 return;
             }
             RongRTCRemoteUser user = this.rtcRoom.getRemoteUser(userId);
@@ -293,12 +307,13 @@ public class RCFlutterRTCWrapper {
                 @Override
                 public void onUiSuccess() {
                     RCLog.i("unsubscribeAVStream success ");
-
+                    result.success(0);
                 }
 
                 @Override
                 public void onUiFailed(RTCErrorCode rtcErrorCode) {
                     RCLog.e("unsubscribeAVStream error "+ rtcErrorCode.getValue());
+                    result.success(rtcErrorCode.getValue());
                 }
             });
         }

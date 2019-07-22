@@ -4,13 +4,12 @@ import android.util.Log;
 
 public class RCLog {
 
-    private static String TAG = "[Rong Android]";
-
+    private static String TAG = "[RC-Flutter-RTC] Android ";
     public static void i(String msg) {
         Log.i(TAG,msg);
     }
 
     public static void e(String msg) {
-        Log.e(TAG,msg);
+        Log.e(TAG+"error ",msg);
     }
 }
