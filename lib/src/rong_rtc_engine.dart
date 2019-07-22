@@ -104,7 +104,7 @@ class RongRtcEngine {
       return;
     }
     Map map = {"viewId":viewId};
-    _channel.invokeMethod(RCRTCMethodKey.RemoveNativeView,map);
+    _channel.invokeMethod(RCRTCMethodKey.RemovePlatformView,map);
   }
 
   /// 当前用户发布音视频流
@@ -147,19 +147,19 @@ class RongRtcEngine {
   static void Function(String userId) onUserLeaved;
 
   /// 有远端用户发布音视频的回调
-  static void Function(String userId) onRemoteUserStreamPublished;
+  static void Function(String userId) onUserStreamPublished;
 
   /// 有远端用户取消发布音视频流的回调
-  static void Function(String userId) onRemoteUserStreamUnpublished;
+  static void Function(String userId) onUserStreamUnpublished;
 
   /// 远端用户的视频是否可用的回调，如对方关闭了摄像头
-  static void Function(String userId,bool enable) onRemoteUserVideoEnabled;
+  static void Function(String userId,bool enable) onUserVideoEnabled;
 
   /// 远端用户的音频是否可用的回调，如对方关闭了麦克风
-  static void Function(String userId,bool enable) onRemoteUserAudioEnabled;
+  static void Function(String userId,bool enable) onUserAudioEnabled;
 
   /// 收到远端用户第一关键帧的回调
-  static void Function(String userId) onRemoteUserFirstKeyframeReceived;
+  static void Function(String userId) onUserFirstKeyframeReceived;
 
   /// 创建 iOS/Android 的 platform view
   static Widget createPlatformView(String userId,int width,int height,Function(int viewId) created) {
@@ -214,28 +214,28 @@ class RongRtcEngine {
           }
           break;
         case RCRTCMethodCallBackKey.RemoteUserPublishStreams:
-          if(onRemoteUserStreamPublished != null) {
-            onRemoteUserStreamPublished(arg["userId"]);
+          if(onUserStreamPublished != null) {
+            onUserStreamPublished(arg["userId"]);
           }
           break;
         case RCRTCMethodCallBackKey.RemoteUserUnpublishStreams:
-          if(onRemoteUserStreamUnpublished != null) {
-            onRemoteUserStreamUnpublished(arg["userId"]);
+          if(onUserStreamUnpublished != null) {
+            onUserStreamUnpublished(arg["userId"]);
           }
           break;
         case RCRTCMethodCallBackKey.RemoteUserVideoEnabled:
-          if(onRemoteUserVideoEnabled != null) {
-            onRemoteUserVideoEnabled(arg["userId"],arg["enable"]);
+          if(onUserVideoEnabled != null) {
+            onUserVideoEnabled(arg["userId"],arg["enable"]);
           }
           break;
         case RCRTCMethodCallBackKey.RemoteUserAudioEnabled:
-          if(onRemoteUserAudioEnabled != null) {
-            onRemoteUserVideoEnabled(arg["userId"],arg["enable"]);
+          if(onUserAudioEnabled != null) {
+            onUserVideoEnabled(arg["userId"],arg["enable"]);
           }
           break;
         case RCRTCMethodCallBackKey.RemoteUserFirstKeyframe:
-          if(onRemoteUserFirstKeyframeReceived != null) {
-            onRemoteUserFirstKeyframeReceived(arg["userId"]);
+          if(onUserFirstKeyframeReceived != null) {
+            onUserFirstKeyframeReceived(arg["userId"]);
           }
           break;
       }

@@ -11,7 +11,7 @@ public class RCFlutterRTCMethodKey {
     static String SubscribeAVStream = "SubscribeAVStream";
     static String UnsubscribeAVStream = "UnsubscribeAVStream";
     static String GetRemoteUsers = "GetRemoteUsers";
-    static String RemoveNativeView = "RemoveNativeView";
+    static String RemovePlatformView = "RemovePlatformView";
     static String MuteLocalAudio = "MuteLocalAudio";
     static String MuteRemoteAudio = "MuteRemoteAudio";
     static String SwitchCamera = "SwitchCamera";

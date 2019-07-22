@@ -9,7 +9,7 @@ class RCRTCMethodKey {
   static const String SubscribeAVStream = "SubscribeAVStream";
   static const String UnsubscribeAVStream = "UnsubscribeAVStream";
   static const String GetRemoteUsers = "GetRemoteUsers";
-  static const String RemoveNativeView = "RemoveNativeView";
+  static const String RemovePlatformView = "RemovePlatformView";
   static const String MuteLocalAudio = "MuteLocalAudio";
   static const String MuteRemoteAudio = "MuteRemoteAudio";
   static const String SwitchCamera = "SwitchCamera";

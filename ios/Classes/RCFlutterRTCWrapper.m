@@ -11,6 +11,7 @@
 #import "RCFlutterRTCConfig.h"
 #import <RongIMLib/RongIMLib.h>
 #import <RongRTCLib/RongRTCLib.h>
+#import "RCRTCFlutterLog.h"
 
 @interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate>
 @property (nonatomic, strong) FlutterMethodChannel *channel;
@@ -46,8 +47,8 @@
         [self renderLocalVideoView:call.arguments];
     }else if([RCFlutterRTCMethodKeyRenderRemoteVideo isEqualToString:call.method]) {
         [self renderRemoteVideoView:call.arguments];
-    }else if([RCFlutterRTCMethodKeyRemoveNativeView isEqualToString:call.method]) {
-        [self removeNativeView:call.arguments];
+    }else if([RCFlutterRTCMethodKeyRemovePlatformView isEqualToString:call.method]) {
+        [self removePlatformView:call.arguments];
     }else if([RCFlutterRTCMethodKeySubscribeAVStream isEqualToString:call.method]) {
         [self subscribeAVStream:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyUnsubscribeAVStream isEqualToString:call.method]) {
@@ -66,13 +67,14 @@
         [self exchangeVideo:call.arguments];
     }
     else {
-        NSLog(@"Error: iOS can't response methodname %@",call.method);
+        [RCRTCLog e:[NSString stringWithFormat:@" iOS can't response method : %@",call.method]];
         result(FlutterMethodNotImplemented);
     }
 }
 
 - (void)config:(id)arg {
-    NSLog(@"iOS config %@",arg);
+    NSString *LOG_TAG = @"config";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         [[RCFlutterRTCConfig sharedConfig] updateParam:dic];
@@ -80,7 +82,8 @@
 }
 
 - (void)joinRTCRoom:(id)arg result:(FlutterResult)result {
-    NSLog(@"iOS joinRTCRoom start");
+    NSString *LOG_TAG = @"joinRTCRoom";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         NSString *roomId = (NSString *)arg;
         __weak typeof(self) ws = self;
@@ -89,47 +92,55 @@
                 ws.rtcRoom = room;
                 ws.rtcRoom.delegate = ws;
             }
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
             result(@(code));
-            NSLog(@"iOS joinRTCRoom end %@",@(code));
         }];
     }
 }
 
 - (void)leaveRTCRoom:(id)arg result:(FlutterResult)result {
-    NSLog(@"iOS leaveRTCRoom start");
+    NSString *LOG_TAG = @"leaveRTCRoom";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         NSString *roomId = (NSString *)arg;
         [[RongRTCEngine sharedEngine] leaveRoom:roomId completion:^(BOOL isSuccess, RongRTCCode code) {
             result(@(code));
-            NSLog(@"iOS leaveRTCRoom end %@",@(code));
+            [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(code)]];
         }];
     }
 }
 
 - (void)publishAVStream:(FlutterResult )result {
-    NSLog(@"%s",__func__);
+    NSString *LOG_TAG = @"publishAVStream";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start",LOG_TAG]];
     if(!self.rtcRoom) {
         result(@(RongRTCCodeNotInRoom));
+        [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
     [self.rtcRoom publishDefaultAVStream:^(BOOL isSuccess, RongRTCCode desc) {
         result(@(desc));
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
     }];
 }
 
 - (void)unpublishAVStream:(FlutterResult )result {
-    NSLog(@"%s",__func__);
+    NSString *LOG_TAG = @"unpublishAVStream";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start",LOG_TAG]];
     if(!self.rtcRoom) {
         result(@(RongRTCCodeNotInRoom));
+        [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
     [self.rtcRoom unpublishDefaultAVStream:^(BOOL isSuccess, RongRTCCode desc) {
         result(@(desc));
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
     }];
 }
 
 - (void)renderLocalVideoView:(id)arg {
-    NSLog(@"%s",__func__);
+    NSString *LOG_TAG = @"renderLocalVideoView";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
@@ -150,7 +161,8 @@
 }
 
 - (void)renderRemoteVideoView:(id)arg  {
-    NSLog(@"%s",__func__);
+    NSString *LOG_TAG = @"renderRemoteVideoView";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         
         NSDictionary *dic = (NSDictionary *)arg;
@@ -196,6 +208,8 @@
 }
 
 - (void)exchangeVideo:(id)arg {
+    NSString *LOG_TAG = @"exchangeVideo";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId1 = [dic[@"viewId1"] intValue];
@@ -205,9 +219,12 @@
 }
 
 - (void)subscribeAVStream:(id)arg result:(FlutterResult)result{
+    NSString *LOG_TAG = @"subscribeAVStream";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         if(!self.rtcRoom) {
             result(@(RongRTCCodeNotInRoom));
+            [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
             return;
         }
         NSString *userId = (NSString *)arg;
@@ -215,17 +232,22 @@
         if(user) {
             [self.rtcRoom subscribeAVStream:user.remoteAVStreams tinyStreams:nil completion:^(BOOL isSuccess, RongRTCCode desc) {
                 result(@(desc));
+                [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
             }];
         }else {
             result(@(RongRTCCodeInvalidUserId));
+            [RCRTCLog e:[NSString stringWithFormat:@"%@ user not in room:%@",LOG_TAG,userId]];
         }
     }
 }
 
 - (void)unsubscribeAVStream:(id)arg result:(FlutterResult)result{
+    NSString *LOG_TAG = @"unsubscribeAVStream";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         if(!self.rtcRoom) {
             result(@(RongRTCCodeNotInRoom));
+            [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
             return;
         }
         NSString *userId = (NSString *)arg;
@@ -233,19 +255,24 @@
         if(user) {
             [self.rtcRoom unsubscribeAVStream:user.remoteAVStreams completion:^(BOOL isSuccess, RongRTCCode desc) {
                 result(@(desc));
+                [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
             }];
         }else {
             result(@(RongRTCCodeInvalidUserId));
+            [RCRTCLog e:[NSString stringWithFormat:@"%@ user not in room:%@",LOG_TAG,userId]];
         }
     }
 }
 
 - (void)getRemoteUsers:(id)arg result:(FlutterResult)result{
+    NSString *LOG_TAG = @"getRemoteUsers";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         NSString *roomId = (NSString *)arg;
         NSMutableArray<NSString *> *userIds = [NSMutableArray new];
         if(![self.rtcRoom.roomId isEqualToString:roomId]) {
             result(userIds);
+            [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
             return;
         }
         for(RongRTCRemoteUser *u in self.rtcRoom.remoteUsers) {
@@ -255,7 +282,9 @@
     }
 }
 
-- (void)removeNativeView:(id)arg {
+- (void)removePlatformView:(id)arg {
+    NSString *LOG_TAG = @"removePlatformView";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
@@ -265,6 +294,8 @@
 
 
 - (void)muteLocalAudio:(id)arg {
+    NSString *LOG_TAG = @"muteLocalAudio";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         BOOL muted = [dic[@"muted"] boolValue];
@@ -273,6 +304,8 @@
 }
 
 - (void)muteRemoteAudio:(id)arg {
+    NSString *LOG_TAG = @"muteRemoteAudio";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         BOOL muted = [dic[@"muted"] boolValue];
@@ -282,6 +315,7 @@
                 for(RongRTCAVInputStream *stream in user.remoteAVStreams) {
                     if(RTCMediaTypeAudio == stream.streamType) {
                         stream.disable = muted;
+                        return;
                     }
                 }
             }
@@ -290,6 +324,8 @@
 }
 
 - (void)switchCamera:(id)arg {
+    NSString *LOG_TAG = @"switchCamera";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     [self.capturer switchCamera];
 }
 
@@ -299,6 +335,8 @@
     if(userId) {
         [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserJoined arguments:@{@"userId":userId}];
     }
+    NSString *LOG_TAG = @"onUserJoined";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
 }
 
 -(void)didLeaveUser:(RongRTCRemoteUser*)user {
@@ -306,6 +344,8 @@
     if(userId) {
         [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyUserLeaved arguments:@{@"userId":userId}];
     }
+    NSString *LOG_TAG = @"onUserLeaved";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
 }
 
 - (void)didPublishStreams:(NSArray <RongRTCAVInputStream *>*)streams {
@@ -315,6 +355,8 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams arguments:@{@"userId":userId}];
         }
+        NSString *LOG_TAG = @"onUserLeaved";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
     }
 }
 

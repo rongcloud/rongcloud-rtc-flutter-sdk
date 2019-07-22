@@ -69,8 +69,8 @@ public class RCFlutterRTCWrapper {
             renderLocalVideo(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.RenderRemoteVideo)) {
             renderRemoteVideo(call.arguments);
-        }else if(call.method.equals(RCFlutterRTCMethodKey.RemoveNativeView)) {
-            removeNativeView(call.arguments);
+        }else if(call.method.equals(RCFlutterRTCMethodKey.RemovePlatformView)) {
+            removePlatformView(call.arguments);
         }else if(call.method.equals(RCFlutterRTCMethodKey.SubscribeAVStream)) {
             subscribeAVStream(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.UnsubscribeAVStream)) {
@@ -245,8 +245,8 @@ public class RCFlutterRTCWrapper {
         }
     }
 
-    private void removeNativeView(Object arg) {
-        String LOG_TAG = "removeNativeView " ;
+    private void removePlatformView(Object arg) {
+        String LOG_TAG = "removePlatformView " ;
         RCLog.i(LOG_TAG + "start");
         if(arg instanceof Map) {
             Map param = (Map)arg;
