@@ -355,7 +355,7 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserPublishStreams arguments:@{@"userId":userId}];
         }
-        NSString *LOG_TAG = @"onUserLeaved";
+        NSString *LOG_TAG = @"onUserStreamPublished";
         [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
     }
 }
@@ -367,6 +367,8 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserUnpublishStreams arguments:@{@"userId":userId}];
         }
+        NSString *LOG_TAG = @"onUserStreamUnpublished";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
         
     }
 }
@@ -377,6 +379,8 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserAudioEnabled arguments:@{@"userId":userId,@"enable":@(!mute)}];
         }
+        NSString *LOG_TAG = @"onUserAudioEnabled";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
     }
 }
 
@@ -386,6 +390,8 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserVideoEnabled arguments:@{@"userId":userId,@"enable":@(enable)}];
         }
+        NSString *LOG_TAG = @"onUserVideoEnabled";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
     }
 }
 
@@ -395,6 +401,8 @@
         if(userId) {
             [self.channel invokeMethod:RCFlutterRTCMethodCallBackKeyRemoteUserFirstKeyframe arguments:@{@"userId":userId}];
         }
+        NSString *LOG_TAG = @"onUserFirstKeyframeReceived";
+        [RCRTCLog i:[NSString stringWithFormat:@"%@ user:%@",LOG_TAG,userId]];
     }
 }
 

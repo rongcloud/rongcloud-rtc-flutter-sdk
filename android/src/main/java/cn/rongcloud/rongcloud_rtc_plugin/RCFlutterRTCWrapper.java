@@ -257,7 +257,7 @@ public class RCFlutterRTCWrapper {
 
     private void subscribeAVStream(Object arg, final MethodChannel.Result result) {
         String LOG_TAG = "subscribeAVStream " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
             if (this.rtcRoom == null) {
@@ -289,7 +289,7 @@ public class RCFlutterRTCWrapper {
 
     private void unsubscribeAVStream(Object arg, final MethodChannel.Result result) {
         String LOG_TAG = "unsubscribeAVStream " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String userId = String.valueOf(arg);
             if (this.rtcRoom == null) {
@@ -321,7 +321,7 @@ public class RCFlutterRTCWrapper {
 
     private void getRemoteUsers(Object arg, MethodChannel.Result result) {
         String LOG_TAG = "getRemoteUsers " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof String) {
             String roomId = String.valueOf(arg);
             if(this.rtcRoom == null || !this.rtcRoom.getRoomId().equals(roomId) || this.rtcRoom.getRemoteUsers() == null) {
@@ -338,7 +338,7 @@ public class RCFlutterRTCWrapper {
 
     private void muteLocalAudio(Object arg) {
         String LOG_TAG = "muteLocalAudio " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof Map) {
             Map map = (Map)arg;
             boolean muted = (boolean)map.get("muted");
@@ -348,7 +348,7 @@ public class RCFlutterRTCWrapper {
 
     private void muteRemoteAudio(Object arg) {
         String LOG_TAG = "muteRemoteAudio " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof Map) {
             Map map = (Map)arg;
             boolean muted = (boolean)map.get("muted");
@@ -370,7 +370,7 @@ public class RCFlutterRTCWrapper {
 
     private void switchCamera(Object arg) {
         String LOG_TAG = "switchCamera " ;
-        RCLog.i(LOG_TAG + "start");
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(this.capture == null) {
             return;
         }
@@ -378,6 +378,8 @@ public class RCFlutterRTCWrapper {
     }
 
     private void exchangeVideo(Object arg) {
+        String LOG_TAG = "exchangeVideo " ;
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
         if(arg instanceof Map) {
             Map map = (Map)arg;
             int viewId1 = (Integer) map.get("viewId1");
@@ -396,6 +398,8 @@ public class RCFlutterRTCWrapper {
                 map.put("userId",userId);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserPublishStreamsCallBack,map);
             }
+            String LOG_TAG = "onUserStreamPublished ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -406,6 +410,8 @@ public class RCFlutterRTCWrapper {
                 map.put("userId",userId);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
             }
+            String LOG_TAG = "onUserStreamUnpublished ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -417,6 +423,8 @@ public class RCFlutterRTCWrapper {
                 map.put("enable",b);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserAudioEnabledCallBack,map);
             }
+            String LOG_TAG = "onUserAudioEnabled ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -428,6 +436,8 @@ public class RCFlutterRTCWrapper {
                 map.put("enable",b);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserVideoEnabledCallBack,map);
             }
+            String LOG_TAG = "onUserVideoEnabled ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -438,6 +448,8 @@ public class RCFlutterRTCWrapper {
                 map.put("userId",userId);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserJoinedCallBack,map);
             }
+            String LOG_TAG = "onUserJoined ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -448,6 +460,8 @@ public class RCFlutterRTCWrapper {
                 map.put("userId",userId);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
             }
+            String LOG_TAG = "onUserLeaved ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
@@ -458,11 +472,12 @@ public class RCFlutterRTCWrapper {
                 map.put("userId",userId);
                 methodChannel.invokeMethod(RCFlutterRTCMethodKey.UserLeavedCallBack,map);
             }
+            String LOG_TAG = "onUserLeaved ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
         public void onVideoTrackAdd(String s, String s1) {
-            Log.i("checkonVideoTrackAdd",s+":"+s1);
         }
 
         @Override
@@ -471,12 +486,16 @@ public class RCFlutterRTCWrapper {
                 return;
             }
             if(userId.equals(RongIMClient.getInstance().getCurrentUserId())) {
-                // do nothing 和 iOS 同步，iOS 不会回调自己的第一关键帧的到达
+                // do nothing
+                // 和 iOS 同步，iOS 不会回调自己的第一关键帧的到达
                 return;
             }
             Map map = new HashMap();
             map.put("userId",userId);
             methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserFirstKeyframeCallBack,map);
+
+            String LOG_TAG = "onUserFirstKeyframeReceived ";
+            RCLog.i(LOG_TAG + "user:"+userId);
         }
 
         @Override
