@@ -49,10 +49,10 @@ class _CallPageState extends State<CallPage> {
   void dispose() {
     super.dispose();
     _sessions.forEach((session) {
-      RongRtcEngine.removePlatformView(session.viewId);
+      RongRTCEngine.removePlatformView(session.viewId);
     });
     _sessions.clear();
-    RongRtcEngine.leaveRTCRoom(this.roomId,null);
+    RongRTCEngine.leaveRTCRoom(this.roomId,null);
   }
 
   @override
@@ -71,7 +71,7 @@ class _CallPageState extends State<CallPage> {
     }
 
     ///配置默认的参数
-    RongRtcEngine.config(RongRtcConfig.defaultConfig());
+    RongRTCEngine.config(RongRTCConfig.defaultConfig());
 
     _onJoinRTCRoom();
     _addRTCEventHandlers();
@@ -79,7 +79,7 @@ class _CallPageState extends State<CallPage> {
 
   /// 加入 RTC 房间
   _onJoinRTCRoom() async {
-    RongRtcEngine.joinRTCRoom(this.roomId,(int code) {
+    RongRTCEngine.joinRTCRoom(this.roomId,(int code) {
       if(code == 0) {
         screenWidth = MediaQuery.of(context).size.width;
         screenHeight = MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top;
@@ -101,7 +101,7 @@ class _CallPageState extends State<CallPage> {
 
   /// 渲染已经存在的远端用户视频
   _renderExistedRemoterUsersIfNeed() async {
-    List userIds = await RongRtcEngine.getRemoteUsers(this.roomId);
+    List userIds = await RongRTCEngine.getRemoteUsers(this.roomId);
     if(userIds.length > 0) {
       for(String uid in userIds) {
         /// 渲染单个远端用户 id
@@ -114,16 +114,16 @@ class _CallPageState extends State<CallPage> {
   _addRTCEventHandlers() {
 
     /// 由用户加入
-    RongRtcEngine.onUserJoined = (String userId) {
+    RongRTCEngine.onUserJoined = (String userId) {
       setState(() {
         _addInfoString("user did join:"+userId);
       });
     };
 
     ///有用户离开
-    RongRtcEngine.onUserLeaved = (String userId) {
+    RongRTCEngine.onUserLeaved = (String userId) {
       ///取消已经订阅的音视频流
-      RongRtcEngine.unsubscribeAVStream(userId,(int code) {
+      RongRTCEngine.unsubscribeAVStream(userId,(int code) {
         setState(() {
           _addInfoString("user did leave:"+userId);
           _addInfoString("unsubscribe stream of user:"+userId);
@@ -133,7 +133,7 @@ class _CallPageState extends State<CallPage> {
     };
 
     ///有用户发布流
-    RongRtcEngine.onUserStreamPublished = (String userId) {
+    RongRTCEngine.onUserStreamPublished = (String userId) {
       ///订阅并渲染用户的流
       _subscribeAndRenderRemoteUser(userId);
       setState(() {
@@ -143,7 +143,7 @@ class _CallPageState extends State<CallPage> {
     };
 
     ///有用户取消发布流
-    RongRtcEngine.onUserStreamUnpublished = (String userId) {
+    RongRTCEngine.onUserStreamUnpublished = (String userId) {
       setState(() {
         _addInfoString("user did unpublish stream:"+userId);
       });
@@ -160,14 +160,14 @@ class _CallPageState extends State<CallPage> {
 
   _subscribeAndRenderRemoteUser(String userId) {
     ///订阅远端用户的流
-    RongRtcEngine.subscribeAVStream(userId,(int code) {
+    RongRTCEngine.subscribeAVStream(userId,(int code) {
       if(code == RongRTCCode.Success) {
           /// 创建 platform view
-          Widget videoView = RongRtcEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
+          Widget videoView = RongRTCEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
             setState(() {
               _addInfoString("render remote video for user:"+userId);
               _getVideoSession(userId).viewId = viewId;
-              RongRtcEngine.renderRemoteVideo(userId, viewId);
+              RongRTCEngine.renderRemoteVideo(userId, viewId);
             });
           }
         );
@@ -183,12 +183,12 @@ class _CallPageState extends State<CallPage> {
 
   ///渲染本地用户视频流
   _renderLocalUser() {
-    Widget videoView =  RongRtcEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
+    Widget videoView =  RongRTCEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
         setState(() {
           mainSession.viewId = viewId;
           _addInfoString("render local video for user:"+CurrentUserId);
-          RongRtcEngine.renderLocalVideo(viewId);
-          RongRtcEngine.publishAVStream((int code) {
+          RongRTCEngine.renderLocalVideo(viewId);
+          RongRTCEngine.publishAVStream((int code) {
             setState(() {
               _addInfoString("local user publish av stream:"+code.toString());
             });
@@ -206,7 +206,7 @@ class _CallPageState extends State<CallPage> {
 
   ///取消订阅并移除远端用户视频流
   _unsubscribeAndRemoveRemoteUser(String userId) {
-    RongRtcEngine.unsubscribeAVStream(userId,(int code) {
+    RongRTCEngine.unsubscribeAVStream(userId,(int code) {
       if(code == RongRTCCode.Success) {
         VideoSession session = _getVideoSession(userId);
         if(session != null) {
@@ -227,7 +227,7 @@ class _CallPageState extends State<CallPage> {
   }
 
   onSwitchCamera() {
-    RongRtcEngine.switchCamera();
+    RongRTCEngine.switchCamera();
     
     setState(() {
       _addInfoString("switch local user camera");
@@ -236,7 +236,7 @@ class _CallPageState extends State<CallPage> {
 
   onMute() {
     this.muted = !this.muted;
-    RongRtcEngine.muteLocalAudio(this.muted);
+    RongRTCEngine.muteLocalAudio(this.muted);
 
     setState(() {
       String text = this.muted ? "mute" :"unmute";
@@ -259,7 +259,7 @@ class _CallPageState extends State<CallPage> {
     mainSession.userId = _sessions[index].userId;
     _sessions[index].userId = tmpUserId;
 
-    RongRtcEngine.exchangeVideo(mainSession.viewId, _sessions[index].viewId);
+    RongRTCEngine.exchangeVideo(mainSession.viewId, _sessions[index].viewId);
     print("GestureDetector onTap");
   }
 

@@ -6,14 +6,14 @@ import 'dart:async';
 import 'rong_method_key.dart';
 import 'rong_rtc_config.dart';
 
-class RongRtcEngine {
+class RongRTCEngine {
   static const MethodChannel _channel =
       const MethodChannel('plugins.rongcloud.im/rtc_plugin');
   
   ///配置
   ///
   ///请在 [renderLocalVideo] 接口前调用
-  static void config(RongRtcConfig config) {
+  static void config(RongRTCConfig config) {
     Map conf = config.toMap();
     _channel.invokeMethod(RCRTCMethodKey.Config,conf);
   }
