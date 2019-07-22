@@ -1,8 +1,6 @@
 package cn.rongcloud.rongcloud_rtc_plugin;
 
 import android.content.Context;
-import android.view.View;
-
 import java.util.HashMap;
 import java.util.Map;
 

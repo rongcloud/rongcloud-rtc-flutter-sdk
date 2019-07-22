@@ -1,8 +1,6 @@
 package cn.rongcloud.rongcloud_rtc_plugin;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import java.util.Map;
