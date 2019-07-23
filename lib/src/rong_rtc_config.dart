@@ -1,12 +1,12 @@
 class RongRTCConfig {
   
   ///摄像头输出的视频分辨率，默认 640x480
-  ///参见 [RongRtcVideoSize]
+  ///参见 [RongRTCVideoSize]
   int videoSize;
 
   static RongRTCConfig defaultConfig(){
       RongRTCConfig config = new RongRTCConfig();
-      config.videoSize = RongRtcVideoSize.Size640x480;
+      config.videoSize = RongRTCVideoSize.Size640x480;
       return config;
   }
 
@@ -16,7 +16,7 @@ class RongRTCConfig {
   }
 }
 
-class RongRtcVideoSize {
+class RongRTCVideoSize {
   static const int Size256x144 = 256144;
   static const int Size320x240 = 320240;
   static const int Size480x360 = 480360;

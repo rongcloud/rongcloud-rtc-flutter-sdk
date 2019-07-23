@@ -51,7 +51,6 @@
 }
 
 -(NSObject<FlutterPlatformView> *)createWithFrame:(CGRect)frame viewIdentifier:(int64_t)viewId arguments:(id)args{
-    NSLog(@"%s",__func__);
     NSLog(@"ios 获取原生view 参数为 %@",args);
     RCFlutterRTCView *view = [[RCFlutterRTCView alloc] initWithWithFrame:frame viewIdentifier:viewId arguments:args binaryMessenger:self.messenger];
     [self.viewDic setObject:view forKey:@(viewId)];
@@ -60,13 +59,11 @@
 }
 
 - (RCFlutterRTCView *)getRenderFlutterView:(int)viewId {
-    NSLog(@"%s",__func__);
     RCFlutterRTCView *view = [self.viewDic objectForKey:@(viewId)];
     return view;
 }
 
 - (void)removeRenderVideoView:(int)viewId {
-    NSLog(@"%s",__func__);
     RCFlutterRTCView *flutterView = [self.viewDic objectForKey:@(viewId)];
     if(flutterView) {
         [self.viewDic removeObjectForKey:@(viewId)];
@@ -75,7 +72,6 @@
 }
 
 - (void)updateVideoView:(int)viewId size:(CGSize)size {
-    NSLog(@"%s",__func__);
     RCFlutterRTCView *flutterView = [self.viewDic objectForKey:@(viewId)];
     if(flutterView && flutterView.view) {
         CGRect bounds = flutterView.view.bounds;

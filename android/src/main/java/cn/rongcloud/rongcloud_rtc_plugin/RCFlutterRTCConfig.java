@@ -9,7 +9,7 @@ public class RCFlutterRTCConfig {
     private RongRTCConfig rtcConfig = null;
 
     private RCFlutterRTCConfig() {
-
+        rtcConfig = new RongRTCConfig.Builder().build();
     }
 
     private static class SingleHolder {
@@ -27,9 +27,6 @@ public class RCFlutterRTCConfig {
     }
 
     public RongRTCConfig getRTCConfig() {
-        if(rtcConfig == null) {
-            rtcConfig = new RongRTCConfig.Builder().build();
-        }
         return rtcConfig;
     }
 

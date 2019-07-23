@@ -21,6 +21,14 @@
     return config;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if(self) {
+        self.captureParam = [RongRTCVideoCaptureParam defaultParameters];
+    }
+    return self;
+}
+
 - (void)updateParam:(NSDictionary *)dic {
     int videoSize = [dic[@"videoSize"] intValue];
     self.captureParam.videoSizePreset = [self genVideoSizePreset:videoSize];
@@ -55,13 +63,6 @@
             break;
     }
     return size;
-}
-
-- (RongRTCVideoCaptureParam *)captureParam {
-    if(!_captureParam) {
-        _captureParam = [RongRTCVideoCaptureParam defaultParameters];
-    }
-    return _captureParam;
 }
 
 @end

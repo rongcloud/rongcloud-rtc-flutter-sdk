@@ -73,8 +73,8 @@ class _CallPageState extends State<CallPage> {
     ///配置默认的参数
     RongRTCEngine.config(RongRTCConfig.defaultConfig());
 
-    _onJoinRTCRoom();
     _addRTCEventHandlers();
+    _onJoinRTCRoom();
   }
 
   /// 加入 RTC 房间
@@ -95,8 +95,6 @@ class _CallPageState extends State<CallPage> {
         });
       }
     });
-    
-
   }
 
   /// 渲染已经存在的远端用户视频
@@ -105,7 +103,7 @@ class _CallPageState extends State<CallPage> {
     if(userIds.length > 0) {
       for(String uid in userIds) {
         /// 渲染单个远端用户 id
-        _subscribeAndRenderRemoteUser(uid);
+        _subscribeAndRenderExistedRemoteUser(uid);
       }
     }
   }
@@ -128,13 +126,9 @@ class _CallPageState extends State<CallPage> {
         _getVideoSession(CurrentUserId).userId = userId;
         RongRTCEngine.exchangeVideo(mainSession.viewId, _getVideoSession(userId).viewId);
       }
-      ///取消已经订阅的音视频流
-      RongRTCEngine.unsubscribeAVStream(userId,(int code) {
-        setState(() {
-          _addInfoString("user did leave:"+userId);
-          _addInfoString("unsubscribe stream of user:"+userId);
-          _unsubscribeAndRemoveRemoteUser(userId);
-        });
+      setState(() {
+        _removeRemoteUser(userId);
+        _addInfoString("user did leave:"+userId);
       });
     };
 
@@ -168,22 +162,35 @@ class _CallPageState extends State<CallPage> {
     ///订阅远端用户的流
     RongRTCEngine.subscribeAVStream(userId,(int code) {
       setState(() {
-          if(code == RongRTCCode.Success) {
-            /// 创建 platform view
-            Widget videoView = RongRTCEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
-              setState(() {
-                _addInfoString("render remote video for user:"+userId);
-                _getVideoSession(userId).viewId = viewId;
-                RongRTCEngine.renderRemoteVideo(userId, viewId);
-              });
-            });
-            ///相关数据加入 session 中
-            VideoSession session = new VideoSession();
-            session.userId = userId;
-            session.view = videoView;
-            _sessions.add(session);
+        if(code == RongRTCCode.Success) {
+          _renderRemoteUser(userId);
         } 
       });
+    });
+  }
+
+  _renderRemoteUser(String userId) {
+    /// 创建 platform view
+    Widget videoView = RongRTCEngine.createPlatformView(userId,videoWidth.toInt(),videoHeight.toInt(),(viewId) {
+      setState(() {
+        _addInfoString("render remote video for user:"+userId);
+        _getVideoSession(userId).viewId = viewId;
+        RongRTCEngine.renderRemoteVideo(userId, viewId);
+      });
+    });
+    ///相关数据加入 session 中
+    VideoSession session = new VideoSession();
+    session.userId = userId;
+    session.view = videoView;
+    _sessions.add(session);
+  }
+
+  _subscribeAndRenderExistedRemoteUser(String userId) {
+    ///订阅远端用户的流
+    RongRTCEngine.subscribeAVStream(userId,(int code) {
+        if(code == RongRTCCode.Success) {
+          _renderRemoteUser(userId);
+        } 
     });
     
   }
@@ -211,24 +218,30 @@ class _CallPageState extends State<CallPage> {
     mainSession.height = screenHeight;
   }
 
-  ///取消订阅并移除远端用户视频流
-  _unsubscribeAndRemoveRemoteUser(String userId) {
-    RongRTCEngine.unsubscribeAVStream(userId,(int code) {
-      VideoSession session = _getVideoSession(userId);
-      if(session != null) {
-        _sessions.remove(session);
-      }
-    });
-    
+  ///移除远端用户
+  _removeRemoteUser(String userId) {
+    VideoSession session = _getVideoSession(userId);
+    if(session != null) {
+      _sessions.remove(session);
+    }
   }
 
   VideoSession _getVideoSession(String userId) {
-    for(VideoSession sess in _sessions) {
-      if(sess.userId == userId) {
-        return sess;
-      }
+    int index = _getIndexOfVideoSession(userId);
+    if(index >= 0) {
+      return _sessions[index];
     }
     return null;
+  }
+
+  int _getIndexOfVideoSession(String userId) {
+    for(int i = 0;i< _sessions.length;i++) {
+      VideoSession sess = _sessions[i];
+      if(sess.userId == userId) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   onSwitchCamera() {
