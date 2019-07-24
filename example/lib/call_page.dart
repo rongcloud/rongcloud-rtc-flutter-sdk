@@ -87,9 +87,6 @@ class _CallPageState extends State<CallPage> {
         /// 渲染当前用户的视频
         _renderLocalUser();
 
-        /// 渲染已经存在的远端用户视频
-        _renderExistedRemoterUsersIfNeed();
-
         setState(() {
           _addInfoString("join room "+this.roomId);
         });
@@ -103,7 +100,7 @@ class _CallPageState extends State<CallPage> {
     if(userIds.length > 0) {
       for(String uid in userIds) {
         /// 渲染单个远端用户 id
-        _subscribeAndRenderExistedRemoteUser(uid);
+        _subscribeAndRenderRemoteUser(uid);
       }
     }
   }
@@ -185,16 +182,6 @@ class _CallPageState extends State<CallPage> {
     _sessions.add(session);
   }
 
-  _subscribeAndRenderExistedRemoteUser(String userId) {
-    ///订阅远端用户的流
-    RongRTCEngine.subscribeAVStream(userId,(int code) {
-        if(code == RongRTCCode.Success) {
-          _renderRemoteUser(userId);
-        } 
-    });
-    
-  }
-
   ///渲染本地用户视频流
   _renderLocalUser() {
     Widget videoView =  RongRTCEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
@@ -204,6 +191,8 @@ class _CallPageState extends State<CallPage> {
           RongRTCEngine.renderLocalVideo(viewId);
           RongRTCEngine.publishAVStream((int code) {
             setState(() {
+              /// 当本地视频发布成功之后，再渲染已经存在的远端用户视频
+              _renderExistedRemoterUsersIfNeed();
               _addInfoString("local user publish av stream:"+code.toString());
             });
           });
