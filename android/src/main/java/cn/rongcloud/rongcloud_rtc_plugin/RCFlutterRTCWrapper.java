@@ -12,6 +12,7 @@ import cn.rongcloud.rtc.RTCErrorCode;
 import cn.rongcloud.rtc.RongRTCEngine;
 import cn.rongcloud.rtc.callback.JoinRoomUICallBack;
 import cn.rongcloud.rtc.callback.RongRTCResultUICallBack;
+import cn.rongcloud.rtc.core.RendererCommon;
 import cn.rongcloud.rtc.engine.view.RongRTCVideoView;
 import cn.rongcloud.rtc.events.RongRTCEventsListener;
 import cn.rongcloud.rtc.room.RongRTCRoom;
@@ -197,9 +198,11 @@ public class RCFlutterRTCWrapper {
         if(arg instanceof Map) {
             Map param = (Map)arg;
             int viewId = (Integer) param.get("viewId");
+            int mode = (Integer) param.get("mode");
             RongRTCVideoView view = RCFlutterRTCViewFactory.getInstance().getRenderVideoView(viewId);
             //todo
             if(view != null) {
+                view.setScalingType(_convertFillMode(mode));
                 getCapture().setRTCConfig(RCFlutterRTCConfig.getInstance().getRTCConfig());
                 getCapture().setRongRTCVideoView(view);
                 getCapture().startCameraCapture();
@@ -219,10 +222,12 @@ public class RCFlutterRTCWrapper {
             Map param = (Map)arg;
             int viewId = (Integer) param.get("viewId");
             String userId = (String)param.get("userId");
+            int mode = (Integer) param.get("mode");
             RongRTCVideoView view = RCFlutterRTCViewFactory.getInstance().getRenderVideoView(viewId);
             if(view != null) {
                 for(String uId : this.rtcRoom.getRemoteUsers().keySet()) {
                     if(uId.equals(userId)) {
+                        view.setScalingType(_convertFillMode(mode));
                         renderViewForRemoteUser(view,this.rtcRoom.getRemoteUser(uId));
                     }
                 }
@@ -565,6 +570,14 @@ public class RCFlutterRTCWrapper {
         @Override
         public void onReceiveMessage(Message message) {
 
+        }
+    }
+
+    private RendererCommon.ScalingType _convertFillMode(int mode) {
+        if(0 == mode) {
+            return RendererCommon.ScalingType.SCALE_ASPECT_FIT;
+        }else {
+            return RendererCommon.ScalingType.SCALE_ASPECT_FILL;
         }
     }
 

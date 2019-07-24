@@ -16,6 +16,7 @@ class RongRTCConfig {
   }
 }
 
+/// 视频分辨率
 class RongRTCVideoSize {
   static const int Size256x144 = 256144;
   static const int Size320x240 = 320240;
@@ -24,4 +25,11 @@ class RongRTCVideoSize {
   static const int Size640x480 = 640480;
   static const int Size720x480 = 720480;
   static const int Size1280x720 = 1280720;
+}
+
+enum RongRTCVodioFillMode {
+  /// 自适应
+  Fit,
+  /// 填充
+  Fill,
 }

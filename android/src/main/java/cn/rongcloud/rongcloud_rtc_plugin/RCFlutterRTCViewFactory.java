@@ -47,7 +47,7 @@ public class RCFlutterRTCViewFactory extends PlatformViewFactory {
         if(view == null) {
             return null;
         }
-        return view.getView();
+        return view.getVideoView();
     }
 
     public void removeRenderVideoView(int viewId) {
@@ -75,8 +75,8 @@ public class RCFlutterRTCViewFactory extends PlatformViewFactory {
         flutterView1.unbindRenderView();
         flutterView2.unbindRenderView();
 
-        flutterView1.bindRenderView(renderView2,flutterView1.getViewParent());
-        flutterView2.bindRenderView(renderView1,flutterView2.getViewParent());
+        flutterView1.bindRenderView(renderView2);
+        flutterView2.bindRenderView(renderView1);
 
     }
 }

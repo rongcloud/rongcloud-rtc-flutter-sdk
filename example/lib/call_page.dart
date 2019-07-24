@@ -172,7 +172,7 @@ class _CallPageState extends State<CallPage> {
       setState(() {
         _addInfoString("render remote video for user:"+userId);
         _getVideoSession(userId).viewId = viewId;
-        RongRTCEngine.renderRemoteVideo(userId, viewId);
+        RongRTCEngine.renderRemoteVideo(userId, viewId,RongRTCVodioFillMode.Fill);
       });
     });
     ///相关数据加入 session 中
@@ -188,7 +188,7 @@ class _CallPageState extends State<CallPage> {
         setState(() {
           mainSession.viewId = viewId;
           _addInfoString("render local video for user:"+CurrentUserId);
-          RongRTCEngine.renderLocalVideo(viewId);
+          RongRTCEngine.renderLocalVideo(viewId,RongRTCVodioFillMode.Fill);
           RongRTCEngine.publishAVStream((int code) {
             setState(() {
               /// 当本地视频发布成功之后，再渲染已经存在的远端用户视频

@@ -157,15 +157,17 @@
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
+        int mode = [dic[@"mode"] intValue];
+        RCVideoFillMode fileMode = [self _convertFillMode:mode];
         RCFlutterRTCView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderFlutterView:viewId];
-        [self renderLocalVideoViewAt:view];
+        [self renderLocalVideoViewAt:view fillMode:fileMode];
     }
 }
 
-- (void)renderLocalVideoViewAt:(RCFlutterRTCView *)view {
+- (void)renderLocalVideoViewAt:(RCFlutterRTCView *)view fillMode:(RCVideoFillMode)fileMode{
     if(view) {
         RongRTCLocalVideoView *localView = (RongRTCLocalVideoView *)view.renderView;
-        localView.fillMode = RCVideoFillModeAspectFill;
+        localView.fillMode = fileMode;
         [self.capturer setVideoRender:localView];
         
         [self.capturer setCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
@@ -181,28 +183,29 @@
         NSDictionary *dic = (NSDictionary *)arg;
         int viewId = [dic[@"viewId"] intValue];
         NSString *userId = dic[@"userId"];
-        
+        int mode = [dic[@"mode"] intValue];
+        RCVideoFillMode fileMode = [self _convertFillMode:mode];
         RCFlutterRTCView *view = [[RCFlutterRTCViewFactory sharedInstance] getRenderFlutterView:viewId];
-        [self renderRemoteVideoAt:view forUser:userId];
+        [self renderRemoteVideoAt:view forUser:userId fillMode:fileMode];
     }
 }
 
-- (void)renderRemoteVideoAt:(RCFlutterRTCView *)view forUser:(NSString *)userId{
+- (void)renderRemoteVideoAt:(RCFlutterRTCView *)view forUser:(NSString *)userId fillMode:(RCVideoFillMode)fileMode{
     if(view) {
         for(RongRTCRemoteUser *remoteUser in self.rtcRoom.remoteUsers) {
             if([userId isEqualToString:remoteUser.userId]) {
-                [self renderVideoOnView:view forRemoteUser:remoteUser];
+                [self renderVideoOnView:view forRemoteUser:remoteUser fillMode:fileMode];
                 break;
             }
         }
     }
 }
 
-- (void)renderVideoOnView:(RCFlutterRTCView *)flutterView forRemoteUser:(RongRTCRemoteUser *)remoteUser {
+- (void)renderVideoOnView:(RCFlutterRTCView *)flutterView forRemoteUser:(RongRTCRemoteUser *)remoteUser fillMode:(RCVideoFillMode)fileMode{
     for(RongRTCAVInputStream *stream in remoteUser.remoteAVStreams) {
         if(RTCMediaTypeVideo == stream.streamType) {
             RongRTCRemoteVideoView *remoteView = (RongRTCRemoteVideoView *)flutterView.renderView;
-            remoteView.fillMode = RCVideoFillModeAspectFill;
+            remoteView.fillMode = fileMode;
             [stream setVideoRender:remoteView];
             
             return;
@@ -455,6 +458,14 @@
         }
     }
     return nil;
+}
+
+- (RCVideoFillMode)_convertFillMode:(int)mode {
+    if(mode == 0) {
+        return RCVideoFillModeAspect;
+    }else {
+        return RCVideoFillModeAspectFill;
+    }
 }
 
 - (BOOL)cancelRenderVideoInView:(UIView *)view {

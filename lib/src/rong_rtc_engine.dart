@@ -52,8 +52,8 @@ class RongRTCEngine {
   /// 渲染本地视频
   /// 
   /// 必须要先于 [publishAVStream] 调用
-  static void renderLocalVideo(int viewId) {
-    Map map = {"viewId":viewId};
+  static void renderLocalVideo(int viewId,RongRTCVodioFillMode fillMode) {
+    Map map = {"viewId":viewId,"mode":_convertVideoFillMode(fillMode)};
     _channel.invokeMethod(RCRTCMethodKey.RenderLocalVideo,map);
   }
 
@@ -62,8 +62,8 @@ class RongRTCEngine {
   /// [userId] 用户 id
   /// 
   /// [viewId] 视频所在 viewId
-  static void renderRemoteVideo(String userId,int viewId) {
-    Map map = {"viewId":viewId,"userId":userId};
+  static void renderRemoteVideo(String userId,int viewId,RongRTCVodioFillMode fillMode) {
+    Map map = {"viewId":viewId,"userId":userId,"mode":_convertVideoFillMode(fillMode)};
     _channel.invokeMethod(RCRTCMethodKey.RenderRemoteVideo,map);
   }
 
@@ -254,5 +254,12 @@ class RongRTCEngine {
     });
   }
     
+  static int _convertVideoFillMode(RongRTCVodioFillMode fillMode) {
+    if(RongRTCVodioFillMode.Fit == fillMode) {
+      return 0;
+    }else {
+      return 1;
+    }
+  }
   
 }

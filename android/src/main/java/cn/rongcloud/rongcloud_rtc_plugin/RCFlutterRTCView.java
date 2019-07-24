@@ -1,8 +1,11 @@
 package cn.rongcloud.rongcloud_rtc_plugin;
 
 import android.content.Context;
+import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
+import android.widget.FrameLayout;
+
 import java.util.Map;
 import cn.rongcloud.rtc.engine.view.RongRTCVideoView;
 import io.flutter.plugin.common.BinaryMessenger;
@@ -10,38 +13,37 @@ import io.flutter.plugin.platform.PlatformView;
 
 public class RCFlutterRTCView implements PlatformView {
 
-    private RongRTCVideoView videoView = null;
+    private ViewGroup holderView = null;//占位 view
+    private RongRTCVideoView videoView = null;//视频 view
     private String userId = null;
     private Integer widthI = null;
     private Integer heightI = null;
-    private ViewParent viewParent = null;
 
     RCFlutterRTCView(Context context, BinaryMessenger messenger, int viewId, Object arg) {
-
-        videoView = new RongRTCVideoView(context);
-
         Map map = (Map)arg;
         widthI = (Integer) map.get("width");
         heightI = (Integer) map.get("height");
         userId = (String)map.get("userId");
-        ViewGroup.LayoutParams layoutParams = videoView.getLayoutParams();
-        if (layoutParams != null) {
-            layoutParams.width = widthI.intValue();
-            layoutParams.height = heightI.intValue();
-            videoView.setLayoutParams(layoutParams);
-        }
+
+        holderView = new FrameLayout(context);
+        ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(dp2px(context,widthI.floatValue()),dp2px(context,heightI.floatValue()));
+        holderView.setLayoutParams(lp);
+
+        videoView = new RongRTCVideoView(context);
+        holderView.addView(videoView,new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
     }
 
     @Override
-    public RongRTCVideoView getView() {
-        return videoView;
+    public View getView() {
+        return holderView;
     }
 
     @Override
     public void dispose() {
 
     }
+
 
     public String getUserId() {
         return userId;
@@ -51,31 +53,14 @@ public class RCFlutterRTCView implements PlatformView {
         return videoView;
     }
 
-    public ViewParent getViewParent() {
-        return viewParent;
-    }
-
-    public void bindRenderView(RongRTCVideoView view, ViewParent viewParent) {
+    public void bindRenderView(RongRTCVideoView view) {
         videoView = view;
-        ViewParent parent = viewParent;
-        if(parent instanceof ViewGroup) {
-            ViewGroup viewGroup = (ViewGroup)parent;
-            viewGroup.addView(view);
-            ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-            if (layoutParams != null) {
-                layoutParams.width = dp2px(RCFlutterRTCWrapper.getInstance().getContext(),widthI.floatValue());
-                layoutParams.height = dp2px(RCFlutterRTCWrapper.getInstance().getContext(),heightI.floatValue());
-                view.setLayoutParams(layoutParams);
-            }
-        }
+
+        holderView.addView(view,new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER) );
     }
 
     public void unbindRenderView() {
-        viewParent = videoView.getParent();
-        if(viewParent instanceof ViewGroup) {
-            ViewGroup viewGroup = (ViewGroup)viewParent;
-            viewGroup.removeView(videoView);
-        }
+        holderView.removeView(videoView);
     }
 
     public void updateUserId(String uid) {
