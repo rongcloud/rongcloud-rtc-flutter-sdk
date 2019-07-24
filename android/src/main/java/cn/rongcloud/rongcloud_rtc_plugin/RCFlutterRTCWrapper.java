@@ -83,6 +83,8 @@ public class RCFlutterRTCWrapper {
             switchCamera();
         }else if(call.method.equals(RCFlutterRTCMethodKey.ExchangeVideo)) {
             exchangeVideo(call.arguments);
+        }else if(call.method.equals(RCFlutterRTCMethodKey.SetSpeakerEnable)) {
+            setSpeakerEnable(call.arguments);
         }
         else {
             result.notImplemented();
@@ -384,6 +386,16 @@ public class RCFlutterRTCWrapper {
             int viewId1 = (Integer) map.get("viewId1");
             int viewId2 = (Integer) map.get("viewId2");
             RCFlutterRTCViewFactory.getInstance().exchangeVideo(viewId1,viewId2);
+        }
+    }
+
+    private void setSpeakerEnable(Object arg) {
+        String LOG_TAG = "setSpeakerEnable " ;
+        RCLog.i(LOG_TAG + "start param:"+arg.toString());
+        if(arg instanceof Map) {
+            Map map = (Map)arg;
+            boolean enable = (boolean)map.get("enable");
+            getCapture().setEnableSpeakerphone(enable);
         }
     }
 

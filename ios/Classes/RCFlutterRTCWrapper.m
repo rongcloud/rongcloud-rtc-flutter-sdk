@@ -65,6 +65,8 @@
         [self updateVideoViewSize:call.arguments];
     }else if([RCFlutterRTCMethodKeyExchangeVideo isEqualToString:call.method]) {
         [self exchangeVideo:call.arguments];
+    }else if([RCFlutterRTCMethodKeySetSpeakerEnable isEqualToString:call.method]) {
+        [self setSpeakerEnable:call.arguments];
     }
     else {
         [RCRTCLog e:[NSString stringWithFormat:@" iOS can't response method : %@",call.method]];
@@ -226,6 +228,16 @@
         int viewId1 = [dic[@"viewId1"] intValue];
         int viewId2 = [dic[@"viewId2"] intValue];
         [[RCFlutterRTCViewFactory sharedInstance] exchangeVideo:viewId1 with:viewId2];
+    }
+}
+
+- (void)setSpeakerEnable:(id)arg {
+    NSString *LOG_TAG = @"setSpeakerEnable";
+    [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
+    if([arg isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dic = (NSDictionary *)arg;
+        BOOL enable = [dic[@"enable"] boolValue];
+        [self.capturer useSpeaker:enable];
     }
 }
 

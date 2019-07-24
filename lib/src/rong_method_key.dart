@@ -14,6 +14,7 @@ class RCRTCMethodKey {
   static const String MuteRemoteAudio = "MuteRemoteAudio";
   static const String SwitchCamera = "SwitchCamera";
   static const String ExchangeVideo = "ExchangeVideo";
+  static const String SetSpeakerEnable = "SetSpeakerEnable";
 }
 
 class RCRTCMethodCallBackKey {

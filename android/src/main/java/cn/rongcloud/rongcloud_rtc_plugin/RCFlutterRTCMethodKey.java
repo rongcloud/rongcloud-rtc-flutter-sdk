@@ -16,6 +16,7 @@ public class RCFlutterRTCMethodKey {
     static String MuteRemoteAudio = "MuteRemoteAudio";
     static String SwitchCamera = "SwitchCamera";
     static String ExchangeVideo = "ExchangeVideo";
+    static String SetSpeakerEnable = "SetSpeakerEnable";
 
     static String UserJoinedCallBack = "UserJoinedCallBack";
     static String UserLeavedCallBack = "UserLeavedCallBack";

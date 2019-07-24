@@ -24,6 +24,7 @@ static NSString * RCFlutterRTCMethodKeyMuteLocalAudio = @"MuteLocalAudio";
 static NSString * RCFlutterRTCMethodKeyMuteRemoteAudio = @"MuteRemoteAudio";
 static NSString * RCFlutterRTCMethodKeySwitchCamera = @"SwitchCamera";
 static NSString * RCFlutterRTCMethodKeyExchangeVideo = @"ExchangeVideo";
+static NSString * RCFlutterRTCMethodKeySetSpeakerEnable = @"SetSpeakerEnable";
 
 
 //callbackkey 由 native 触发，native 响应

@@ -96,6 +96,12 @@ class RongRTCEngine {
     _channel.invokeMethod(RCRTCMethodKey.SwitchCamera);
   }
 
+  /// 设置扬声器是否打开
+  static void setSpeakerEnable(bool enable) {
+    Map map = {"enable":enable};
+    _channel.invokeMethod(RCRTCMethodKey.SetSpeakerEnable,map);
+  }
+
   /// 移除 iOS/Android 的 platform view
   /// 
   /// [viewId] 视频 viewId
@@ -149,7 +155,7 @@ class RongRTCEngine {
   /// 有远端用户加入的回调
   static void Function(String userId) onUserJoined;
 
-  /// 有远端用户离开的回调
+  /// 有远端用户离开的回调，如果对方正常离开房间会立即回调；如果用户强杀 APP ，则会在 1 分钟后回调
   static void Function(String userId) onUserLeaved;
 
   /// 有远端用户发布音视频的回调
