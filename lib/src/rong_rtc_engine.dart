@@ -86,10 +86,10 @@ class RongRTCEngine {
   }
 
   /// 远端用户静音开关
-  static void muteRemoteAudio(String userId,bool muted) {
-    Map map = {"userId":userId,"muted":muted};
-    _channel.invokeMethod(RCRTCMethodKey.MuteRemoteAudio,map);
-  }
+  // static void muteRemoteAudio(String userId,bool muted) {
+  //   Map map = {"userId":userId,"muted":muted};
+  //   _channel.invokeMethod(RCRTCMethodKey.MuteRemoteAudio,map);
+  // }
 
   /// 切换本地用户摄像头
   static void switchCamera() {
