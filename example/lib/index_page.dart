@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'call_page.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class IndexPage extends StatefulWidget {
   @override
@@ -37,6 +38,13 @@ class _IndexPageState extends State<IndexPage> {
     // dispose input controller
     _textController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState(); 
+    //申请音视频权限
+    PermissionHandler().requestPermissions([PermissionGroup.camera, PermissionGroup.microphone]);
   }
 
   @override
