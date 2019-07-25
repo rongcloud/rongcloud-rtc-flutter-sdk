@@ -62,9 +62,9 @@ class _CallPageState extends State<CallPage> {
   }
 
   initialize() {
-    if(AppKey.isEmpty) {
+    if(AppKey.isEmpty || CurrentUserId.isEmpty || IMToken.isEmpty) {
       setState(() {
-        _addInfoString("没有设置 Appkey，请在 user_data.dart 中设置");
+        _addInfoString("没有设置用户数据，请在 user_data.dart 中设置");
         _addInfoString("RongCloud RTC 未初始化");
       });
       return;

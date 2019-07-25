@@ -22,6 +22,8 @@
 
 管理后台的 "音视频服务"->"服务设置" 开通音视频 RTC 3.0 ，开通两个小时后生效
 
+![](images/screenshot.jpg)
+
 # 依赖 RTC Flutter Plugin
 
 在项目的 `pubspec.yaml` 中写如下依赖
