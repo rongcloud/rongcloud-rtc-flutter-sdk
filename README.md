@@ -22,13 +22,25 @@
 
 管理后台的 "音视频服务"->"服务设置" 开通音视频 RTC 3.0 ，开通两个小时后生效
 
+# 依赖 RTC Flutter Plugin
+
+在项目的 `pubspec.yaml` 中写如下依赖
+
+```
+dependencies:
+  flutter:
+    sdk: flutter
+
+  rongcloud_rtc_plugin: ^0.9.2
+```
 
 # 项目依赖关系
+
 
 ![](images/arch_dependency.png)
 
 
-如图 RTC 依赖于 IM 发送信令
+`如图 RTC 依赖于 IM 发送信令`
 
 # 业务流程
 
