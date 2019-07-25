@@ -36,6 +36,26 @@ dependencies:
   rongcloud_rtc_plugin: ^0.9.2
 ```
 
+iOS 需要在 Info.plist 中需要加入对相机和麦克风的权限申请
+
+```
+<key>NSCameraUsageDescription</key>
+<string>使用相机</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>使用麦克风</string>
+
+```
+还需要添加字段 `io.flutter.embedded_views_preview` 值为 `YES`
+
+Android 需要在 AndroidManifest.xml 文件中声明对相机和麦克风的权限
+
+```
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+```
+
 # 项目依赖关系
 
 
@@ -129,6 +149,6 @@ RongRTCEngine.renderRemoteVideo(userId, viewId);
 
 # 常见问题
 
-## iOS 使用 Platform View 时报错：`[VERBOSE-2:platform_view_layer.cc(28)] Trying to embed a platform view but the PaintContext does not support embedding`
+## iOS 无法加载视频页面并报错：`[VERBOSE-2:platform_view_layer.cc(28)] Trying to embed a platform view but the PaintContext does not support embedding`
 
 打开需要使用 Platform View 的 iOS 工程，在`Info.plist`中添加字段`io.flutter.embedded_views_preview`，其值为`YES`。
