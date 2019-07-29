@@ -8,7 +8,7 @@
 
 [融云 Android RTC 文档](https://www.rongcloud.cn/docs/android_RTClib.html)
 
-源码地址 [Github](https://github.com/rongcloud/rongcloud-im-flutter-sdk)
+源码地址 [Github](https://github.com/rongcloud/rongcloud-rtc-flutter-sdk)
 
 # 前期准备
 
