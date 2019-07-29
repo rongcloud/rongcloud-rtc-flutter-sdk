@@ -12,7 +12,7 @@
 
 ## 1 申请开发者账号
 
-登录[融云官网](https://www.rongcloud.cn)申请开发者账号
+[融云官网](https://developer.rongcloud.cn/signup/?utm_source=RTCfluttergithub&utm_term=RTCsign)申请开发者账号
 
 通过管理后台的 "基本信息"->"App Key" 获取 appkey
 
