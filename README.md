@@ -16,7 +16,7 @@
 
 [融云官网](https://developer.rongcloud.cn/signup/?utm_source=RTCfluttergithub&utm_term=RTCsign)申请开发者账号
 
-通过管理后台的 "基本信息"->"App Key" 获取 appkey
+通过管理后台的 "基本信息"->"App Key" 获取 AppKey
 
 通过管理后台的 "IM 服务"—>"API 调用"->"用户服务"->"获取 Token"，通过用户 id 获取 IMToken
 
@@ -151,6 +151,6 @@ RongRTCEngine.renderRemoteVideo(userId, viewId);
 
 # 常见问题
 
-## iOS 无法加载视频页面并报错：`[VERBOSE-2:platform_view_layer.cc(28)] Trying to embed a platform view but the PaintContext does not support embedding`
+## iOS 无法加载视频页面并报错：[VERBOSE-2:platform_view_layer.cc(28)] Trying to embed a platform view but the PaintContext does not support embedding
 
-打开需要使用 Platform View 的 iOS 工程，在`Info.plist`中添加字段`io.flutter.embedded_views_preview`，其值为`YES`。
+打开 iOS 工程，在`Info.plist`中添加字段`io.flutter.embedded_views_preview`，其值为`YES`。
