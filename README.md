@@ -66,27 +66,38 @@ Android 需要在 AndroidManifest.xml 文件中声明对相机和麦克风的权
 
 `如图 RTC 依赖于 IM 发送信令`
 
-# 业务流程
+# 处理流程
 
-![](images/app_rtc.png)
+## 1.用户加入房间，渲染并发布流的处理过程
+
+![](images/app_rtc1.png)
+
+## 2.渲染已经在房间的远端用户的处理过程
+
+![](images/app_rtc2.png)
+
+## 3.渲染后续进入房间的远端用户的处理过程
+
+![](images/app_rtc3.png)
 
 # 接口说明
 
+## 1.用户加入房间，渲染并发布流
 
-## 1.初始化 SDK
+### 1.1.初始化 IM SDK
 
 ```
 RongcloudImPlugin.init(RongAppKey);
 ```
 
-## 2.连接 IM 
+### 1.2.连接 IM
 
 ```
 int rc = await RongcloudImPlugin.connect(IMToken);
 print("连接 im " + rc.toString());
 ```
 
-## 3.加入 RTC 房间
+### 1.3.加入 RTC 房间
 
 ```
 RongRTCEngine.joinRTCRoom(this.roomId,(int code) {
@@ -94,23 +105,22 @@ RongRTCEngine.joinRTCRoom(this.roomId,(int code) {
 });
 ```
 
-## 4.获取原生平台的 PlatformView
+### 1.4.获取 native 待渲染视频的 view
 
 ```
-Widget view = RongRTCEngine.createPlatformView("userId", 200, 300, (int viewId) {
+Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
       
 });
 
 ```
 
-## 5.渲染当前用户的视频
+### 1.5.渲染当前用户音视频流到 view 上
 
 ```
 RongRTCEngine.renderLocalVideo(viewId);
 ```
 
-
-## 6.发布当前用户音视频流
+### 1.6.发布当前用户音视频流
 
 ```
 RongRTCEngine.publishAVStream((int code) {
@@ -118,7 +128,101 @@ RongRTCEngine.publishAVStream((int code) {
 });
 ```
 
-## 7.取消发布当前用户音视频流
+## 2.渲染已经在房间的远端用户
+
+### 2.1.获取已经在房间里的远端用户列表
+
+```
+List userIds = await RongRTCEngine.getRemoteUsers(this.roomId);
+```
+
+### 2.2.订阅远端用户的音视频流
+如果有多人存在，需要循环订阅
+
+```
+RongRTCEngine.subscribeAVStream(userId,(int code) {
+      
+});
+```
+
+### 2.3.获取 native 待渲染视频的 view
+
+```
+Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
+      
+});
+
+```
+
+### 2.4.渲染远端用户的音视频流到 view 上
+
+```
+RongRTCEngine.renderRemoteVideo(userId, viewId,RongRTCVodioFillMode.Fill);
+```
+
+## 3.渲染后续进入房间的远端用户
+
+### 3.1.监听远端用户加入的回调
+
+`当用户加入的时候，不要做订阅渲染的处理`，因为此时该用户可能刚加入房间成功，但是尚未发布音视频流
+
+```
+RongRTCEngine.onUserJoined = (String userId) {
+    
+};
+```
+
+### 3.2.监听远端用户发布流的回调
+
+
+```
+RongRTCEngine.onUserStreamPublished = (String userId) {
+  
+};
+```
+
+### 3.3.远端用户发布流成功，则通过 userId 订阅该用户的音视频流
+
+```
+RongRTCEngine.subscribeAVStream(userId,(int code) {
+      
+});
+```
+
+
+### 3.4.获取 native 待渲染视频的 view
+
+```
+Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
+      
+});
+
+```
+
+### 3.5.渲染该用户的音视频流到 view 上
+
+```
+RongRTCEngine.renderRemoteVideo(userId, viewId,RongRTCVodioFillMode.Fill);
+```
+
+
+
+## 其他接口
+
+## 配置接口
+配置分辨率，默认为 640x480
+
+```
+RongRTCEngine.config(RongRTCConfig.defaultConfig());
+```
+
+## 离开房间
+
+```
+RongRTCEngine.leaveRTCRoom(this.roomId,null);
+```
+
+## 取消发布当前用户音视频流
 
 ```
 RongRTCEngine.unpublishAVStream((int code) {
@@ -127,15 +231,7 @@ RongRTCEngine.unpublishAVStream((int code) {
 
 ```
 
-## 8.订阅远端用户的音视频流
-
-```
-RongRTCEngine.subscribeAVStream(userId,(int code) {
-      
-});
-```
-
-## 9.取消订阅远端用户的音视频流
+## 取消订阅远端用户的音视频流
 
 ```
 RongRTCEngine.unsubscribeAVStream(userId,(int code) {
@@ -143,11 +239,32 @@ RongRTCEngine.unsubscribeAVStream(userId,(int code) {
 });
 ```
 
-## 10.渲染远端用户的视频
+## 当前用户静音
 
 ```
-RongRTCEngine.renderRemoteVideo(userId, viewId);
+RongRTCEngine.muteLocalAudio(this.muted);
 ```
+
+<!--## 切换两个用户视频
+大小视频窗口切换
+
+```
+RongRTCEngine.exchangeVideo(mainSession.viewId, _getVideoSession(userId).viewId);
+```-->
+
+## 切换本地摄像头
+
+```
+RongRTCEngine.switchCamera();
+```
+
+## 移除渲染视频的 view
+
+```
+RongRTCEngine.removePlatformView(viewId);
+```
+
+更多接口[请参考源码](https://github.com/rongcloud/rongcloud-rtc-flutter-sdk)
 
 # 常见问题
 
