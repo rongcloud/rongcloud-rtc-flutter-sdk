@@ -6,3 +6,5 @@ pubspec.lock
 
 android/.classpath
 android/.project
+.idea
+.idea/*
