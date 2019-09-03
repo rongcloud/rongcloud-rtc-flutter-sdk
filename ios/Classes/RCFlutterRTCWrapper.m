@@ -39,6 +39,8 @@
         [self joinRTCRoom:call.arguments result:result];
     }else if([RCFlutterRTCMethodKeyLeaveRTCRoom isEqualToString:call.method]) {
         [self leaveRTCRoom:call.arguments result:result];
+    }else if([RCFlutterRTCMethodKeyStartCapture isEqualToString:call.method]) {
+        [self startCapture];
     }else if([RCFlutterRTCMethodKeyPublishAVStream isEqualToString:call.method]) {
         [self publishAVStream:result];
     }else if([RCFlutterRTCMethodKeyUnpublishAVStream isEqualToString:call.method]) {
@@ -117,6 +119,11 @@
     }
 }
 
+- (void)startCapture {
+    [self.capturer setCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
+    [self.capturer startCapture];
+}
+
 - (void)publishAVStream:(FlutterResult )result {
     NSString *LOG_TAG = @"publishAVStream";
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start",LOG_TAG]];
@@ -169,9 +176,6 @@
         RongRTCLocalVideoView *localView = (RongRTCLocalVideoView *)view.renderView;
         localView.fillMode = fileMode;
         [self.capturer setVideoRender:localView];
-        
-        [self.capturer setCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
-        [self.capturer startCapture];
     }
 }
 

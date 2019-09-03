@@ -60,6 +60,8 @@ public class RCFlutterRTCWrapper {
             joinRTCRoom(call.arguments,result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.LeaveRTCRoom)) {
             leaveRTCRoom(call.arguments,result);
+        }else if(call.method.equals(RCFlutterRTCMethodKey.StartCapture)) {
+            startCapture();
         }else if(call.method.equals(RCFlutterRTCMethodKey.PublishAVStream)) {
             publishAVStream(result);
         }else if(call.method.equals(RCFlutterRTCMethodKey.UnpublishAVStream)) {
@@ -146,6 +148,16 @@ public class RCFlutterRTCWrapper {
         }
     }
 
+    private void startCapture() {
+        getCapture().setRTCConfig(RCFlutterRTCConfig.getInstance().getRTCConfig());
+
+        boolean cameraEnable = RCFlutterRTCConfig.getInstance().isCameraEnable();
+        if(!cameraEnable) {
+            getCapture().muteLocalVideo(true);
+        }
+        getCapture().startCameraCapture();
+    }
+
     private void publishAVStream(final MethodChannel.Result result) {
         final String LOG_TAG = "publishAVStream " ;
         RCLog.i(LOG_TAG+" start");
@@ -203,9 +215,7 @@ public class RCFlutterRTCWrapper {
             //todo
             if(view != null) {
                 view.setScalingType(_convertFillMode(mode));
-                getCapture().setRTCConfig(RCFlutterRTCConfig.getInstance().getRTCConfig());
                 getCapture().setRongRTCVideoView(view);
-                getCapture().startCameraCapture();
             }
         }
     }

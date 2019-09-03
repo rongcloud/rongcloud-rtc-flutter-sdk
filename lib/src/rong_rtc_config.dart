@@ -1,17 +1,27 @@
 class RongRTCConfig {
   
+  ///是否打开摄像头，默认值 true 表示打开摄像头，如果为 false 只会发布音频流
+  bool cameraEnable;
+
   ///摄像头输出的视频分辨率，默认 640x480
   ///参见 [RongRTCVideoSize]
   int videoSize;
 
   static RongRTCConfig defaultConfig(){
       RongRTCConfig config = new RongRTCConfig();
+      config.cameraEnable = true;
       config.videoSize = RongRTCVideoSize.Size640x480;
       return config;
   }
 
   Map toMap(){
-    Map map = {"videoSize":videoSize};
+    if(cameraEnable == null) {
+      cameraEnable = true;
+    }
+    if(videoSize == null) {
+      videoSize = RongRTCVideoSize.Size640x480;
+    }
+    Map map = {"videoSize":videoSize,"cameraEnable":cameraEnable};
     return map;
   }
 }

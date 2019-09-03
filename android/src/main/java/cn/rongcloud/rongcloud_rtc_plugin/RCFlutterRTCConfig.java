@@ -12,6 +12,8 @@ public class RCFlutterRTCConfig {
         rtcConfig = new RongRTCConfig.Builder().build();
     }
 
+    private boolean cameraEnable;
+
     private static class SingleHolder {
         static RCFlutterRTCConfig instance = new RCFlutterRTCConfig();
     }
@@ -22,12 +24,17 @@ public class RCFlutterRTCConfig {
 
     public void updateParam(Map map) {
         int videoSize = (Integer) map.get("videoSize");
+        cameraEnable = (Boolean) map.get("cameraEnable");
 
         rtcConfig.setVideoProfile(genVideoProfile(videoSize));
     }
 
     public RongRTCConfig getRTCConfig() {
         return rtcConfig;
+    }
+
+    public boolean isCameraEnable() {
+        return cameraEnable;
     }
 
     private RongRTCConfig.RongRTCVideoProfile genVideoProfile(int value) {

@@ -2,6 +2,7 @@ class RCRTCMethodKey {
   static const String Config = "Config";
   static const String JoinRTCRoom = "JoinRTCRoom";
   static const String LeaveRTCRoom = "LeaveRTCRoom";
+  static const String StartCapture = "StartCapture";
   static const String PublishAVStream = "PublishAVStream";
   static const String UnpublishAVStream = "UnpublishAVStream";
   static const String RenderLocalVideo = "RenderLocalVideo";

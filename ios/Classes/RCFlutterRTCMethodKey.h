@@ -12,6 +12,7 @@
 static NSString * RCFlutterRTCMethodKeyConfig = @"Config";
 static NSString * RCFlutterRTCMethodKeyJoinRTCRoom = @"JoinRTCRoom";
 static NSString * RCFlutterRTCMethodKeyLeaveRTCRoom = @"LeaveRTCRoom";
+static NSString * RCFlutterRTCMethodKeyStartCapture = @"StartCapture";
 static NSString * RCFlutterRTCMethodKeyPublishAVStream = @"PublishAVStream";
 static NSString * RCFlutterRTCMethodKeyUnpublishAVStream = @"UnpublishAVStream";
 static NSString * RCFlutterRTCMethodKeyRenderLocalVideo = @"RenderLocalVideo";

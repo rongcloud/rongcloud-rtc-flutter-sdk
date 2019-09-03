@@ -49,6 +49,13 @@ class RongRTCEngine {
     return userIds;
   }
 
+  ///开始采集数据
+  ///
+  ///默认采集音视频，如果 [config] 中关闭摄像头，则只会收集音频
+  static void startCapture() {
+    _channel.invokeMethod(RCRTCMethodKey.StartCapture);
+  }
+
   /// 渲染本地视频
   /// 
   /// 必须要先于 [publishAVStream] 调用

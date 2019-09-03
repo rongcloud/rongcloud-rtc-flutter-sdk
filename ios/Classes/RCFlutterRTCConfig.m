@@ -32,6 +32,7 @@
 - (void)updateParam:(NSDictionary *)dic {
     int videoSize = [dic[@"videoSize"] intValue];
     self.captureParam.videoSizePreset = [self genVideoSizePreset:videoSize];
+    self.captureParam.turnOnCamera = [dic[@"cameraEnable"] boolValue];
 }
 
 - (RongRTCVideoSizePreset)genVideoSizePreset:(int)value {

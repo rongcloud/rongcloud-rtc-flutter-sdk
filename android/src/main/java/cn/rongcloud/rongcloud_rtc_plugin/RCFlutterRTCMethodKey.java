@@ -4,6 +4,7 @@ public class RCFlutterRTCMethodKey {
     static String Config = "Config";
     static String JoinRTCRoom = "JoinRTCRoom";
     static String LeaveRTCRoom = "LeaveRTCRoom";
+    static String StartCapture = "StartCapture";
     static String PublishAVStream = "PublishAVStream";
     static String UnpublishAVStream = "UnpublishAVStream";
     static String RenderLocalVideo = "RenderLocalVideo";

@@ -71,7 +71,10 @@ class _CallPageState extends State<CallPage> {
     }
 
     ///配置默认的参数
-    RongRTCEngine.config(RongRTCConfig.defaultConfig());
+    RongRTCConfig conf = RongRTCConfig.defaultConfig();
+    // 关闭摄像头则只会发布音频
+    // conf.cameraEnable = false;
+    RongRTCEngine.config(conf);
 
     _addRTCEventHandlers();
     _onJoinRTCRoom();
@@ -184,6 +187,8 @@ class _CallPageState extends State<CallPage> {
 
   ///渲染本地用户视频流
   _renderLocalUser() {
+    //开始采集音视频数据，如果摄像头关闭，则只会采集语音
+    RongRTCEngine.startCapture();
     Widget videoView =  RongRTCEngine.createPlatformView(CurrentUserId,screenWidth.toInt(),screenHeight.toInt(),(viewId) {
         setState(() {
           mainSession.viewId = viewId;
