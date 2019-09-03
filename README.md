@@ -66,7 +66,7 @@ Android 需要在 AndroidManifest.xml 文件中声明对相机和麦克风的权
 
 `如图 RTC 依赖于 IM 发送信令`
 
-# 处理流程
+# 音视频模式处理流程
 
 ## 1.用户加入房间，渲染并发布流的处理过程
 
@@ -80,7 +80,7 @@ Android 需要在 AndroidManifest.xml 文件中声明对相机和麦克风的权
 
 ![](images/app_rtc3.png)
 
-# 接口说明
+# 音视频模式接口说明
 
 ## 1.用户加入房间，渲染并发布流
 
@@ -105,7 +105,13 @@ RongRTCEngine.joinRTCRoom(this.roomId,(int code) {
 });
 ```
 
-### 1.4.获取 native 待渲染视频的 view
+### 1.4.开始采集音视频
+
+```
+RongRTCEngine.startCapture();
+```
+
+### 1.5.获取 native 待渲染视频的 view
 
 ```
 Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
@@ -114,13 +120,13 @@ Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
 
 ```
 
-### 1.5.渲染当前用户音视频流到 view 上
+### 1.6.渲染当前用户音视频流到 view 上
 
 ```
 RongRTCEngine.renderLocalVideo(viewId);
 ```
 
-### 1.6.发布当前用户音视频流
+### 1.7.发布当前用户音视频流
 
 ```
 RongRTCEngine.publishAVStream((int code) {
@@ -205,7 +211,9 @@ Widget view = RongRTCEngine.createPlatformView(userId, 200, 300, (int viewId) {
 RongRTCEngine.renderRemoteVideo(userId, viewId,RongRTCVodioFillMode.Fill);
 ```
 
+# 纯音频模式处理流程
 
+如果只使用纯音频模式，请参考[此文档](doc/AUDIO_ONLY.md)
 
 ## 其他接口
 
