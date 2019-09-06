@@ -1,7 +1,12 @@
+## 0.9.7
+
+* 与依赖的 `rongcloud_im_plugin` 版本保持一致
+
+
 ## 0.9.6+1
 
 * 增加纯音频功能
-* 增加纯音频文档
+* 增加[纯音频文档](https://github.com/rongcloud/rongcloud-rtc-flutter-sdk/blob/master/doc/AUDIO_ONLY.md)
 
 ## 0.9.6
 
