@@ -1,3 +1,7 @@
+## 1.0.2
+
+* 与依赖的 `rongcloud_im_plugin` 版本保持一致
+
 ## 1.0.1
 
 * 与依赖的 `rongcloud_im_plugin` 版本保持一致
