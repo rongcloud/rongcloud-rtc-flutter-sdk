@@ -1,4 +1,4 @@
-package cn.rongcloud.rongcloud_rtc_plugin;
+package io.rong.flutter.rtclib;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;

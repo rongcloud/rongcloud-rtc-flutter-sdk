@@ -1,4 +1,4 @@
-package cn.rongcloud.rongcloud_rtc_plugin;
+package io.rong.flutter.rtclib;
 
 public class RCFlutterRTCMethodKey {
     static String Config = "Config";

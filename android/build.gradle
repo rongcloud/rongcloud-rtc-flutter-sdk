@@ -1,4 +1,4 @@
-group 'cn.rongcloud.rongcloud_rtc_plugin'
+group 'io.rong.flutter.rtclib'
 version '1.0-SNAPSHOT'
 
 buildscript {
