@@ -1,3 +1,7 @@
+## 1.1.0
+`从 1.1.0 开始为方便排查 Android 问题将 RTC Flutter SDK Android 的包名改为 io.rong.flutter.rtclib`
+* 与依赖的 `rongcloud_im_plugin` 版本保持一致
+
 ## 1.0.7
 
 * 与依赖的 `rongcloud_im_plugin` 版本保持一致

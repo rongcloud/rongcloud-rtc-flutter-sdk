@@ -35,7 +35,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  rongcloud_rtc_plugin: ^1.0.7
+  rongcloud_rtc_plugin: ^1.1.0
 ```
 
 iOS 需要在 Info.plist 中需要加入对相机和麦克风的权限申请
@@ -57,6 +57,8 @@ Android 需要在 AndroidManifest.xml 文件中声明对相机和麦克风的权
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
 ```
+
+> **从 1.1.0 开始为方便排查 Android 问题将 RTC Flutter SDK Android 的包名改为 io.rong.flutter.rtclib**
 
 # 项目依赖关系
 

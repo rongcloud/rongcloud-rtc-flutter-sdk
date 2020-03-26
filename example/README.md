@@ -4,9 +4,9 @@
 
 如何运行该项目？
 
-终端进入项目路径执行下面命令获取相关的依赖
+1. 需要将 `user_data.dart` 中的 `AppKey` 修改为在融云后台申请的 `Appkey`，`CurrentUserId` 和 `IMToken` 修改为创建用户时的 `userId` 和 `token`
 
-`$ flutter packages get`
+2. 终端进入项目路径执行下面命令获取相关的依赖 `$ flutter packages get`
 
 # iOS 项目
 
