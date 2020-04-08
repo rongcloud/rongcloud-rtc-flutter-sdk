@@ -2,9 +2,12 @@
 android/.settings/
 .packages
 example/pubspec.lock
+example/.flutter-plugins-dependencies
 pubspec.lock
 
 android/.classpath
 android/.project
 .idea
 .idea/*
+
+.dart_tool/
