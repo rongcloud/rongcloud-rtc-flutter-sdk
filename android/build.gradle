@@ -38,5 +38,5 @@ android {
 dependencies {
     //implementation 'cn.rongcloud.sdk:im_lib:2.9.19'
     api project(':rongcloud_im_plugin')
-    implementation 'cn.rongcloud.rtclib:rtc_lib:3.0.7'
+    implementation 'cn.rongcloud.rtclib:rtc_lib:3.2.0'
 }

@@ -25,8 +25,8 @@ public class RCFlutterRTCConfig {
     public void updateParam(Map map) {
         int videoSize = (Integer) map.get("videoSize");
         cameraEnable = (Boolean) map.get("cameraEnable");
-
-        rtcConfig.setVideoProfile(genVideoProfile(videoSize));
+        RongRTCConfig.Builder confBuild = new RongRTCConfig.Builder().setVideoProfile(genVideoProfile(videoSize));
+        rtcConfig = confBuild.build();
     }
 
     public RongRTCConfig getRTCConfig() {

@@ -319,7 +319,7 @@ public class RCFlutterRTCWrapper {
                 return;
             }
             RongRTCRemoteUser user = this.rtcRoom.getRemoteUser(userId);
-            this.rtcRoom.unSubscribeAVStream(user.getRemoteAVStreams(), new RongRTCResultUICallBack() {
+            this.rtcRoom.unsubscribeAVStream(user.getRemoteAVStreams(), new RongRTCResultUICallBack() {
                 @Override
                 public void onUiSuccess() {
                     RCLog.i(LOG_TAG + " success ");
@@ -434,24 +434,6 @@ public class RCFlutterRTCWrapper {
         }
 
         @Override
-        public void onRemoteUserUnPublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
-            final String userId = rongRTCRemoteUser.getUserId();
-            mMainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(userId != null) {
-                        Map map = new HashMap();
-                        map.put("userId",userId);
-                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
-                    }
-                    String LOG_TAG = "onUserStreamUnpublished ";
-                    RCLog.i(LOG_TAG + "user:"+userId);
-
-                }
-            });
-        }
-
-        @Override
         public void onRemoteUserAudioStreamMute(RongRTCRemoteUser rongRTCRemoteUser, RongRTCAVInputStream rongRTCAVInputStream, boolean b) {
             final String userId = rongRTCRemoteUser.getUserId();
             final boolean enable = b;
@@ -485,6 +467,24 @@ public class RCFlutterRTCWrapper {
                         methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserVideoEnabledCallBack,map);
                     }
                     String LOG_TAG = "onUserVideoEnabled ";
+                    RCLog.i(LOG_TAG + "user:"+userId);
+
+                }
+            });
+        }
+
+        @Override
+        public void onRemoteUserUnpublishResource(RongRTCRemoteUser rongRTCRemoteUser, List<RongRTCAVInputStream> list) {
+            final String userId = rongRTCRemoteUser.getUserId();
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(userId != null) {
+                        Map map = new HashMap();
+                        map.put("userId",userId);
+                        methodChannel.invokeMethod(RCFlutterRTCMethodKey.RemoteUserUnpublishStreamsCallBack,map);
+                    }
+                    String LOG_TAG = "onUserStreamUnpublished ";
                     RCLog.i(LOG_TAG + "user:"+userId);
 
                 }
