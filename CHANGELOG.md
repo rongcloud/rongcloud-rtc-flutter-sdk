@@ -1,3 +1,8 @@
+## 2.0.0+1
+
+* 适配 RTC 3.2.2 版本
+* 与依赖的 `rongcloud_im_plugin` 版本保持一致
+
 ## 2.0.0
 
 * 与依赖的 `rongcloud_im_plugin` 版本保持一致
