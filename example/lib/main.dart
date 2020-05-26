@@ -24,10 +24,11 @@ class _MyAppState extends State<MyApp> {
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
-    RongcloudImPlugin.init(AppKey);
+    RongIMClient.init(AppKey);
 
-    int rc = await RongcloudImPlugin.connect(IMToken);
-    print("连接 im " + rc.toString());
+    RongIMClient.connect(IMToken, (code, userId) => {
+      print("连接 im " + code.toString() + " " + userId.toString())
+    });
 
 
     // If the widget was removed from the tree while the asynchronous platform

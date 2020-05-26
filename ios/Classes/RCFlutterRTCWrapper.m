@@ -16,7 +16,6 @@
 @interface RCFlutterRTCWrapper ()<RongRTCRoomDelegate>
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, strong) RongRTCRoom *rtcRoom;
-@property (nonatomic, strong) RongRTCAVCapturer *capturer;
 @end
 
 @implementation RCFlutterRTCWrapper
@@ -120,15 +119,16 @@
 }
 
 - (void)startCapture {
-    [self.capturer setCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
-    [self.capturer startCapture];
+    
+    [[RongRTCVideoCapturer sharedInstance] setVideoCaptureParam:[RCFlutterRTCConfig sharedConfig].captureParam];
+    [[RongRTCVideoCapturer sharedInstance] startCapture];
 }
 
 - (void)publishAVStream:(FlutterResult )result {
     NSString *LOG_TAG = @"publishAVStream";
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start",LOG_TAG]];
     if(!self.rtcRoom) {
-        result(@(RongRTCCodeNotInRoom));
+        result(@(RongRTCCodeNotInRTCRoom));
         [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
@@ -145,7 +145,7 @@
     NSString *LOG_TAG = @"unpublishAVStream";
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start",LOG_TAG]];
     if(!self.rtcRoom) {
-        result(@(RongRTCCodeNotInRoom));
+        result(@(RongRTCCodeNotInRTCRoom));
         [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
         return;
     }
@@ -175,7 +175,7 @@
     if(view) {
         RongRTCLocalVideoView *localView = (RongRTCLocalVideoView *)view.renderView;
         localView.fillMode = fileMode;
-        [self.capturer setVideoRender:localView];
+        [[RongRTCVideoCapturer sharedInstance] setVideoRender:localView];
     }
 }
 
@@ -244,7 +244,7 @@
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         BOOL enable = [dic[@"enable"] boolValue];
-        [self.capturer useSpeaker:enable];
+        [[RongRTCAudioCapturer sharedInstance] useSpeaker:enable];
     }
 }
 
@@ -253,7 +253,7 @@
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         if(!self.rtcRoom) {
-            result(@(RongRTCCodeNotInRoom));
+            result(@(RongRTCCodeNotInRTCRoom));
             [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
             return;
         }
@@ -265,7 +265,7 @@
                 [RCRTCLog i:[NSString stringWithFormat:@"%@ result:%@",LOG_TAG,@(desc)]];
             }];
         }else {
-            result(@(RongRTCCodeInvalidUserId));
+            result(@(40004));
             [RCRTCLog e:[NSString stringWithFormat:@"%@ user not in room:%@",LOG_TAG,userId]];
         }
     }
@@ -276,7 +276,7 @@
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
     if([arg isKindOfClass:[NSString class]]) {
         if(!self.rtcRoom) {
-            result(@(RongRTCCodeNotInRoom));
+            result(@(RongRTCCodeNotInRTCRoom));
             [RCRTCLog e:[NSString stringWithFormat:@"%@ not in room",LOG_TAG]];
             return;
         }
@@ -291,7 +291,7 @@
                 }];
             }];
         }else {
-            result(@(RongRTCCodeInvalidUserId));
+            result(@(40004));
             [RCRTCLog e:[NSString stringWithFormat:@"%@ user not in room:%@",LOG_TAG,userId]];
         }
     }
@@ -332,7 +332,8 @@
     if([arg isKindOfClass:[NSDictionary class]]) {
         NSDictionary *dic = (NSDictionary *)arg;
         BOOL muted = [dic[@"muted"] boolValue];
-        [self.capturer setMicrophoneDisable:muted];
+        
+        [[RongRTCAudioCapturer sharedInstance] setMicrophoneDisable:muted];
     }
 }
 
@@ -359,7 +360,7 @@
 - (void)switchCamera:(id)arg {
     NSString *LOG_TAG = @"switchCamera";
     [RCRTCLog i:[NSString stringWithFormat:@"%@ start param:%@",LOG_TAG,arg]];
-    [self.capturer switchCamera];
+    [[RongRTCVideoCapturer sharedInstance] switchCamera];
 }
 
 #pragma mark - RongRTCRoomDelegate
@@ -502,11 +503,4 @@
     }
 }
 
-#pragma mark - getter
-- (RongRTCAVCapturer *)capturer {
-    if(!_capturer) {
-        _capturer = [RongRTCAVCapturer sharedInstance];
-    }
-    return _capturer;
-}
 @end
