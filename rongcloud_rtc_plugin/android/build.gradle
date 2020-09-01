@@ -1,0 +1,50 @@
+group 'io.rong.flutter.rtclib'
+version '1.0'
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.6.3'
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven {url  "https://dl.bintray.com/rongcloud/maven"}
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 21
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+
+    sourceSets.main{
+        jniLibs.srcDir 'libs'
+        jni.srcDirs = []
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'cn.rongcloud.sdk:im_lib:4.0.1.1'
+//    implementation 'cn.rongcloud.sdk:rtc_lib:4.0.1.1'
+    implementation 'com.alibaba:fastjson:1.1.71.android'
+}

@@ -1,6 +1,3 @@
-group 'io.rong.flutter.rtclib'
-version '1.0-SNAPSHOT'
-
 buildscript {
     repositories {
         google()
@@ -8,35 +5,25 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.android.tools.build:gradle:3.5.0'
     }
 }
 
-rootProject.allprojects {
+allprojects {
     repositories {
         google()
         jcenter()
-        maven {url  "https://dl.bintray.com/rongcloud/maven"}
     }
 }
 
-apply plugin: 'com.android.library'
-
-android {
-    compileSdkVersion 28
-
-    defaultConfig {
-        minSdkVersion 16
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    }
-    lintOptions {
-        disable 'InvalidPackage'
-    }
-
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
 }
 
-dependencies {
-    //implementation 'cn.rongcloud.sdk:im_lib:2.9.19'
-    api project(':rongcloud_im_plugin')
-    implementation 'cn.rongcloud.rtclib:rtc_lib:3.2.0'
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
