@@ -1,14 +1,6 @@
 package io.rong.flutter.rtclib.agent.room;
 
 import androidx.annotation.NonNull;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import cn.rongcloud.rtc.api.RCRTCRemoteUser;
 import cn.rongcloud.rtc.api.RCRTCRoom;
 import cn.rongcloud.rtc.api.callback.IRCRTCRoomEventsListener;
@@ -16,6 +8,9 @@ import cn.rongcloud.rtc.api.stream.RCRTCAudioInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.base.RCRTCMediaType;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -26,6 +21,9 @@ import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoInputStream;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RCFlutterRoom implements MethodCallHandler {
 
@@ -72,7 +70,13 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("streamList", streamList);
             String jsonStr =
                 JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            channel.invokeMethod("onRemoteUserPublishResource", jsonStr);
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onRemoteUserPublishResource", jsonStr);
+                  }
+                });
           }
 
           @Override
@@ -93,7 +97,13 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("enable", enable);
             String jsonStr =
                 JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            channel.invokeMethod("onRemoteUserMuteAudio", jsonStr);
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onRemoteUserMuteAudio", jsonStr);
+                  }
+                });
           }
 
           @Override
@@ -114,7 +124,13 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("enable", enable);
             String jsonStr =
                 JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            channel.invokeMethod("onRemoteUserMuteVideo", jsonStr);
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onRemoteUserMuteVideo", jsonStr);
+                  }
+                });
           }
 
           @Override
@@ -140,7 +156,13 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("streamList", streamList);
             String jsonStr =
                 JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            channel.invokeMethod("onRemoteUserUnpublishResource", jsonStr);
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onRemoteUserUnpublishResource", jsonStr);
+                  }
+                });
           }
 
           @Override
@@ -150,7 +172,13 @@ public class RCFlutterRoom implements MethodCallHandler {
             remoteUserList.add(remoteUser);
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
-            channel.invokeMethod("onUserJoined", jsonObj.toJSONString());
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onUserJoined", jsonObj.toJSONString());
+                  }
+                });
           }
 
           @Override
@@ -161,7 +189,13 @@ public class RCFlutterRoom implements MethodCallHandler {
                 remoteUserList.remove(remoteUser);
                 JSONObject jsonObj = new JSONObject();
                 jsonObj.put("remoteUser", remoteUser);
-                channel.invokeMethod("onUserLeft", jsonObj.toJSONString());
+                UIThreadHandler.post(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        channel.invokeMethod("onUserLeft", jsonObj.toJSONString());
+                      }
+                    });
                 return;
               }
             }
@@ -176,7 +210,13 @@ public class RCFlutterRoom implements MethodCallHandler {
                 remoteUserList.remove(RCFlutterRemoteUser);
                 JSONObject jsonObj = new JSONObject();
                 jsonObj.put("remoteUser", RCFlutterRemoteUser);
-                channel.invokeMethod("onUserOffline", jsonObj.toJSONString());
+                UIThreadHandler.post(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        channel.invokeMethod("onUserOffline", jsonObj.toJSONString());
+                      }
+                    });
                 return;
               }
             }
@@ -187,7 +227,13 @@ public class RCFlutterRoom implements MethodCallHandler {
           public void onLeaveRoom(int code) {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("code", code);
-            channel.invokeMethod("onLeaveRoom", jsonObj.toJSONString());
+            UIThreadHandler.post(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    channel.invokeMethod("onLeaveRoom", jsonObj.toJSONString());
+                  }
+                });
           }
         });
   }

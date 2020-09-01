@@ -46,12 +46,12 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
 
   private void startCamera(Result result) {
     cameraOutputStream.startCamera(null);
-    result.success(0);
+    UIThreadHandler.success(result, 0);
   }
 
   private void stopCamera(Result result) {
     cameraOutputStream.stopCamera();
-    result.success(0);
+    UIThreadHandler.success(result, 0);
   }
 
   private void switchCamera(Result result) {
@@ -72,6 +72,6 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
   private void enableTinyStream(MethodCall call, Result result) {
     boolean enabled = (boolean) call.arguments;
     cameraOutputStream.enableTinyStream(enabled);
-    result.success(null);
+    UIThreadHandler.success(result, null);
   }
 }

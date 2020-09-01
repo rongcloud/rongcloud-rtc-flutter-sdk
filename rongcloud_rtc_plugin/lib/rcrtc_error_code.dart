@@ -10,7 +10,8 @@ class RCRTCErrorCode {
 
 class RCRTCCodeResult<T> {
   int code;
+  String reason;
   T object;
 
-  RCRTCCodeResult(this.code, [this.object]);
+  RCRTCCodeResult(this.code, [this.object, this.reason]);
 }

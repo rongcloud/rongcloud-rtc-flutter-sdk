@@ -1,5 +1,6 @@
 PODS:
   - Flutter (1.0.0)
+  - JSONModel (1.8.0)
   - path_provider_linux (0.0.1):
     - Flutter
   - "permission_handler (5.0.1+1)":
@@ -9,19 +10,11 @@ PODS:
     - RongCloudIM/IMLib (= 4.0.2)
   - rongcloud_rtc_plugin (0.0.1):
     - Flutter
-    - RongCloudIM
-  - RongCloudIM (4.0.2):
-    - RongCloudIM/IMKit (= 4.0.2)
-    - RongCloudIM/IMLib (= 4.0.2)
-    - RongCloudIM/RongSticker (= 4.0.2)
-    - RongCloudIM/Sight (= 4.0.2)
-  - RongCloudIM/IMKit (4.0.2):
-    - RongCloudIM/IMLib
+    - JSONModel
+    - RongRTCLib (= 4.0.2)
   - RongCloudIM/IMLib (4.0.2)
-  - RongCloudIM/RongSticker (4.0.2):
-    - RongCloudIM/IMKit
-  - RongCloudIM/Sight (4.0.2):
-    - RongCloudIM/IMKit
+  - RongRTCLib (4.0.2):
+    - RongCloudIM/IMLib (~> 4.0.2)
   - shared_preferences (0.0.1):
     - Flutter
   - shared_preferences_linux (0.0.1):
@@ -44,7 +37,9 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - JSONModel
     - RongCloudIM
+    - RongRTCLib
 
 EXTERNAL SOURCES:
   Flutter:
@@ -68,11 +63,13 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  JSONModel: 02ab723958366a3fd27da57ea2af2113658762e9
   path_provider_linux: 4d630dc393e1f20364f3e3b4a2ff41d9674a84e4
   permission_handler: eac8e15b4a1a3fba55b761d19f3f4e6b005d15b6
   rongcloud_im_plugin: bcca07de0410936169503aeff97744ab556c47c6
-  rongcloud_rtc_plugin: 6344967ad7fc11e20a11667aaad30438608c1126
+  rongcloud_rtc_plugin: b40f99da9d231482e5af4162c69dfc75f22a158d
   RongCloudIM: 8a068b5c6bd6fb2e770a5f245fcd9d6832296515
+  RongRTCLib: d46b232eecf73f53176897d61ca05e63842c6b03
   shared_preferences: af6bfa751691cdc24be3045c43ec037377ada40d
   shared_preferences_linux: afefbfe8d921e207f01ede8b60373d9e3b566b78
   shared_preferences_macos: f3f29b71ccbb56bf40c9dd6396c9acf15e214087

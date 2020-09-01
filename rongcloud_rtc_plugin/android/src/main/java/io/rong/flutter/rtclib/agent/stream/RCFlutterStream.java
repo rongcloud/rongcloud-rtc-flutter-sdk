@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterStream implements MethodCallHandler {
 
@@ -58,16 +59,16 @@ public class RCFlutterStream implements MethodCallHandler {
   private void mute(MethodCall call, Result result) {
     boolean mute = (boolean) call.arguments;
     rtcStream.mute(mute);
-    result.success(0);
+    UIThreadHandler.success(result, 0);
   }
 
   private void getResourceState(Result result) {
     int stateValue = rtcStream.getResourceState().getValue();
-    result.success(stateValue);
+    UIThreadHandler.success(result, stateValue);
   }
 
   private void isMute(Result result) {
-    result.success(rtcStream.isMute());
+    UIThreadHandler.success(result, rtcStream.isMute());
   }
 
   @SuppressWarnings("unused")

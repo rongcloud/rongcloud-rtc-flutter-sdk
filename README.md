@@ -19,7 +19,7 @@
 
 * 遵循官方代码编写规范：https://dart.dev/guides/language/effective-dart/style
 * 上述文档中未说明部分，遵循 flutter 源码所使用规范。
-* IDE 格式化自动换行距离设置为 120。
+* IDE 格式化自动换行距离设置为 120，默认的 80 过于严苛，对主流显示器不友好。
 
 ## 注释规范：
 

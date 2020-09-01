@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
 import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterVideoInputStream extends RCFlutterInputStream {
 
@@ -33,6 +34,6 @@ public class RCFlutterVideoInputStream extends RCFlutterInputStream {
     int viewId = (int) call.arguments;
     RCFlutterVideoView videoView = RCFlutterVideoViewFactory.getInstance().getVideoView(viewId);
     videoInputStream.setVideoView(videoView.getNativeVideoView());
-    result.success(null);
+    UIThreadHandler.success(result, null);
   }
 }

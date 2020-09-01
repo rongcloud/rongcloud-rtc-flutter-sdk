@@ -15,6 +15,7 @@ import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
 import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
 
@@ -54,13 +55,13 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
             .setVideoResolution(JSON.parseObject(jsonStr, RCFlutterVideoStreamConfig.class).getVideoResolution())
             .build();
     videoOutputStream.setVideoConfig(rcrtcVideoStreamConfig);
-    result.success(null);
+    UIThreadHandler.success(result, null);
   }
 
   protected void setVideoView(MethodCall call, MethodChannel.Result result) {
     int viewId = (int) call.arguments;
     RCFlutterVideoView videoView = RCFlutterVideoViewFactory.getInstance().getVideoView(viewId);
     videoOutputStream.setVideoView(videoView.getNativeVideoView());
-    result.success(null);
+    UIThreadHandler.success(result, null);
   }
 }

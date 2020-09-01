@@ -18,6 +18,10 @@ public class UIThreadHandler {
         });
   }
 
+  public static void post(Runnable runnable){
+    mHandler.post(runnable);
+  }
+
   public static void error(Result result, String errorCode, String errorMessage) {
     mHandler.post(
         new Runnable() {

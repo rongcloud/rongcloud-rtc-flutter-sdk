@@ -1,5 +1,6 @@
 #import "RCFlutterRTCManager+VideoCapture.h"
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
 @implementation RCFlutterRTCManager (VideoCapture)
 
 - (RCRTCCameraOutputStream *)getRTCCameraOutputStream {
@@ -30,3 +31,5 @@
     [[RCRTCEngine sharedInstance].defaultVideoStream setIsMute:mute];
 }
 @end
+
+#pragma clang diagnostic pop

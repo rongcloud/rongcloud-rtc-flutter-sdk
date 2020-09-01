@@ -1,4 +1,6 @@
 #import "RCFlutterRTCManager+LocalUser.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-protocol-method-implementation"
 
 @implementation RCFlutterRTCManager (LocalUser)
 
@@ -24,3 +26,5 @@
 }
 
 @end
+
+#pragma clang diagnostic pop

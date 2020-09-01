@@ -135,7 +135,7 @@ public class RCFlutterLocalUser extends RCFlutterUser {
   //      streamList.add(flutterOutputStream);
   //      jsonStreams.add(JSON.toJSONString(flutterOutputStream));
   //    }
-  //    result.success(jsonStreams);
+  //    UIThreadHandler.success(result, jsonStreams);
   //  }
 
   public void publishDefaultStreams(final Result result) {
@@ -143,12 +143,12 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(0);
+            UIThreadHandler.success(result, 0);
           }
 
           @Override
           public void onFailed(RTCErrorCode code) {
-            result.success(code.getValue());
+            UIThreadHandler.success(result, code.getValue());
           }
         });
   }
@@ -160,7 +160,7 @@ public class RCFlutterLocalUser extends RCFlutterUser {
           @Override
           public void onSuccess(RCRTCLiveInfo info) {
 
-            result.success(JSON.toJSONString(new RCFlutterLiveInfo(bMsg, info)));
+            UIThreadHandler.success(result, JSON.toJSONString(new RCFlutterLiveInfo(bMsg, info)));
           }
 
           @Override
@@ -204,13 +204,13 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(0);
+            UIThreadHandler.success(result, 0);
           }
 
           @Override
           public void onFailed(RTCErrorCode rtcErrorCode) {
             //            String errorCode = String.valueOf(rtcErrorCode.getValue());
-            result.success(rtcErrorCode.getValue());
+            UIThreadHandler.success(result, rtcErrorCode.getValue());
           }
         });
   }
@@ -223,12 +223,12 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(0);
+            UIThreadHandler.success(result, 0);
           }
 
           @Override
           public void onFailed(RTCErrorCode rtcErrorCode) {
-            result.success(rtcErrorCode.getValue());
+            UIThreadHandler.success(result, rtcErrorCode.getValue());
           }
         });
   }
@@ -241,12 +241,12 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(0);
+            UIThreadHandler.success(result, 0);
           }
 
           @Override
           public void onFailed(RTCErrorCode rtcErrorCode) {
-            result.success(rtcErrorCode.getValue());
+            UIThreadHandler.success(result, rtcErrorCode.getValue());
           }
         });
   }
@@ -306,7 +306,7 @@ public class RCFlutterLocalUser extends RCFlutterUser {
 
     if (targetStreamList.size() != tempStreams.size()) { // todo 异步会怎样？
       RCFlutterDebugChecker.throwError("target stream not found!");
-      result.success(-1);
+      UIThreadHandler.success(result, -1);
     }
 
     if (targetStreamList.size() != 0) {
@@ -315,12 +315,12 @@ public class RCFlutterLocalUser extends RCFlutterUser {
           new IRCRTCResultCallback() {
             @Override
             public void onSuccess() {
-              result.success(0);
+              UIThreadHandler.success(result, 0);
             }
 
             @Override
             public void onFailed(RTCErrorCode code) {
-              result.success(code.getValue());
+              UIThreadHandler.success(result, code.getValue());
             }
           });
     }

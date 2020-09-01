@@ -73,7 +73,7 @@
 - (NSMutableDictionary *)toDesc {
     NSMutableDictionary *roomDic = [NSMutableDictionary dictionary];
     NSMutableDictionary *dic = [self getRoomJsonFromRoom:self.rtcRoom].mutableCopy;
-    roomDic[@"room"] = dic;
+    roomDic[@"data"] = dic;
     return roomDic;
 }
 

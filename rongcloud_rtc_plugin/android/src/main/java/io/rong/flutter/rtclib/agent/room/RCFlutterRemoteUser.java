@@ -2,6 +2,7 @@ package io.rong.flutter.rtclib.agent.room;
 
 import androidx.annotation.NonNull;
 
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +61,7 @@ public class RCFlutterRemoteUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(null);
+            UIThreadHandler.success(result, null);
           }
 
           @Override
@@ -76,7 +77,7 @@ public class RCFlutterRemoteUser extends RCFlutterUser {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(null);
+            UIThreadHandler.success(result, null);
           }
 
           @Override

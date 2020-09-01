@@ -8,6 +8,7 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterMicOutputStream extends RCFlutterAudioOutputStream {
 
@@ -37,7 +38,7 @@ public class RCFlutterMicOutputStream extends RCFlutterAudioOutputStream {
   private void setMicrophoneDisable(MethodCall call, Result result) {
     boolean disable = (boolean) call.arguments;
     rtcMicOutputStream.setMicrophoneDisable(disable);
-    result.success(null);
+    UIThreadHandler.success(result, null);
   }
 
   public boolean getMute() {

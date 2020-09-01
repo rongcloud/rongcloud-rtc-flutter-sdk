@@ -13,6 +13,7 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
 
@@ -62,7 +63,7 @@ public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
         new IRCRTCResultDataCallback<String[]>() {
           @Override
           public void onSuccess(String[] strings) {
-            result.success(strings);
+            UIThreadHandler.success(result, strings);
           }
 
           @Override
@@ -79,7 +80,7 @@ public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
         new IRCRTCResultDataCallback<String[]>() {
           @Override
           public void onSuccess(String[] strings) {
-            result.success(strings);
+            UIThreadHandler.success(result, strings);
           }
 
           @Override
@@ -99,7 +100,7 @@ public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
         new IRCRTCResultCallback() {
           @Override
           public void onSuccess() {
-            result.success(null);
+            UIThreadHandler.success(result, null);
           }
 
           @Override

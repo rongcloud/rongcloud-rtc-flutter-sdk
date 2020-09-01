@@ -89,10 +89,17 @@ class RCRTCEngine {
   Future<RCRTCCodeResult<RCRTCRoom>> joinRoom(String roomId) async {
     String jsonStr = await _channel.invokeMethod('joinRoom', roomId);
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-    RCRTCDebugChecker.isTrueWithMessage(jsonObj["code"] == 0, "failed to joinRoom with error code ${jsonObj["code"]}");
     print("joinRoom json: ${jsonObj.toString()}");
-    _room = RCRTCRoom.fromJson(jsonObj['room']);
-    return RCRTCCodeResult(jsonObj['code'], _room);
+
+    int resultCode = jsonObj["code"];
+    RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
+    if (resultCode == 0) {
+      _room = RCRTCRoom.fromJson(jsonObj['data']);
+      result.object = _room;
+    } else {
+      result.reason = jsonObj['data'];
+    }
+    return result;
   }
 
   // /// TODO:如下方法替代上面的方法?用一个joinroom方法？根据config区分直播或者normal？
@@ -170,7 +177,7 @@ class RCRTCEngine {
   setMediaServerUrl(String serverUrl) async {
     await _channel.invokeMethod("mediaServerUrl", serverUrl);
   }
-  
+
   releaseVideoView(int viewId) async {
     await _channel.invokeMethod("releaseVideoView", viewId);
   }
