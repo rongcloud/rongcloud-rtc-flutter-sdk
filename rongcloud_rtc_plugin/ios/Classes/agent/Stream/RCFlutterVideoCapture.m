@@ -30,15 +30,20 @@
     if ([call.method isEqualToString:KStartCapture]) {
         RCLogI(@"ios start capture");
         [self startCapture];
+        result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KRenderView]) {
         [self getRenderView:(NSNumber *) call.arguments];
+        result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KSwitchCamera]) {
-        [self switchCamera];
+        bool isFront = [self switchCamera];
+        result([NSNumber numberWithBool:isFront]);
     } else if ([call.method isEqualToString:KStopCamera]) {
         [self stopCamera];
+        result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KSetVideoConfig]) {
-        NSDictionary *dic= [RCFlutterTools decodeToDic:call.arguments];
+        NSDictionary *dic = [RCFlutterTools decodeToDic:call.arguments];
         [self setVideoConfigFromFlutter:dic];
+        result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KMute]){
         [super handleMethodCall:call result:result];
     } else {
@@ -68,6 +73,7 @@ SingleInstanceM(VideoCapture);
         [self renderLocalView:localView];
     });
 }
+
 - (void)renderLocalView:(RCFlutterRenderView *)localView {
     [self renderView:localView.previewView];
 }

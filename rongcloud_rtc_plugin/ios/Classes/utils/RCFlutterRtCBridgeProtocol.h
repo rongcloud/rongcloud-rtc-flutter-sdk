@@ -108,36 +108,6 @@ typedef void(^RCFlutterLiveOperationCallback)(BOOL isSuccess, RCRTCCode desc, RC
 - (void)unsubscribeLiveStream:(nonnull NSString *)url
                    completion:(void (^)(BOOL isSuccess, RCRTCCode code))completion;
 
-/*!
- 设置混流布局配置
- 
- @param config 混流布局配置
- @param completion 动作的回调
- @discussion
- 设置混流布局配置
- 
- @remarks 资源管理
- */
-- (void)setMixStreamConfig:(RCRTCMixConfig *)config
-                completion:(void (^) (BOOL isSuccess, RCRTCCode code))completion;
-
-/*
- 添加一个推流地址
- 
- @param url 推流地址
- @param completion 回调
- */
-- (void)addPublishStreamUrl:(NSString *)url
-                 completion:(void (^)(BOOL isSuccess, RCRTCCode code, NSArray *))completion;
-
-/*
- 移除一个推流地址
- 
- @param url 要移除的推流地址
- @param completion 回调
- */
-- (void)removePublishStreamUrl:(NSString *)url
-                    completion:(void (^)(BOOL isSuccess, RCRTCCode code, NSArray *))completion;
 @end
 
 
@@ -188,6 +158,17 @@ typedef void(^RCFlutterLiveOperationCallback)(BOOL isSuccess, RCRTCCode desc, RC
 
 #pragma mark - local user 相关接口
 @protocol RCFlutterLocalUserProtocol <NSObject>
+
+/*!
+ 发布默认音视频直播流
+ 
+ @param completion 发布完成回调
+ @discussion
+ 发布默认音视频直播流
+ 
+ @remarks 资源管理
+ */
+- (void)publishRTCDefaultLiveStream:(RCFlutterLiveOperationCallback)completion;
 
 /*!
  发布默认音视频流
@@ -309,7 +290,7 @@ switchToNormalStream:(nonnull NSArray<RCRTCInputStream *> *)streams
 - (void)startCapture;
 
 /// 切换前后摄像头
-- (void)switchCamera;
+- (bool)switchCamera;
 
 /// 关闭摄像头
 - (void)stopCamera;

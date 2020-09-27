@@ -1,6 +1,5 @@
 #import "AppDelegate.h"
 #import "GeneratedPluginRegistrant.h"
-#import <RongRTCLib/RongRTCLib.h>
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application

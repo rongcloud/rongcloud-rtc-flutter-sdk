@@ -14,8 +14,17 @@
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
 }
 
+//- (instancetype)init
+//{
+//    self = [super init];
+//    if (self) {
+//        [self registerStreamChannel];
+//    }
+//    return self;
+//}
+
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    NSLog(@"%@", call.method);
+    NSLog(@"RCFlutterInputStream handleMethodCall %@", call.method);
     if ([call.method isEqualToString:KRenderView]) {
         [self renderView:(NSNumber *) call.arguments];
     } else if ([call.method isEqualToString:KMute]) {
@@ -34,8 +43,7 @@
 
 - (void)renderView:(NSNumber *)args {
     int viewId = args.intValue;
-    RCFlutterRenderView *remoteView =
-        (RCRTCRemoteVideoView *) [[RCFlutterRenderViewFactory sharedViewFactory] getViewWithId:viewId andType:RongFlutterRenderViewTypeRemoteView];
+    RCFlutterRenderView *remoteView = (RCRTCRemoteVideoView *) [[RCFlutterRenderViewFactory sharedViewFactory] getViewWithId:viewId andType:RongFlutterRenderViewTypeRemoteView];
     [(RCRTCVideoInputStream *) (self.rtcInputStream) setVideoView:remoteView.previewView];
 }
 

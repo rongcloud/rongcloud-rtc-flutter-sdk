@@ -11,9 +11,9 @@ class RCRTCVideoOutputStream extends RCRTCOutputStream {
 
   RCRTCVideoOutputStream.fromJson(stream) : super.fromJson(stream);
 
-  void setVideoView(RCRTCVideoView view) async {
+  void setVideoView(RCRTCVideoView view, int id) async {
     _videoView = view;
-    await channel.invokeMethod('setVideoView', view.id);
+    await channel.invokeMethod('setVideoView', id);
   }
 
   setVideoConfig(RCRTCVideoStreamConfig config) async {

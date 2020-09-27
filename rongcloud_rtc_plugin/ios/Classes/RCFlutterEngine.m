@@ -11,6 +11,10 @@
 #import "RCFlutterRenderViewFactory.h"
 #import "RCFlutterTools.h"
 
+#import "RCFlutterAVStream+Private.h"
+#import "RCFlutterInputStream.h"
+#import "RCFlutterInputStream+Private.h"
+
 
 @interface RCFlutterEngine () <NSCopying>
 
@@ -44,6 +48,10 @@
     } else if([call.method isEqualToString:KReleaseVideoView]){
         NSNumber *viewId = ((NSNumber *)(call.arguments));
         [self releaseVideoView:viewId];
+    } else if([call.method isEqualToString:KSubscribeLiveStream]) {
+        [self subscribeLiveStream:call result:result];
+    } else if([call.method isEqualToString:KUnsubscribeLiveStream]) {
+        [self unsubscribeLiveStream:call result:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -83,7 +91,7 @@ SingleInstanceM(Engine);
         NSDictionary *dic = (NSDictionary *)call.arguments;
         roomId = dic[@"roomId"];
         NSDictionary *roomConfig = dic[@"roomConfig"];
-        config.roomType = ((NSNumber *)roomConfig[@"roomType"]).integerValue;
+        config.roomType = ((NSNumber *)roomConfig[@"roomType"]).integerValue == 0 ? RCRTCRoomTypeNormal : RCRTCRoomTypeLive;
         config.liveType = ((NSNumber *)roomConfig[@"liveType"]).integerValue;
         [self joinLiveRoom:roomId roomConfig:config result:result];
     }
@@ -155,18 +163,23 @@ SingleInstanceM(Engine);
         result(jsonResult);
     }];
 }
+
 - (void)enableSpeaker:(BOOL)enable {
     [[RCFlutterRTCManager sharedRTCManager] useSpeaker:enable];
 }
+
 - (RCFlutterVideoCapture *)defaultVideoStream {
     return [RCFlutterVideoCapture sharedVideoCapture];
 }
+
 - (RCFlutterAudioCapture *)defaultAudioStream {
     return [RCFlutterAudioCapture sharedAudioCapture];
 }
+
 - (void)releaseVideoView:(NSNumber *)viewId {
     [[RCFlutterRenderViewFactory sharedViewFactory] releaseVideoView:viewId.intValue];
 }
+
 - (void)getDefaultVideoStream:(FlutterResult)result{
     RCFlutterVideoCapture *video = self.defaultVideoStream;
     NSDictionary *desc = [video toDesc];
@@ -180,4 +193,45 @@ SingleInstanceM(Engine);
     NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
     result(jsonObj);
 }
+
+- (void)subscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = (NSDictionary *)call.arguments;
+    NSString *url = dic[@"url"];
+    RCRTCAVStreamType type = [dic[@"type"] intValue];
+    [[RCFlutterRTCManager sharedRTCManager] subscribeLiveStream:url streamType:type completion:^(RCRTCCode code, RCRTCInputStream * _Nullable inputStream) {
+        if (code != RCRTCCodeSuccess) {
+            NSMutableDictionary *desc = [NSMutableDictionary dictionary];
+            [desc setObject:@"failed" forKey:@"callback"];
+            [desc setObject:[NSNumber numberWithInt:(int)code] forKey:@"code"];
+            [desc setObject:[RCRTCCodeDefine codeDesc:code] forKey:@"message"];
+            NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+            result(jsonObj);
+        }
+        if ([inputStream mediaType] == RTCMediaTypeVideo) {
+            NSMutableDictionary *desc = [NSMutableDictionary dictionary];
+            [desc setObject:@"success" forKey:@"callback"];
+            RCFlutterInputStream *stream = [[RCFlutterInputStream alloc] init];
+            stream.rtcInputStream = inputStream;
+            [stream registerStreamChannel];
+            [desc setObject:[RCFlutterTools dictionaryToJson:[stream toDesc]] forKey:@"stream"];
+            NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+            result(jsonObj);
+        }
+    }];
+}
+
+-(void) unsubscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSString *url = (NSString *)call.arguments;
+    [[RCFlutterRTCManager sharedRTCManager] unsubscribeLiveStream:url completion:^(BOOL isSuccess, RCRTCCode code) {
+        NSMutableDictionary *desc = [NSMutableDictionary dictionary];
+        if (isSuccess) {
+            [desc setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+        } else {
+            [desc setObject:[NSNumber numberWithInt:(int)code] forKey:@"code"];
+        }
+        NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+        result(jsonObj);
+    }];
+}
+
 @end

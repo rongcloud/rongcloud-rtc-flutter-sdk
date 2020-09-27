@@ -12,9 +12,11 @@ SingleInstanceM(RTCManager);
         }
     }];
 }
+
 - (void)joinRTCRoom:(NSString *)roomId config:(RCRTCRoomConfig *)config completion:(void (^)(RCRTCRoom * _Nullable, RCRTCCode))completion {
     [[RCRTCEngine sharedInstance] joinRoom:roomId config:config completion:completion];
 }
+
 - (void)leaveRTCRoom:(NSString *)roomId completion:(void (^)(BOOL, RCRTCCode code))completion {
     [[RCRTCEngine sharedInstance] leaveRoom:roomId completion:^(BOOL isSuccess, RCRTCCode code) {
         if (completion) {
@@ -22,6 +24,7 @@ SingleInstanceM(RTCManager);
         }
     }];
 }
+
 - (void)useSpeaker:(BOOL)speaker{
     [[RCRTCEngine sharedInstance] useSpeaker:speaker];
 }

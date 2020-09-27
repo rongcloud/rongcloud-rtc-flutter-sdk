@@ -1,8 +1,24 @@
 #import "RCFlutterLocalUser+Apis.h"
 #import "RCFlutterRTCManager.h"
 #import "RCFlutterUser+Private.h"
+
 @implementation RCFlutterLocalUser (Apis)
+
 #pragma mark - api
+
+- (void)publishRTCDefaultLiveStream:(RCFlutterLiveOperationCallback)completion {
+    if (self.rtcUser) {
+        [[RCFlutterRTCManager sharedRTCManager] publishDefaultLiveStreams:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
+            completion(isSuccess, desc, liveInfo);
+        }];
+    } else {
+        RCLogE(@"publishRTCDefaultLiveStream ios RCFlutterLocalUser dont has rtclocaluser");
+        if (completion) {
+            completion(NO, -1, NULL);
+        }
+    }
+}
+
 - (void)publishRTCDefaultAVStream:(RongFlutterOperationCallback)completion {
     if (self.rtcUser) {
         [[RCFlutterRTCManager sharedRTCManager] publishRTCDefaultAVStream:^(BOOL isSuccess, RCRTCCode desc) {

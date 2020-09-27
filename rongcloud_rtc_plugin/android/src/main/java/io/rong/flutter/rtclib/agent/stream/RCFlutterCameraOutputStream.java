@@ -2,12 +2,16 @@ package io.rong.flutter.rtclib.agent.stream;
 
 import androidx.annotation.NonNull;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import cn.rongcloud.rtc.api.stream.RCRTCCameraOutputStream;
 import cn.rongcloud.rtc.base.RCRTCStream;
 import cn.rongcloud.rtc.core.CameraVideoCapturer;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
+import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
@@ -59,12 +63,12 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
         new CameraVideoCapturer.CameraSwitchHandler() {
           @Override
           public void onCameraSwitchDone(boolean b) {
-            UIThreadHandler.success(result, b);
+            UIThreadHandler.success(result, cameraOutputStream.isFrontCamera());
           }
 
           @Override
           public void onCameraSwitchError(String s) {
-            UIThreadHandler.error(result, null, null);
+            UIThreadHandler.success(result, cameraOutputStream.isFrontCamera());
           }
         });
   }
@@ -74,4 +78,26 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
     cameraOutputStream.enableTinyStream(enabled);
     UIThreadHandler.success(result, null);
   }
+
+  @JSONField
+  public boolean isFrontCamera() {
+    return cameraOutputStream.isFrontCamera();
+  }
+
+  private void setPreviewMirror(MethodCall call, Result result){
+    boolean enabled = (boolean) call.arguments;
+    //TODO 临时解决 cameraOutputStream.setPreviewMirror(enabled) 不生效的问题
+//    cameraOutputStream.setPreviewMirror(enabled);
+    RCFlutterVideoViewFactory.getInstance()
+            .getVideoView(viewId)
+            .getNativeVideoView()
+            .setMirror(enabled);
+    UIThreadHandler.success(result, enabled);
+  }
+
+  @JSONField
+  public boolean isPreviewMirror() {
+    return cameraOutputStream.isPreviewMirror();
+  }
+
 }

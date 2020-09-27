@@ -20,6 +20,7 @@
 #.vscode/
 
 # Flutter/Dart/Pub related
+**/.last_build_id
 **/doc/api/
 .dart_tool/
 .flutter-plugins
@@ -29,6 +30,10 @@ pubspec.lock
 .pub-cache/
 .pub/
 /build/
+/ios/Podfile.lock
+
+# iOS related
+ios/Podfile*
 
 # Web related
 lib/generated_plugin_registrant.dart
@@ -43,3 +48,4 @@ app.*.map.json
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 # XCode
 **/*.xcworkspace
+

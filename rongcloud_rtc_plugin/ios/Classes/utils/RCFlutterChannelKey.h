@@ -60,16 +60,19 @@ FOUNDATION_EXTERN NSString const *KEnableSpeaker;
 FOUNDATION_EXTERN NSString const *KLeaveRTCRoom;
 
 // publish default streams
+FOUNDATION_EXTERN NSString const *KPublishDefaultLiveStreams;
+
+// publish default streams
 FOUNDATION_EXTERN NSString const *KPublishDefaultStreams;
 
-// unpublishStreams
-FOUNDATION_EXTERN NSString const *KUnpublishStreams;
+// unpublish default streams
+FOUNDATION_EXTERN NSString const *KUnPublishDefaultStreams;
 
 // publishStreams
 FOUNDATION_EXTERN NSString const *KPublishStreams;
 
-// unpublish default streams
-FOUNDATION_EXTERN NSString const *KUnPublishDefaultStreams;
+// unpublishStreams
+FOUNDATION_EXTERN NSString const *KUnpublishStreams;
 
 // getDefaultVideoStream
 FOUNDATION_EXTERN NSString const *KGetDefaultVideoStream;
@@ -82,6 +85,11 @@ FOUNDATION_EXTERN NSString const *KRenderView;
 
 // releasevideoview
 FOUNDATION_EXTERN NSString const *KReleaseVideoView;
+
+// subscribe live stream
+FOUNDATION_EXTERN NSString const *KSubscribeLiveStream;
+
+FOUNDATION_EXTERN NSString const *KUnsubscribeLiveStream;
 
 // subscribe stream
 FOUNDATION_EXTERN NSString const *KSubscribeStream;

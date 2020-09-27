@@ -34,6 +34,7 @@
     if ([call.method isEqualToString:KMute]) {
         NSNumber *mute = (NSNumber *) (call.arguments);
         [self setMute:mute.boolValue];
+        result([NSNumber numberWithInt:0]);
     }
 }
 
@@ -54,11 +55,8 @@
 - (void)registerStreamChannel {
     if (self.streamId && self.userId) {
         //rong.flutter.rtclib/RCRTCVideoOutputStream-$streamId
-        NSString *channelId =
-            [NSString stringWithFormat:@"%@%@_%@", KMediaStream, self.streamId, @(self.streamType)];
-        FlutterMethodChannel *streamChannel = [FlutterMethodChannel
-            methodChannelWithName:channelId
-                  binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
+        NSString *channelId = [NSString stringWithFormat:@"%@%@_%@", KMediaStream, self.streamId, @(self.streamType)];
+        FlutterMethodChannel *streamChannel = [FlutterMethodChannel methodChannelWithName:channelId binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
         [[RCFlutterEngine sharedEngine].pluginRegister addMethodCallDelegate:self channel:streamChannel];
     }
 }

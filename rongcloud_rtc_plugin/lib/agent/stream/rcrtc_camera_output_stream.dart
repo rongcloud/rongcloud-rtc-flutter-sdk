@@ -6,7 +6,12 @@ import 'rcrtc_video_output_stream.dart';
 class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   static const _tag = "RCRTCCameraOutputStream";
 
-  RCRTCCameraOutputStream.fromJson(stream) : super.fromJson(stream);
+  bool _isFrontCamera;
+
+  RCRTCCameraOutputStream.fromJson(stream) : super.fromJson(stream) {
+    bool isFrontCamera = stream['frontCamera'];
+    _isFrontCamera = isFrontCamera ?? true;
+  }
 
   Future<dynamic> methodHandler(MethodCall call) async {
     RCRTCLog.d(_tag, "methodHandler ${call.method}: ${call.arguments}");
@@ -15,12 +20,12 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
 
   /// 开启摄像头采集视频数据
   Future<void> startCamera() async {
-    return await channel.invokeMethod("startCamera");
+    await channel.invokeMethod("startCamera");
   }
 
   /// 切换摄像头
   Future<void> switchCamera() async {
-    return channel.invokeMethod("switchCamera");
+    _isFrontCamera = await channel.invokeMethod("switchCamera");
   }
 
   /// 停用摄像头
@@ -31,5 +36,9 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   /// 是否开启大小流
   Future<void> enableTinyStream(bool enable) async {
     await channel.invokeMethod("enableTinyStream", enable);
+  }
+
+  bool isFrontCamera() {
+    return _isFrontCamera;
   }
 }

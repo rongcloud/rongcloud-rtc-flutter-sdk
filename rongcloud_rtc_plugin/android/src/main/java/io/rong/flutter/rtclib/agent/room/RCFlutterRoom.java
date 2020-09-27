@@ -48,10 +48,8 @@ public class RCFlutterRoom implements MethodCallHandler {
     rtcRoom.registerRoomListener(
         new IRCRTCRoomEventsListener() {
           @Override
-          public void onRemoteUserPublishResource(
-              RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
-            RCFlutterLog.d(
-                TAG, "onRemoteUserPublishResource userId = " + rtcRemoteUser.getUserId());
+          public void onRemoteUserPublishResource(RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
+            RCFlutterLog.d(TAG, "onRemoteUserPublishResource userId = " + rtcRemoteUser.getUserId());
             RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
               return;
@@ -68,8 +66,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("streamList", streamList);
-            String jsonStr =
-                JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                 new Runnable() {
                   @Override

@@ -5,6 +5,7 @@ import '../../utils/rcrtc_log.dart';
 enum MediaType {
   audio,
   video,
+  application,
 }
 
 /// 当前流状态

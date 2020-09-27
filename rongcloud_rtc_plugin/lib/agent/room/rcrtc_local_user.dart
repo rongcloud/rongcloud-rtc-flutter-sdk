@@ -1,14 +1,12 @@
 import 'dart:convert';
 
-import 'package:rongcloud_rtc_plugin/agent/stream/rcrtc_mic_output_stream.dart';
-import 'package:rongcloud_rtc_plugin/utils/rcrtc_debug_checker.dart';
-
 import '../../rcrtc_error_code.dart';
 import '../../rcrtc_live_info.dart';
-import '../../utils/rcrtc_callbacks.dart';
+import '../../utils/rcrtc_debug_checker.dart';
 import '../../utils/rcrtc_log.dart';
 import '../stream/rcrtc_camera_output_stream.dart';
 import '../stream/rcrtc_input_stream.dart';
+import '../stream/rcrtc_mic_output_stream.dart';
 import '../stream/rcrtc_output_stream.dart';
 import 'rcrtc_user.dart';
 
@@ -34,7 +32,13 @@ class RCRTCLocalUser extends RCRTCUser {
     print('streams = $streamList');
   }
 
-  List<RCRTCOutputStream> getStreams() {
+  Future<List<RCRTCOutputStream>> getStreams() async {
+    if (streamList.isEmpty) {
+      List<dynamic> jsonList = await methodChannel.invokeListMethod('getStreams');
+      jsonList.forEach((json) {
+        streamList.add(RCRTCOutputStream.fromJson(jsonDecode(json)));
+      });
+    }
     return streamList;
   }
 
@@ -76,18 +80,30 @@ class RCRTCLocalUser extends RCRTCUser {
     return code;
   }
 
-  // Future<void> publishDefaultLiveStreams() async {
-  //   await methodChannel.invokeMethod("publishLiveStreams");
-  // }
-  //
-  // Future<void> publishLiveStream(RCRTCOutputStream stream, {OnSuccess<RCRTCLiveInfo> onSuccess, OnError<int> onError}) async {
-  //   String jsonStr = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
-  //   Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-  //   int code = jsonObj["code"];
-  //   if (code == 0) {
-  //     onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(jsonObj["content"])));
-  //   } else {
-  //     onError(code);
-  //   }
-  // }
+  Future<void> publishDefaultLiveStreams(
+    void onSuccess(RCRTCLiveInfo liveInfo),
+    void onError(int code, String message),
+  ) async {
+    String json = await methodChannel.invokeMethod('publishLiveStreams');
+    Map<String, dynamic> result = jsonDecode(json);
+    RCRTCLog.d(_tag, "publishDefaultLiveStreams $result");
+    int code = result['code'];
+    String content = result["content"];
+    if (code == 0) {
+      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content)));
+    } else {
+      onError(code, content);
+    }
+  }
+
+// Future<void> publishLiveStream(RCRTCOutputStream stream, {OnSuccess<RCRTCLiveInfo> onSuccess, OnError<int> onError}) async {
+//   String jsonStr = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
+//   Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+//   int code = jsonObj["code"];
+//   if (code == 0) {
+//     onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(jsonObj["content"])));
+//   } else {
+//     onError(code);
+//   }
+// }
 }

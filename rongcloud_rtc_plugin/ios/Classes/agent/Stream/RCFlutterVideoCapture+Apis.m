@@ -6,8 +6,8 @@
     [[RCFlutterRTCManager sharedRTCManager] startCapture];
 }
 
-- (void)switchCamera {
-    [[RCFlutterRTCManager sharedRTCManager] switchCamera];
+- (bool)switchCamera {
+    return [[RCFlutterRTCManager sharedRTCManager] switchCamera];
 }
 
 - (void)stopCamera {

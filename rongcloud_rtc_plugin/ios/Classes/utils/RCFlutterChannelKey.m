@@ -29,6 +29,7 @@ NSString const *KRoom = @"rong.flutter.rtclib/Room:";
 #pragma mark - action on channel
 // init
 NSString const *KInit = @"init";
+
 // join room
 NSString const *KJoinRoom = @"joinRoom";
 
@@ -59,17 +60,20 @@ NSString const *KEnableSpeaker = @"enableSpeaker";
 // leaveRTCRoom
 NSString const *KLeaveRTCRoom = @"leaveRoom";
 
+// public default live streams
+NSString const *KPublishDefaultLiveStreams = @"publishLiveStreams";
+
 // publish default streams
 NSString const *KPublishDefaultStreams = @"publishDefaultStreams";
 
-// unpublishStreams
-NSString const *KUnpublishStreams = @"unpublishStreams";
+// unpublish default streams
+NSString const *KUnPublishDefaultStreams = @"unpublishDefaultStreams";
 
 // publishStreams
 NSString const *KPublishStreams = @"publishStreams";
 
-// unpublish default streams
-NSString const *KUnPublishDefaultStreams = @"unpublishDefaultStreams";
+// unpublishStreams
+NSString const *KUnpublishStreams = @"unpublishStreams";
 
 // getDefaultVideoStream
 NSString const *KGetDefaultVideoStream = @"getDefaultVideoStream";
@@ -82,6 +86,12 @@ NSString const *KRenderView = @"setVideoView";
 
 // releasevideoview
 NSString const *KReleaseVideoView = @"releaseVideoView";
+
+// subscribe live stream
+NSString const *KSubscribeLiveStream = @"subscribeLiveStream";
+
+// subscribe live stream
+NSString const *KUnsubscribeLiveStream = @"unsubscribeLiveStream";
 
 // subscribe stream
 NSString const *KSubscribeStream = @"subscribeStreams";

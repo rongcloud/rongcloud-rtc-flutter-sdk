@@ -4,7 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../rcrtc_engine.dart';
 
-typedef CreatedCallback(RCRTCVideoView view, String id);
+typedef CreatedCallback(RCRTCVideoView view, int id);
 
 enum RCRTCViewType { local, remote }
 
@@ -65,7 +65,7 @@ class _RCRTCVideoViewState extends State<RCRTCVideoView> {
   void _onViewCreated(int id) {
     this.id = id;
     if (widget.onCreated != null) {
-      widget.onCreated(widget, widget.streamId);
+      widget.onCreated(widget, widget.id);
     }
   }
 }

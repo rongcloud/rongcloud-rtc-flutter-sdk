@@ -5,19 +5,26 @@ import 'package:flutter/widgets.dart';
 
 import '../rcrtc_error_code.dart';
 import '../rcrtc_room_config.dart';
-import '../utils/rcrtc_debug_checker.dart';
+import '../rongcloud_rtc_plugin.dart';
 import 'rcrtc_status_report.dart';
 import 'room/rcrtc_room.dart';
-import 'stream/rcrtc_audio_input_stream.dart';
 import 'stream/rcrtc_camera_output_stream.dart';
-import 'stream/rcrtc_input_stream.dart';
 import 'stream/rcrtc_mic_output_stream.dart';
 import 'stream/rcrtc_video_input_stream.dart';
 import 'stream/rcrtc_video_output_stream.dart';
 
-enum LiveType {
+enum AVStreamType {
   audio,
   video,
+  audio_video,
+  video_tiny,
+  audio_video_tiny,
+}
+
+enum RoomType {
+  meeting,
+  audio,
+  audio_video,
 }
 
 class RCRTCEngine {
@@ -102,18 +109,26 @@ class RCRTCEngine {
     return result;
   }
 
-  // /// TODO:如下方法替代上面的方法?用一个joinroom方法？根据config区分直播或者normal？
-  // Future<RCRTCCodeResult<RCRTCRoom>> joinLiveRoom({
-  //   @required String roomId,
-  //   RCRTCRoomConfig roomConfig,
-  // }) async {
-  //   Map<String, dynamic> configMap = roomConfig.toJson();
-  //   Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
-  //   String jsonStr = await _channel.invokeMethod('joinLiveRoom', roomMap);
-  //   Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-  //   room = RCRTCRoom.fromJson(jsonObj['room']);
-  //   return RCRTCCodeResult(jsonObj['code'], room);
-  // }
+  Future<RCRTCCodeResult<RCRTCRoom>> joinLiveRoom({
+    @required String roomId,
+    RCRTCRoomConfig roomConfig,
+  }) async {
+    Map<String, dynamic> configMap = roomConfig.toJson();
+    Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
+    String jsonStr = await _channel.invokeMethod('joinLiveRoom', roomMap);
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    print("joinLiveRoom json: ${jsonObj.toString()}");
+
+    int resultCode = jsonObj["code"];
+    RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
+    if (resultCode == 0) {
+      _room = RCRTCRoom.fromJson(jsonObj['data']);
+      result.object = _room;
+    } else {
+      result.reason = jsonObj['data'];
+    }
+    return result;
+  }
 
   Future<int> leaveRoom() async {
     String jsonStr = await _channel.invokeMethod("leaveRoom");
@@ -127,14 +142,12 @@ class RCRTCEngine {
   }
 
   Future<RCRTCCameraOutputStream> get defaultVideoStream async {
-    _cameraOutputStream = _cameraOutputStream ??
-        RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
+    _cameraOutputStream = _cameraOutputStream ?? RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
     return _cameraOutputStream;
   }
 
   Future<RCRTCMicOutputStream> get defaultAudioStream async {
-    _audioOutputStream = _audioOutputStream ??
-        RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
+    _audioOutputStream = _audioOutputStream ?? RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
     return _audioOutputStream;
   }
 
@@ -143,18 +156,29 @@ class RCRTCEngine {
     return RCRTCVideoOutputStream.fromJson(jsonDecode(jsonStr));
   }
 
-  // Future<List<RCRTCInputStream>> subscribeLiveStream(String url, LiveType liveType) async {
-  //   var args = {"url": url, "type": liveType.index};
-  //   List<String> streams = await _channel.invokeListMethod("subscribeLiveStream", args);
-  //   return streams.map<RCRTCInputStream>((stream) {
-  //     var json = jsonDecode(stream);
-  //     if (json['type'] == 0) {
-  //       return RCRTCAudioInputStream.fromJson(json);
-  //     } else {
-  //       return RCRTCVideoInputStream.fromJson(json);
-  //     }
-  //   }).toList();
-  // }
+  Future<void> subscribeLiveStream(
+    String url,
+    RoomType roomType,
+    void onSuccess(RCRTCVideoInputStream stream),
+    void onError(int code, String message),
+  ) async {
+    var args = {"url": url, "type": roomType.index};
+    String json = await _channel.invokeMethod("subscribeLiveStream", args);
+    Map<String, dynamic> result = jsonDecode(json);
+    RCRTCLog.d("RCRTCEngine", "subscribeLiveStream $result");
+    String callback = result['callback'];
+    switch (callback) {
+      case 'success':
+        RCRTCVideoInputStream video = RCRTCVideoInputStream.fromJson(jsonDecode(result['stream']));
+        onSuccess(video);
+        break;
+      case 'failed':
+        int code = result['code'];
+        String message = result['message'];
+        onError(code, message);
+        break;
+    }
+  }
 
   enableSpeaker(bool enableSpeaker) async {
     await _channel.invokeMethod("enableSpeaker", enableSpeaker);
@@ -170,8 +194,10 @@ class RCRTCEngine {
     await _channel.invokeMethod("unRegisterStatusReportListener");
   }
 
-  unsubscribeLiveStream(String url) async {
-    await _channel.invokeMethod("unsubscribeLiveStream", url);
+  Future<int> unsubscribeLiveStream(String url) async {
+    String result = await _channel.invokeMethod("unsubscribeLiveStream", url);
+    Map<String, dynamic> json = jsonDecode(result);
+    return json['code'];
   }
 
   setMediaServerUrl(String serverUrl) async {

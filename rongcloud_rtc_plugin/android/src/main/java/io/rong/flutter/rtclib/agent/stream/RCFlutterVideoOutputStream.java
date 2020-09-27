@@ -22,6 +22,8 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
   private static final String TAG = "RCFlutterVideoOutputStream";
   private RCRTCVideoOutputStream videoOutputStream;
 
+  protected int viewId;
+
   public RCFlutterVideoOutputStream(BinaryMessenger bMsg, RCRTCStream rtcStream) {
     super(bMsg, rtcStream);
     RCFlutterDebugChecker.isTrue(rtcStream instanceof RCRTCVideoOutputStream);
@@ -59,7 +61,7 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
   }
 
   protected void setVideoView(MethodCall call, MethodChannel.Result result) {
-    int viewId = (int) call.arguments;
+    viewId = (int) call.arguments;
     RCFlutterVideoView videoView = RCFlutterVideoViewFactory.getInstance().getVideoView(viewId);
     videoOutputStream.setVideoView(videoView.getNativeVideoView());
     UIThreadHandler.success(result, null);

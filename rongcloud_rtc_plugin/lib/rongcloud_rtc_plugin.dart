@@ -16,6 +16,7 @@ export 'agent/stream/rcrtc_video_input_stream.dart';
 export 'agent/stream/rcrtc_video_output_stream.dart';
 export 'agent/stream/rcrtc_video_stream_config.dart';
 export 'agent/view/rcrtc_video_view.dart';
+export 'rcrtc_live_info.dart';
 export 'rcrtc_error_code.dart';
 export 'rcrtc_room_config.dart';
 export 'utils/rcrtc_log.dart';

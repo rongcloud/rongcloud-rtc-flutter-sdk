@@ -18,6 +18,8 @@
 #import "RCFlutterInputStream.h"
 #import "RCFlutterInputStream+Private.h"
 
+#import "RCFlutterLiveInfo.h"
+
 #import "RCFlutterRoom.h"
 #import "RCFlutterRoom+Private.h"
 
@@ -46,8 +48,14 @@
 @implementation RCFlutterLocalUser
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    if ([call.method isEqualToString:KPublishDefaultStreams]) {
+    if ([call.method isEqualToString:KPublishDefaultLiveStreams]) {
+        [self publishRTCDefaultLiveStreamWithResult:result];
+    } else if ([call.method isEqualToString:KPublishDefaultStreams]) {
         [self publishRTCDefaultAVStream:^(BOOL isSuccess, RCRTCCode desc) {
+            result(@(desc));
+        }];
+    } else if ([call.method isEqualToString:KUnPublishDefaultStreams]) {
+        [self unpublishDefaultStream:^(BOOL isSuccess, RCRTCCode desc) {
             result(@(desc));
         }];
     } else if ([call.method isEqualToString:KPublishStreams]) {
@@ -57,7 +65,6 @@
             [arr addObject:dic];
         }
         [self publishStream:arr result:result];
-        
     } else if ([call.method isEqualToString:KUnpublishStreams]) {
         NSMutableArray *arr = [NSMutableArray array];
         for (NSString *json in (NSArray *)call.arguments) {
@@ -65,23 +72,17 @@
             [arr addObject:dic];
         }
         [self unpublishStream:arr result:result];
-        
     } else if ([call.method isEqualToString:KSubscribeStream]) {
-        NSArray
-        *streams = [RCFlutterTools decodeToArray:call.arguments];
+        NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self subscribeStreams:streams result:result];
-    } else if ([call.method isEqualToString:KUnPublishDefaultStreams]) {
-        [self unpublishDefaultStream:^(BOOL isSuccess, RCRTCCode desc) {
-            result(@(desc));
-        }];
     } else if ([call.method isEqualToString:KUnSubscribeStream]) {
-        NSArray
-        *streams = [RCFlutterTools decodeToArray:call.arguments];
+        NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self unsubscribeStreams:streams result:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
 }
+
 - (void)setRtcUser:(RCRTCUser *)rtcUser {
     [super setRtcUser:rtcUser];
     [self registerChannel];
@@ -108,7 +109,6 @@
     if (!self.videoCapture && !self.audioCapture) {
         [self privateStartVideoAndAudioCapture];
     }
-    
 }
 
 - (RCFlutterOutputStream *)mapVideoCapture:(RCRTCOutputStream *)outputStream {
@@ -152,7 +152,23 @@
         [streams addObject:_dic];
     }
     [dic setObject:streams forKey:@"streams"];
-    return dic;;
+    return dic;
+}
+
+- (void)publishRTCDefaultLiveStreamWithResult:(FlutterResult) result {
+    [self publishRTCDefaultLiveStream:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
+        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        if (isSuccess) {
+            RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
+            [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+            [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
+        } else {
+            [dic setObject:[NSNumber numberWithInt:(int)desc] forKey:@"code"];
+            [dic setObject:[RCRTCCodeDefine codeDesc:desc] forKey:@"content"];
+        }
+        NSString *jsonObj = [RCFlutterTools dictionaryToJson:dic];
+        result(jsonObj);
+    }];
 }
 
 - (void)publishStream:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
@@ -168,16 +184,18 @@
     NSArray *arr = [self getUnPublishStreamsFromLocalUserWithArr:streams];
     for (RCRTCOutputStream *stream in arr) {
         [self unpublishStream:stream completion:^(BOOL isSuccess, RCRTCCode desc) {
-            result(@(desc));
+            result([NSNumber numberWithInt:(int)desc]);
         }];
     }
 }
+
 - (void)subscribeStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
     NSArray<RCRTCInputStream *> *inputStreams = [self getAllStreamsWithArr:streams];
     [self subscribeStreams:nil tinyStreams:inputStreams completion:^(BOOL isSuccess, RCRTCCode desc) {
         result(@(desc));
     }];
 }
+
 - (void)unsubscribeStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
     NSArray<RCRTCInputStream *> *inputStreams = [self getAllStreamsWithArr:streams];
     [self unsubscribeStream:inputStreams completion:^(BOOL isSuccess, RCRTCCode desc) {
@@ -185,6 +203,7 @@
         
     }];
 }
+
 - (void)dealloc {
     RCLogI(@"RCFlutterLocalUser dealloc");
     self.rtcUser = nil;
@@ -192,6 +211,7 @@
     self.videoCapture = nil;
     self.audioCapture = nil;
 }
+
 - (NSArray<RCRTCOutputStream *> *)getUnPublishStreamsFromLocalUserWithArr:(NSArray<NSDictionary *> *)streams {
     NSMutableArray *arr = [NSMutableArray array];
     for (NSDictionary *dic in streams) {
@@ -204,6 +224,7 @@
     }
     return arr;
 }
+
 - (NSArray<RCRTCOutputStream *> *)getPublishRTCStreamsFromEngineWithArr:(NSArray<NSDictionary *> *)streams {
     NSMutableArray *ori = [NSMutableArray array];
     [ori addObject:[RCRTCEngine sharedInstance].defaultVideoStream];
@@ -219,6 +240,7 @@
     }
     return arr;
 }
+
 - (BOOL)stream:(RCRTCStream *)output isEqualToStreamDic:(NSDictionary *)dic{
     NSString *streamid = dic[@"streamId"];
     NSNumber *type = dic[@"type"];
@@ -228,10 +250,12 @@
     }
     return NO;
 }
+
 - (NSArray<RCRTCInputStream *> *)getAllStreamsWithArr:(NSArray<NSDictionary *> *)streams {
     NSArray *arr = [[RCFlutterEngine sharedEngine].room getRTCRemoteInputStreamsFromRoom:streams];
     return arr;
 }
+
 - (NSArray<RCRTCInputStream *> *)getRemoteStreamsWithArr:(NSArray<NSDictionary *> *)streams {
     NSMutableArray *arr = [NSMutableArray array];
     for (NSDictionary *dic in streams) {

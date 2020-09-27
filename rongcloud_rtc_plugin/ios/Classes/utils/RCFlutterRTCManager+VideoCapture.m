@@ -11,8 +11,9 @@
     [[RCRTCEngine sharedInstance].defaultVideoStream startCapture];
 }
 
-- (void)switchCamera {
+- (bool)switchCamera {
     [[RCRTCEngine sharedInstance].defaultVideoStream switchCamera];
+    return [RCRTCEngine sharedInstance].defaultVideoStream.cameraPosition  == RCRTCCaptureDeviceFront;
 }
 
 - (void)stopCamera {
