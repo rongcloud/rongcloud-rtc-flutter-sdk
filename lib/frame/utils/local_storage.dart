@@ -4,7 +4,9 @@ class LocalStorage {
   static SharedPreferences _config;
 
   static Future init() async {
-    _config = await SharedPreferences.getInstance();
+    if (_config == null){
+      _config = await SharedPreferences.getInstance();
+    }
   }
 
   static bool containsKey(String key) => _config.containsKey(key);

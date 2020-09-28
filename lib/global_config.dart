@@ -1,7 +1,7 @@
 class GlobalConfig {
   static const String appKey = 'z3v5yqkbv8v30';
 
-  static const String appVersion = '0.1';
+  static const String appVersion = '0.2';
 
   static const String appTitle = 'FlutterRTC';
 

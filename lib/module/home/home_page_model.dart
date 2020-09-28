@@ -102,9 +102,10 @@ class HomePageModel extends AbstractModel implements Model {
   }
 
   @override
-  void requestCreateLiveRoom(
+  void requestJoinRoom(
     BuildContext context,
     String roomId,
+    RCRTCRoomType type,
     void onCreated(BuildContext context),
     void onCreateError(BuildContext context, String info),
   ) async {
@@ -113,18 +114,27 @@ class HomePageModel extends AbstractModel implements Model {
       (code, userId) async {
         if (code == RCRTCErrorCode.OK) {
           RongIMClient.joinChatRoom(roomId, -1);
-          RCRTCCodeResult result = await RCRTCEngine.getInstance().joinLiveRoom(
-            roomId: roomId,
-            roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo),
-          );
-          if (result.code == 0) {
-            onCreated(context);
-          } else {
-            onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
+          if (type == RCRTCRoomType.Live){
+            RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
+              roomId: roomId,
+              roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
+            );
+            if (result.code == 0) {
+              onCreated(context);
+            } else {
+              onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
+            }
+          }else {
+            RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(roomId: roomId);
+            if (result.code == 0) {
+              onCreated(context);
+            } else {
+              onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
+            }
           }
         } else if (code == RCRTCErrorCode.ALREADY_CONNECTED) {
           RongIMClient.disconnect(false);
-          requestCreateLiveRoom(context, roomId, onCreated, onCreateError);
+          requestJoinRoom(context, roomId, type, onCreated, onCreateError);
         } else {
           onCreateError(context, 'requestCreateLiveRoom connect error, code = $code');
         }

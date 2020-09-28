@@ -5,6 +5,7 @@ import 'package:FlutterRTC/frame/ui/toast.dart';
 import 'package:FlutterRTC/router/router.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../../colors.dart';
 import '../../global_config.dart';
@@ -480,7 +481,7 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
             return;
           }
           Navigator.pop(context);
-          _requestCreateLiveRoom(context, rid);
+          _requestJoinRoom(context, rid, _type == 0 ? RCRTCRoomType.Normal : RCRTCRoomType.Live);
         },
       ),
     );
@@ -526,7 +527,15 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
   @override
   void onLiveRoomCreated(BuildContext context) {
     Loading.dismiss(context);
-    _gotoHost();
+    if (_type == 0){
+      _gotoChat();
+    }else {
+      _gotoHost();
+    }
+  }
+
+  void _gotoChat() {
+    Navigator.pushNamed(context, RouterManager.VIDEO_CHAT);
   }
 
   void _gotoHost() {
@@ -572,9 +581,9 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
     presenter?.loadLiveRoomList();
   }
 
-  Future<void> _requestCreateLiveRoom(BuildContext context, String rid) async {
+  Future<void> _requestJoinRoom(BuildContext context, String rid, RCRTCRoomType type) async {
     Loading.show(context);
-    presenter.requestCreateLiveRoom(context, rid);
+    presenter.requestJoinRoom(context, rid, type);
   }
 
   Future<void> _requestJoinLiveRoom(BuildContext context, Room room) async {

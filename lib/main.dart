@@ -5,8 +5,6 @@ import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'global_config.dart';
 import 'router/router.dart';
 
-// void main() => LoadConfig.init().then((value) => runApp(FlutterRTC()));
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   LocalStorage.init().then((value) => runApp(FlutterRTC()));

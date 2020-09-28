@@ -1,6 +1,7 @@
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:flutter/widgets.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'home_page_contract.dart';
 import 'home_page_model.dart';
@@ -59,10 +60,11 @@ class HomePagePresenter extends AbstractPresenter<View, Model> implements Presen
   }
 
   @override
-  void requestCreateLiveRoom(BuildContext context, String roomId) {
-    model?.requestCreateLiveRoom(
+  void requestJoinRoom(BuildContext context, String roomId, RCRTCRoomType type) {
+    model?.requestJoinRoom(
       context,
       roomId,
+      type,
       (context) {
         view?.onLiveRoomCreated(context);
       },

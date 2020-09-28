@@ -93,25 +93,47 @@ class RCRTCEngine {
     _channel.invokeMethod('unInit');
   }
 
-  Future<RCRTCCodeResult<RCRTCRoom>> joinRoom(String roomId) async {
-    String jsonStr = await _channel.invokeMethod('joinRoom', roomId);
-    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-    print("joinRoom json: ${jsonObj.toString()}");
+  Future<RCRTCCodeResult<RCRTCRoom>> joinRoom({
+    @required String roomId,
+    RCRTCRoomType type = RCRTCRoomType.Normal,
+    RCRTCRoomConfig roomConfig,
+  }) async {
+    if (type == RCRTCRoomType.Normal) {
+      String jsonStr = await _channel.invokeMethod('joinRoom', roomId);
+      Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+      print("joinRoom json: ${jsonObj.toString()}");
 
-    int resultCode = jsonObj["code"];
-    RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
-    if (resultCode == 0) {
-      _room = RCRTCRoom.fromJson(jsonObj['data']);
-      result.object = _room;
+      int resultCode = jsonObj["code"];
+      RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
+      if (resultCode == 0) {
+        _room = RCRTCRoom.fromJson(jsonObj['data']);
+        result.object = _room;
+      } else {
+        result.reason = jsonObj['data'];
+      }
+      return result;
     } else {
-      result.reason = jsonObj['data'];
+      Map<String, dynamic> configMap = roomConfig.toJson();
+      Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
+      String jsonStr = await _channel.invokeMethod('joinLiveRoom', roomMap);
+      Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+      print("joinLiveRoom json: ${jsonObj.toString()}");
+
+      int resultCode = jsonObj["code"];
+      RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
+      if (resultCode == 0) {
+        _room = RCRTCRoom.fromJson(jsonObj['data']);
+        result.object = _room;
+      } else {
+        result.reason = jsonObj['data'];
+      }
+      return result;
     }
-    return result;
   }
 
   Future<RCRTCCodeResult<RCRTCRoom>> joinLiveRoom({
     @required String roomId,
-    RCRTCRoomConfig roomConfig,
+    RCRTCRoomConfig roomConfig
   }) async {
     Map<String, dynamic> configMap = roomConfig.toJson();
     Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
