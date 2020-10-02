@@ -230,14 +230,14 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
       _streamOnFullScreen = stream;
     } else {
       _streamsOnSmallScreen.add(stream);
-      _switchToTinyStream(stream);
+      // _switchToTinyStream(stream);
     }
   }
 
   /// should be called only when small window clicked.
   _switchToFullScreen(RCRTCStream stream) {
     setState(() {
-      _switchToTinyStream(_streamOnFullScreen);
+      // _switchToTinyStream(_streamOnFullScreen);
       var index = _streamsOnSmallScreen.indexOf(stream);
       if (index >= 0) {
         _streamsOnSmallScreen[index] = _streamOnFullScreen;
