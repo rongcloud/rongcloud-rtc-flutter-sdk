@@ -117,6 +117,7 @@ class HomePageModel extends AbstractModel implements Model {
           if (type == RCRTCRoomType.Live){
             RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
               roomId: roomId,
+              type: RCRTCRoomType.Live,
               roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
             );
             if (result.code == 0) {
