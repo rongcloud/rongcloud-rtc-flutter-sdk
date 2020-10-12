@@ -60,8 +60,8 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
     private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
-    private RCFlutterCameraOutputStream cameraOutputStream;
-    private RCFlutterMicOutputStream micOutputStream;
+//    private RCFlutterCameraOutputStream cameraOutputStream;
+//    private RCFlutterMicOutputStream micOutputStream;
     // key => (streamId + "_" + type)
     private Map<String, RCFlutterVideoOutputStream> createdVideoOutputStreams;
     private Context context;
@@ -217,17 +217,13 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private void getDefaultVideoStream(Result result) {
         RLog.d(TAG, "getDefaultVideoStream: ");
-        if (cameraOutputStream == null) {
-            cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
-        }
+        RCFlutterCameraOutputStream cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
         UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
     }
 
     private void getDefaultAudioStream(Result result) {
         RLog.d(TAG, "getDefaultAudioStream: ");
-        if (micOutputStream == null) {
-            micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
-        }
+        RCFlutterMicOutputStream micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
         UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
     }
 

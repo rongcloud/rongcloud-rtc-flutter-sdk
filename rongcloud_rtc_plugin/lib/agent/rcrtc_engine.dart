@@ -26,8 +26,8 @@ class RCRTCEngine {
   static const MethodChannel _channel = MethodChannel('rong.flutter.rtclib/engine');
 
   static RCRTCEngine _instance;
-  RCRTCCameraOutputStream _cameraOutputStream;
-  RCRTCMicOutputStream _audioOutputStream;
+  // RCRTCCameraOutputStream _cameraOutputStream;
+  // RCRTCMicOutputStream _audioOutputStream;
   RCRTCRoom _room;
   IRCRTCStatusReportListener _statusReportListener;
 
@@ -121,13 +121,11 @@ class RCRTCEngine {
   }
 
   Future<RCRTCCameraOutputStream> getDefaultVideoStream() async {
-    _cameraOutputStream = _cameraOutputStream ?? RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
-    return _cameraOutputStream;
+    return RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
   }
 
   Future<RCRTCMicOutputStream> getDefaultAudioStream() async {
-    _audioOutputStream = _audioOutputStream ?? RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
-    return _audioOutputStream;
+    return RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
   }
 
   Future<RCRTCVideoOutputStream> createVideoOutputStream(String tag) async {

@@ -277,9 +277,9 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
                 itemCount: 20,
                 itemBuilder: (BuildContext context, int index) {
                   return IconButton(
-                    icon: Image.asset('assets/images/user_avatar/user_avatar_${index}.png'),
+                    icon: Image.asset('assets/images/user_avatar/user_avatar_$index.png'),
                     onPressed: () {
-                      _userAvatar = 'assets/images/user_avatar/user_avatar_${index}.png';
+                      _userAvatar = 'assets/images/user_avatar/user_avatar_$index.png';
                       Navigator.of(context).pop();
                     },
                   );
@@ -293,7 +293,7 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
   Widget _buildUserName(BuildContext context) {
     return Form(
       key: _formKey,
-      autovalidate: true,
+      autovalidateMode: AutovalidateMode.always,
       child: Column(
         children: [
           Stack(

@@ -136,7 +136,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
     String roomId = RCRTCEngine.getInstance().getRoom().id;
     _requestLeaveLiveRoom(roomId);
     RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
-    int unPublishResult = await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
+    int unPublishResult = await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(localUser.getStreams());
     int leaveResult = await RCRTCEngine.getInstance().leaveRoom();
     RongIMClient.quitChatRoom(roomId);
     RongIMClient.disconnect(false);

@@ -4,7 +4,6 @@ import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_model.dart';
-import 'package:FlutterRTC/widgets/video_view.dart';
 import 'package:flutter/widgets.dart';
 
 class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements Presenter {

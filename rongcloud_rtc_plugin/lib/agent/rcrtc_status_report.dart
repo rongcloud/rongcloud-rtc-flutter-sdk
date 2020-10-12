@@ -68,11 +68,11 @@ class StatusReport {
       this.statusAudioSends.putIfAbsent(key, () => StatusBean.fromJson(value));
     });
     Map<String, dynamic> jsonVideoRcvs = map['statusVideoRcvs'];
-    jsonAudioRcvs.forEach((key, value) {
+    jsonVideoRcvs.forEach((key, value) {
       this.statusVideoRcvs.putIfAbsent(key, () => StatusBean.fromJson(value));
     });
     Map<String, dynamic> jsonVideoSends = map['statusVideoSends'];
-    jsonAudioRcvs.forEach((key, value) {
+    jsonVideoSends.forEach((key, value) {
       this.statusVideoSends.putIfAbsent(key, () => StatusBean.fromJson(value));
     });
   }

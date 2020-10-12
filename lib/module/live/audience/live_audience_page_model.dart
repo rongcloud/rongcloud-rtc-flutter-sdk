@@ -248,7 +248,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     int result = 0;
     if (_type != LiveType.normal) {
       RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
-      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
+      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(localUser.getStreams());
       result += await RCRTCEngine.getInstance().leaveRoom();
     } else {
       result = await RCRTCEngine.getInstance().unsubscribeLiveStream(url);
