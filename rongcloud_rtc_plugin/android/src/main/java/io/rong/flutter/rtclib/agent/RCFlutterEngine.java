@@ -19,12 +19,15 @@ import cn.rongcloud.rtc.api.RCRTCRoom;
 import cn.rongcloud.rtc.api.callback.IRCRTCResultCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCResultDataCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCStatusReportListener;
+import cn.rongcloud.rtc.api.callback.RCRTCLiveCallback;
 import cn.rongcloud.rtc.api.report.StatusReport;
+import cn.rongcloud.rtc.api.stream.RCRTCAudioInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCFileVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoStreamConfig;
+import cn.rongcloud.rtc.base.RCRTCAVStreamType;
 import cn.rongcloud.rtc.base.RCRTCMediaType;
 import cn.rongcloud.rtc.base.RCRTCParamsType;
 import cn.rongcloud.rtc.base.RCRTCRoomType;
@@ -240,19 +243,24 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private void subscribeLiveStream(MethodCall call, Result result) {
         String url = call.argument("url");
         int type = call.argument("type");
-        RCRTCRoomType roomType = Objects.requireNonNull(RCRTCRoomType.class.getEnumConstants())[type];
-        RCRTCEngine.getInstance().subscribeLiveStream(url, roomType, new IRCRTCResultDataCallback<List<RCRTCInputStream>>() {
+        RCRTCAVStreamType streamType = Objects.requireNonNull(RCRTCAVStreamType.class.getEnumConstants())[type];
+        RCRTCEngine.getInstance().subscribeLiveStream(url, streamType, new RCRTCLiveCallback() {
             @Override
-            public void onSuccess(List<RCRTCInputStream> streams) {
-                for (RCRTCInputStream stream : streams) {
-                    if (stream.getMediaType() == RCRTCMediaType.VIDEO) {
-                        JSONObject jsonObject = new JSONObject();
-                        jsonObject.put("callback", "success");
-                        jsonObject.put("stream", JSON.toJSONString(new RCFlutterVideoInputStream(bMsg, (RCRTCVideoInputStream) stream)));
-                        UIThreadHandler.success(result, jsonObject.toJSONString());
-                        break;
-                    }
-                }
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onVideoStreamReceived(RCRTCVideoInputStream rcrtcVideoInputStream) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("callback", "success");
+                jsonObject.put("stream", JSON.toJSONString(new RCFlutterVideoInputStream(bMsg, rcrtcVideoInputStream)));
+                UIThreadHandler.success(result, jsonObject.toJSONString());
+            }
+
+            @Override
+            public void onAudioStreamReceived(RCRTCAudioInputStream rcrtcAudioInputStream) {
+
             }
 
             @Override
@@ -264,44 +272,6 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                 UIThreadHandler.success(result, jsonObject.toJSONString());
             }
         });
-//        RCRTCAVStreamType roomType = Objects.requireNonNull(RCRTCAVStreamType.class.getEnumConstants())[type];
-//        RCRTCEngine.getInstance().subscribeLiveStream(url, roomType, new RCRTCLiveCallback() {
-//            @Override
-//            public void onFailed(RTCErrorCode rtcErrorCode) {
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.put("callback", "failed");
-//                jsonObject.put("code", rtcErrorCode.getValue());
-//                jsonObject.put("message", rtcErrorCode.getReason());
-//                RLog.d(TAG, "subscribeLiveStream: onFailed");
-//                UIThreadHandler.success(result, jsonObject.toJSONString());
-//            }
-//
-//            @Override
-//            public void onSuccess() {
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.put("callback", "success");
-//                RLog.d(TAG, "subscribeLiveStream: onSuccess");
-////                UIThreadHandler.success(result, jsonObject.toJSONString());
-//            }
-//
-//            @Override
-//            public void onVideoStreamReceived(RCRTCVideoInputStream rcrtcVideoInputStream) {
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.put("callback", "video");
-//                jsonObject.put("content", JSON.toJSONString(rcrtcVideoInputStream));
-//                RLog.d(TAG, "subscribeLiveStream: onVideoStreamReceived");
-//                UIThreadHandler.success(result, jsonObject.toJSONString());
-//            }
-//
-//            @Override
-//            public void onAudioStreamReceived(RCRTCAudioInputStream rcrtcAudioInputStream) {
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.put("callback", "audio");
-//                jsonObject.put("content", JSON.toJSONString(rcrtcAudioInputStream));
-//                RLog.d(TAG, "subscribeLiveStream: onAudioStreamReceived");
-////                UIThreadHandler.success(result, jsonObject.toJSONString());
-//            }
-//        });
     }
 
     private void unsubscribeLiveStream(MethodCall call, Result result) {

@@ -67,7 +67,9 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   }
 
   Widget _buildMainView(BuildContext context) {
-    return _mainView?.view ?? Container();
+    return Container(
+      child: _mainView?.view ?? Container(),
+    );
   }
 
   Widget _buildTopBar(BuildContext context) {
@@ -144,7 +146,11 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   List<Widget> _buildSubView(BuildContext context) {
     List<Widget> widgets = List();
     _views.forEach((view) {
-      if (_mainView.user.id != view.user.id) widgets.add(view.view);
+      widgets.add(Container(
+        color: Colors.yellow,
+        alignment: Alignment.center,
+        child: view.view,
+      ));
     });
     return widgets;
   }
@@ -200,10 +206,10 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   }
 
   void _changeVideoStreamState() async {
-    // bool closed = await presenter?.changeVideoStreamState();
-    // setState(() {
-    //   _videoStreamStateIcon = closed ? FontAwesomeIcons.videoSlash : FontAwesomeIcons.video;
-    // });
+    bool closed = await presenter?.changeVideoStreamState();
+    setState(() {
+      _videoStreamStateIcon = closed ? FontAwesomeIcons.videoSlash : FontAwesomeIcons.video;
+    });
   }
 
   Widget _buildPermissionGuild(BuildContext context) {
@@ -305,9 +311,18 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   void onVideoViewCreated(VideoView view) {
     String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
     setState(() {
-      if (uid == view.user.id) _mainView = view;
-      _views.add(view);
+      if (uid == view.user.id)
+        _mainView = view;
+      else
+        _addSubView(view);
     });
+  }
+
+  void _addSubView(VideoView view) {
+    _views.removeWhere((element) {
+      return element.user.id == view.user.id;
+    });
+    _views.add(view);
   }
 
   @override
@@ -323,24 +338,11 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   @override
   void onRemoveVideoView(String userId) {
     setState(() {
-      if (_mainView.user.id == userId) _mainView = null;
       _views.removeWhere((view) {
         return view.user.id == userId;
       });
-      if (_mainView == null) _mainView = _suggestView();
+      if (_mainView.user.id == userId) _mainView = null;
     });
-  }
-
-  VideoView _suggestView() {
-    VideoView view = _views.firstWhere(
-      (view) {
-        return view.user.id == RCRTCEngine.getInstance().getRoom().localUser.id;
-      },
-      orElse: () {
-        return _views.isNotEmpty ? _views.first : null;
-      },
-    );
-    return view;
   }
 
   bool _paused = false;

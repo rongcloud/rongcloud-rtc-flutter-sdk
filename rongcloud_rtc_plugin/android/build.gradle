@@ -45,6 +45,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'cn.rongcloud.sdk:im_lib:4.0.1.1'
-    implementation 'cn.rongcloud.sdk:rtc_lib:4.0.1.1'
+    implementation 'cn.rongcloud.sdk:rtc_lib:4.0.3.2'
     implementation 'com.alibaba:fastjson:1.1.71.android'
 }

@@ -20,7 +20,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   ) {
     RCRTCEngine.getInstance().subscribeLiveStream(
       url,
-      RoomType.audio_video,
+      AVStreamType.audio_video,
       (stream) {
         RCRTCVideoView videoView = RCRTCVideoView(
           onCreated: (videoView, id) {

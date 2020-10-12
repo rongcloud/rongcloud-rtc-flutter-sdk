@@ -22,12 +22,6 @@ enum AVStreamType {
   audio_video_tiny,
 }
 
-enum RoomType {
-  meeting,
-  audio,
-  audio_video,
-}
-
 class RCRTCEngine {
   static const MethodChannel _channel = MethodChannel('rong.flutter.rtclib/engine');
 
@@ -141,8 +135,7 @@ class RCRTCEngine {
     return RCRTCVideoOutputStream.fromJson(jsonDecode(jsonStr));
   }
 
-  Future<RCRTCFileVideoOutputStream> createFileVideoOutputStream(
-      {@required String path, @required String tag, bool replace = true, bool playback = true}) async {
+  Future<RCRTCFileVideoOutputStream> createFileVideoOutputStream({@required String path, @required String tag, bool replace = true, bool playback = true}) async {
     var args = {"path": path, "tag": tag, "replace": replace ?? false, "playback": playback ?? true};
     String jsonStr = await _channel.invokeMethod("createFileVideoOutputStream", args);
     return RCRTCFileVideoOutputStream.fromJson(jsonDecode(jsonStr));
@@ -150,11 +143,11 @@ class RCRTCEngine {
 
   Future<void> subscribeLiveStream(
     String url,
-    RoomType roomType,
+    AVStreamType streamType,
     void onSuccess(RCRTCVideoInputStream stream),
     void onError(int code, String message),
   ) async {
-    var args = {"url": url, "type": roomType.index};
+    var args = {"url": url, "type": streamType.index};
     String json = await _channel.invokeMethod("subscribeLiveStream", args);
     Map<String, dynamic> result = jsonDecode(json);
     RCRTCLog.d("RCRTCEngine", "subscribeLiveStream $result");
