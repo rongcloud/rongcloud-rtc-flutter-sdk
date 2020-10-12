@@ -1,5 +1,9 @@
 # 融云 Flutter SDK
 
+## 版本说明
+
+* 基于融云 RTCLib+IMLib 4.0.1 开发，可支持会议模式及直播模式。
+
 ## Git 提交规范
 
 * 提交代码前设置自己的 user.name 和 user.email

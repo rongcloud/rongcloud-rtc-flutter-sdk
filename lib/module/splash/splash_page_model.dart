@@ -4,8 +4,7 @@ import 'package:FlutterRTC/frame/utils/local_storage.dart';
 
 class SplashPageModel extends AbstractModel implements Model {
   @override
-  void preload(
-      Function() onPreloadSuccess, Function(String info) onPreloadError) {
+  void preload(Function() onPreloadSuccess, Function(String info) onPreloadError) {
     try {
       LocalStorage.init().catchError((e) {
         onPreloadError(e.toString());

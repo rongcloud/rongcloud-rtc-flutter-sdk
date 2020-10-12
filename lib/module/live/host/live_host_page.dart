@@ -1223,5 +1223,4 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   List<VideoView> _remoteViews = List();
 
   IconData _microphoneIcon = FontAwesomeIcons.microphone;
-
 }

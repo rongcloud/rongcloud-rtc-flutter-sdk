@@ -34,8 +34,7 @@ SingleInstanceM(ViewFactory);
         viewNum = ((NSDictionary *)args)[@"tag"];
     }
     RongFlutterRenderViewType viewType = (RongFlutterRenderViewType) viewNum.intValue;
-    RCFlutterRenderView *iosView =
-    [[RCFlutterRenderView alloc] initWithFrame:frame viewIdentifier:viewId arguments:args messenger:_messager viewType:viewType];
+    RCFlutterRenderView *iosView = [[RCFlutterRenderView alloc] initWithFrame:frame viewIdentifier:viewId arguments:args messenger:_messager viewType:viewType];
     switch (viewType) {
         case RongFlutterRenderViewTypeLocalView: {
             NSString *localViewId = [NSString stringWithFormat:@"%lld", viewId];
@@ -50,7 +49,7 @@ SingleInstanceM(ViewFactory);
         default:
             break;
     }
-    return iosView;;
+    return iosView;
 }
 
 - (RCFlutterRenderView *)getViewWithId:(int)viewId andType:(RongFlutterRenderViewType)type {

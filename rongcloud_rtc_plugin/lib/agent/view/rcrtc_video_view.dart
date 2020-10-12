@@ -15,7 +15,7 @@ class RCRTCVideoView extends StatefulWidget {
   final _RCRTCVideoViewState state = _RCRTCVideoViewState();
   final String streamId;
 
-  RCRTCVideoView({@required this.onCreated, @required this.viewType, this.streamId}):super(key: Key(streamId.toString()));
+  RCRTCVideoView({@required this.onCreated, @required this.viewType, this.streamId}) : super(key: Key('RCRTCVideoView_$streamId[${DateTime.now().millisecondsSinceEpoch}]'));
 
   @override
   _RCRTCVideoViewState createState() => state;
@@ -32,7 +32,7 @@ class _RCRTCVideoViewState extends State<RCRTCVideoView> {
   }
 
   Widget _platformView() {
-    final Map<String, dynamic> viewMap = { "tag": widget.viewType.index };
+    final Map<String, dynamic> viewMap = {"tag": widget.viewType.index};
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return AndroidView(

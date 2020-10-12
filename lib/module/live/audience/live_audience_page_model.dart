@@ -40,7 +40,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     void onVideoViewReady(RCRTCVideoView videoView),
     void readyToPush(),
   ) {
-    RCRTCEngine.getInstance().defaultVideoStream.then((stream) async {
+    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
       RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig(
         200,
         800,
@@ -65,7 +65,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     void onPushed(),
     void onPushError(),
   ) async {
-    RCRTCEngine.getInstance().room.localUser.publishDefaultLiveStreams(
+    RCRTCEngine.getInstance().getRoom().localUser.publishDefaultLiveStreams(
       (liveInfo) {
         onPushed();
       },
@@ -178,7 +178,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   }
 
   Future<bool> _doJoinRoom(String roomId) async {
-    RCRTCCodeResult result = await RCRTCEngine.getInstance().joinLiveRoom(
+    RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
       roomId: roomId,
       roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo),
     );
@@ -195,9 +195,9 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
     void onRemoteVideoViewClose(String uid),
   ) {
-    RCRTCEngine.getInstance().room.remoteUserList.forEach((user) {
+    RCRTCEngine.getInstance().getRoom().remoteUserList.forEach((user) {
       List<RCRTCInputStream> streams = user.streamList;
-      RCRTCEngine.getInstance().room.localUser.subscribeStreams(streams);
+      RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
       streams.forEach((stream) {
         if (stream.type == MediaType.video) {
           RCRTCVideoView videoView = RCRTCVideoView(
@@ -211,8 +211,8 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       });
     });
 
-    RCRTCEngine.getInstance().room.onRemoteUserPublishResource = (_user, _streams) {
-      RCRTCEngine.getInstance().room.localUser.subscribeStreams(_streams);
+    RCRTCEngine.getInstance().getRoom().onRemoteUserPublishResource = (_user, _streams) {
+      RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(_streams);
       _streams.forEach((stream) {
         if (stream.type == MediaType.video) {
           RCRTCVideoView videoView = RCRTCVideoView(
@@ -226,11 +226,11 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       });
     };
 
-    RCRTCEngine.getInstance().room.onRemoteUserUnpublishResource = (_user, _streams) {
+    RCRTCEngine.getInstance().getRoom().onRemoteUserUnpublishResource = (_user, _streams) {
       onRemoteVideoViewClose(_user.id);
     };
 
-    RCRTCEngine.getInstance().room.onRemoteUserLeft = (_user) {
+    RCRTCEngine.getInstance().getRoom().onRemoteUserLeft = (_user) {
       onRemoteVideoViewClose(_user.id);
     };
   }
@@ -247,8 +247,8 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   ) async {
     int result = 0;
     if (_type != LiveType.normal) {
-      RCRTCLocalUser localUser = RCRTCEngine.getInstance().room.localUser;
-      result += await RCRTCEngine.getInstance().room.localUser.unPublishStreams(await localUser.getStreams());
+      RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
+      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
       result += await RCRTCEngine.getInstance().leaveRoom();
     } else {
       result = await RCRTCEngine.getInstance().unsubscribeLiveStream(url);

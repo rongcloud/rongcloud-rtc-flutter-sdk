@@ -70,7 +70,7 @@ class RCRTCStream {
     return _mute;
   }
 
-  Future<RCRTCResourceState> get resourceState async {
+  Future<RCRTCResourceState> getResourceState() async {
     int stateValue = await channel.invokeMethod("getResourceState");
     if (stateValue == 0) {
       return RCRTCResourceState.forbidden;

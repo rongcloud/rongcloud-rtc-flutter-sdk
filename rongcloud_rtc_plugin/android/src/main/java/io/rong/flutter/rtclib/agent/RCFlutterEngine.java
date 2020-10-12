@@ -5,7 +5,6 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.util.ArrayList;
@@ -21,10 +20,13 @@ import cn.rongcloud.rtc.api.callback.IRCRTCResultCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCResultDataCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCStatusReportListener;
 import cn.rongcloud.rtc.api.report.StatusReport;
+import cn.rongcloud.rtc.api.stream.RCRTCFileVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoOutputStream;
+import cn.rongcloud.rtc.api.stream.RCRTCVideoStreamConfig;
 import cn.rongcloud.rtc.base.RCRTCMediaType;
+import cn.rongcloud.rtc.base.RCRTCParamsType;
 import cn.rongcloud.rtc.base.RCRTCRoomType;
 import cn.rongcloud.rtc.base.RTCErrorCode;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -39,6 +41,7 @@ import io.rong.flutter.rtclib.agent.room.RCFlutterRemoteUser;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoom;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoomType;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterCameraOutputStream;
+import io.rong.flutter.rtclib.agent.stream.RCFlutterFileVideoOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterMicOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoInputStream;
@@ -51,6 +54,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
+    private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
     private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
     private RCFlutterCameraOutputStream cameraOutputStream;
@@ -98,9 +102,6 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             case "leaveRoom":
                 leaveRoom(result);
                 break;
-            case "joinLiveRoom":
-                joinLiveRoom(call, result);
-                break;
             case "getDefaultVideoStream":
                 getDefaultVideoStream(result);
                 break;
@@ -131,6 +132,9 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             case "releaseVideoView":
                 releaseVideoView(call, result);
                 break;
+            case "createFileVideoOutputStream":
+                createFileVideoOutputStream(call, result);
+                break;
             default:
                 result.notImplemented();
         }
@@ -156,13 +160,13 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     }
 
     private void joinRoom(MethodCall call, Result result) {
-        RLog.d(TAG, "joinRoom: ");
-        RCRTCConfig config = RCRTCConfig.Builder.create().build();
-        RCRTCEngine.getInstance().init(context, config);
-        String roomId = (String) call.arguments;
+        String roomId = call.argument("roomId");
+        HashMap<String, Integer> roomConfigMap = call.argument("roomConfig");
+        RCRTCRoomType roomType = RCFlutterRoomType.from(roomConfigMap).nativeRoomType();
         RCRTCEngine.getInstance()
                 .joinRoom(
                         roomId,
+                        roomType,
                         new IRCRTCResultDataCallback<RCRTCRoom>() {
                             @Override
                             public void onSuccess(RCRTCRoom rtcRoom) {
@@ -204,38 +208,6 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                                 JSONObject jsonObject = new JSONObject();
                                 jsonObject.put("code", rtcErrorCode.getValue());
                                 UIThreadHandler.success(result, jsonObject.toJSONString());
-                            }
-                        });
-    }
-
-    private void joinLiveRoom(MethodCall call, Result result) {
-        RCRTCConfig config = RCRTCConfig.Builder.create().build();
-        RCRTCEngine.getInstance().init(context, config);
-
-        String roomId = call.argument("roomId");
-        HashMap<String, Integer> roomConfigMap = call.argument("roomConfig");
-        RCRTCRoomType roomType = RCFlutterRoomType.from(roomConfigMap).nativeRoomType();
-        RCRTCEngine.getInstance()
-                .joinRoom(
-                        roomId,
-                        roomType,
-                        new IRCRTCResultDataCallback<RCRTCRoom>() {
-                            @Override
-                            public void onSuccess(RCRTCRoom rtcRoom) {
-                                RCFlutterLog.v(TAG, "joinLiveRoom onSuccess");
-                                RCFlutterRoom room = new RCFlutterRoom(bMsg, rtcRoom);
-                                roomMap.put(room.getId(), room);
-                                RCFlutterRequestResult<RCFlutterRoom> requestResult =
-                                        new RCFlutterRequestResult<>(room, 0);
-                                UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
-                            }
-
-                            @Override
-                            public void onFailed(RTCErrorCode code) {
-                                RCFlutterLog.v(TAG, "joinLiveRoom onFailed code = " + code);
-                                RCFlutterRequestResult<String> requestResult =
-                                        new RCFlutterRequestResult<>(code.getReason(), code.getValue());
-                                UIThreadHandler.success(result, JSONObject.toJSON(requestResult.toString()));
                             }
                         });
     }
@@ -357,30 +329,25 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         UIThreadHandler.success(result, null);
     }
 
-    //    private void createFileVideoOutputStream(MethodCall call, Result result) {
-    //        String fileName = call.argument("path");
-    //        String tag = call.argument("tag");
-    //        boolean replace = call.argument("replace");
-    //        boolean playback = call.argument("playback");
-    //        RCRTCVideoStreamConfig config =
-    //                RCRTCVideoStreamConfig.Builder.create().
-    //                        setMinRate(50).
-    //                        setMaxRate(500).
-    //                        setVideoFps(RCRTCParamsType.RCRTCVideoFps.Fps_24).
-    //
-    // setVideoResolution(RCRTCParamsType.RCRTCVideoResolution.RESOLUTION_480_640).
-    //                        build();
-    //
-    //        String path = flutterAssets.getAssetFilePathByName(fileName);
-    //        RCRTCFileVideoOutputStream stream =
-    //                RCRTCEngine.getInstance().createFileVideoOutputStream(path, replace, playback,
-    //                        tag, config);
-    //        RCFlutterFileVideoOutputStream flutterStream = new RCFlutterFileVideoOutputStream(bMsg,
-    //                stream);
-    //        String uid = flutterStream.getStreamId() + "_" + flutterStream.getType();
-    //        createdVideoOutputStreams.put(uid, flutterStream);
-    //        UIThreadHandler.success(result, JSON.toJSONString(flutterStream));
-    //    }
+    private void createFileVideoOutputStream(MethodCall call, Result result) {
+        String fileName = call.argument("path");
+        String tag = call.argument("tag");
+        boolean replace = call.argument("replace");
+        boolean playback = call.argument("playback");
+        RCRTCVideoStreamConfig config =
+                RCRTCVideoStreamConfig.Builder.create().
+                        setMinRate(50).
+                        setMaxRate(500).
+                        setVideoFps(RCRTCParamsType.RCRTCVideoFps.Fps_24).
+                        setVideoResolution(RCRTCParamsType.RCRTCVideoResolution.RESOLUTION_480_640).build();
+        String path = ASSETS_PREFIX + flutterAssets.getAssetFilePathByName(fileName);
+        RCRTCFileVideoOutputStream stream =
+                RCRTCEngine.getInstance().createFileVideoOutputStream(path, replace, playback, tag, config);
+        RCFlutterFileVideoOutputStream flutterStream = new RCFlutterFileVideoOutputStream(bMsg, stream);
+        String uid = flutterStream.getStreamId() + "_" + flutterStream.getType();
+        createdVideoOutputStreams.put(uid, flutterStream);
+        UIThreadHandler.success(result, JSON.toJSONString(flutterStream));
+    }
 
     private void registerReportStatusListener() {
         RCRTCEngine.getInstance().registerStatusReportListener(this);

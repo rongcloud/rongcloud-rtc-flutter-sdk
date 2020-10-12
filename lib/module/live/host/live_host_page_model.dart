@@ -57,7 +57,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
     void onVideoViewReady(RCRTCVideoView videoView),
     void readyToPush(),
   ) {
-    RCRTCEngine.getInstance().defaultVideoStream.then((stream) async {
+    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
       RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig(
         300,
         1000,
@@ -83,7 +83,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
     void onSuccess(),
     void onError(String info),
   ) async {
-    RCRTCEngine.getInstance().room.localUser.publishDefaultLiveStreams(
+    RCRTCEngine.getInstance().getRoom().localUser.publishDefaultLiveStreams(
       (liveInfo) {
         _requestCreateLiveRoom(liveInfo.userId, liveInfo.roomId, liveInfo.liveUrl);
         onSuccess();
@@ -111,7 +111,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
 
   @override
   void requestMemberList() async {
-    String roomId = RCRTCEngine.getInstance().room.id;
+    String roomId = RCRTCEngine.getInstance().getRoom().id;
     TextMessage textMessage = TextMessage();
     textMessage.content = jsonEncode(Data.Message(Data.DefaultData.user, MessageType.request_list, "").toJSON());
     RongIMClient.sendMessage(RCConversationType.ChatRoom, roomId, textMessage);
@@ -133,10 +133,10 @@ class LiveHostPageModel extends AbstractModel implements Model {
     void onSuccess(BuildContext context),
     void onError(BuildContext context, String info),
   ) async {
-    String roomId = RCRTCEngine.getInstance().room.id;
+    String roomId = RCRTCEngine.getInstance().getRoom().id;
     _requestLeaveLiveRoom(roomId);
-    RCRTCLocalUser localUser = RCRTCEngine.getInstance().room.localUser;
-    int unPublishResult = await RCRTCEngine.getInstance().room.localUser.unPublishStreams(await localUser.getStreams());
+    RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
+    int unPublishResult = await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
     int leaveResult = await RCRTCEngine.getInstance().leaveRoom();
     RongIMClient.quitChatRoom(roomId);
     RongIMClient.disconnect(false);
@@ -164,14 +164,14 @@ class LiveHostPageModel extends AbstractModel implements Model {
 
   @override
   void muteMicrophone(void onMicrophoneStatusChanged(bool state)) {
-    RCRTCEngine.getInstance().defaultAudioStream.then((stream) async {
+    RCRTCEngine.getInstance().getDefaultAudioStream().then((stream) async {
       stream.mute(!stream.isMute()).then((value) => onMicrophoneStatusChanged(stream.isMute()));
     });
   }
 
   @override
   void switchCamera(void onCameraStatusChanged(bool isFront)) {
-    RCRTCEngine.getInstance().defaultVideoStream.then((stream) async {
+    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
       stream.switchCamera().then((value) => onCameraStatusChanged(stream.isFrontCamera()));
     });
   }

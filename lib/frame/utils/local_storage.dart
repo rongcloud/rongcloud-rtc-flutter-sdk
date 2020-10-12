@@ -4,7 +4,7 @@ class LocalStorage {
   static SharedPreferences _config;
 
   static Future init() async {
-    if (_config == null){
+    if (_config == null) {
       _config = await SharedPreferences.getInstance();
     }
   }

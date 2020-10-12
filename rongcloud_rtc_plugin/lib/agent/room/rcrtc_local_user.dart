@@ -36,6 +36,16 @@ class RCRTCLocalUser extends RCRTCUser {
     return streamList;
   }
 
+  // Future<List<RCRTCOutputStream>> getStreams() async {
+  //   if (streamList.isEmpty) {
+  //     List<dynamic> jsonList = await methodChannel.invokeListMethod('getStreams');
+  //     jsonList.forEach((json) {
+  //       streamList.add(RCRTCOutputStream.fromJson(jsonDecode(json)));
+  //     });
+  //   }
+  //   return streamList;
+  // }
+
   Future<int> publishDefaultStreams() async {
     return await methodChannel.invokeMethod('publishDefaultStreams');
   }

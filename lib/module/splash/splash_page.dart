@@ -10,8 +10,7 @@ class SplashPage extends AbstractView {
   State<StatefulWidget> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends AbstractViewState<Presenter, SplashPage>
-    implements View {
+class _SplashPageState extends AbstractViewState<Presenter, SplashPage> implements View {
   @override
   Widget buildWidget(BuildContext context) {
     presenter.preload();
@@ -36,5 +35,4 @@ class _SplashPageState extends AbstractViewState<Presenter, SplashPage>
     Navigator.pop(context);
     Navigator.pushNamed(context, RouterManager.HOME);
   }
-
 }

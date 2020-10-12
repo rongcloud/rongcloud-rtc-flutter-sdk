@@ -71,11 +71,6 @@ class HomePageModel extends AbstractModel implements Model {
   }
 
   @override
-  void initRCRTCEngine() {
-    RCRTCEngine.getInstance().init(null);
-  }
-
-  @override
   void loadLiveRoomList(
     bool reset,
     void onLoaded(RoomList list),
@@ -114,24 +109,17 @@ class HomePageModel extends AbstractModel implements Model {
       (code, userId) async {
         if (code == RCRTCErrorCode.OK) {
           RongIMClient.joinChatRoom(roomId, -1);
-          if (type == RCRTCRoomType.Live){
-            RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
-              roomId: roomId,
-              type: RCRTCRoomType.Live,
-              roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
-            );
-            if (result.code == 0) {
-              onCreated(context);
-            } else {
-              onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
-            }
-          }else {
-            RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(roomId: roomId);
-            if (result.code == 0) {
-              onCreated(context);
-            } else {
-              onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
-            }
+
+          RCRTCEngine.getInstance().init(null); // 初始化引擎
+
+          RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
+            roomId: roomId,
+            roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
+          );
+          if (result.code == 0) {
+            onCreated(context);
+          } else {
+            onCreateError(context, 'requestCreateLiveRoom join room error, code = ${result.code}');
           }
         } else if (code == RCRTCErrorCode.ALREADY_CONNECTED) {
           RongIMClient.disconnect(false);
@@ -155,6 +143,9 @@ class HomePageModel extends AbstractModel implements Model {
       (code, userId) async {
         if (code == RCRTCErrorCode.OK) {
           RongIMClient.joinChatRoom(roomId, -1);
+
+          RCRTCEngine.getInstance().init(null); // 初始化引擎
+
           onJoined(context);
         } else if (code == RCRTCErrorCode.ALREADY_CONNECTED) {
           RongIMClient.disconnect(false);

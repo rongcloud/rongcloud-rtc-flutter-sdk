@@ -16,7 +16,6 @@ class HomePagePresenter extends AbstractPresenter<View, Model> implements Presen
   void init(BuildContext context) {
     requestCurrentServerVersion();
     login();
-    initRCRTCEngine();
     loadLiveRoomList(true);
   }
 
@@ -39,11 +38,6 @@ class HomePagePresenter extends AbstractPresenter<View, Model> implements Presen
         view?.onLoginError(info);
       },
     );
-  }
-
-  @override
-  void initRCRTCEngine() {
-    model?.initRCRTCEngine();
   }
 
   @override

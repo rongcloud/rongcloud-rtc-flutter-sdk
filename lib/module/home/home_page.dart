@@ -527,9 +527,9 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
   @override
   void onLiveRoomCreated(BuildContext context) {
     Loading.dismiss(context);
-    if (_type == 0){
+    if (_type == 0) {
       _gotoChat();
-    }else {
+    } else {
       _gotoHost();
     }
   }

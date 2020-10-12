@@ -36,8 +36,6 @@ abstract class Model implements IModel {
     void onLoginError(String info),
   );
 
-  void initRCRTCEngine();
-
   void loadLiveRoomList(
     bool reset,
     void onLoaded(RoomList list),
@@ -64,8 +62,6 @@ abstract class Presenter implements IPresenter {
   void requestCurrentServerVersion();
 
   void login();
-
-  void initRCRTCEngine();
 
   void loadLiveRoomList([bool reset]);
 

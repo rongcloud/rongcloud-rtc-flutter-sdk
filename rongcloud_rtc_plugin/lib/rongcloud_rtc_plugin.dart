@@ -8,6 +8,7 @@ export 'agent/room/rcrtc_user.dart';
 export 'agent/stream/rcrtc_audio_input_stream.dart';
 export 'agent/stream/rcrtc_audio_output_stream.dart';
 export 'agent/stream/rcrtc_camera_output_stream.dart';
+export 'agent/stream/rcrtc_file_video_output_stream.dart';
 export 'agent/stream/rcrtc_input_stream.dart';
 export 'agent/stream/rcrtc_mic_output_stream.dart';
 export 'agent/stream/rcrtc_output_stream.dart';

@@ -28,18 +28,9 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   @override
   void init(BuildContext context) {
     requestPermission();
-    RCRTCEngine
-        .getInstance()
-        .room
-        .onRemoteUserPublishResource = (user, streams) => _onRemoteUserPublishResource(user, streams);
-    RCRTCEngine
-        .getInstance()
-        .room
-        .onRemoteUserUnpublishResource = (user, streams) => _onRemoteUserLeft(user);
-    RCRTCEngine
-        .getInstance()
-        .room
-        .onRemoteUserLeft = (user) => _onRemoteUserLeft(user);
+    RCRTCEngine.getInstance().getRoom().onRemoteUserPublishResource = (user, streams) => _onRemoteUserPublishResource(user, streams);
+    RCRTCEngine.getInstance().getRoom().onRemoteUserUnpublishResource = (user, streams) => _onRemoteUserLeft(user);
+    RCRTCEngine.getInstance().getRoom().onRemoteUserLeft = (user) => _onRemoteUserLeft(user);
     RongIMClient.onMessageReceived = (message, left) => _onMessageReceived(message, left);
   }
 
@@ -53,11 +44,7 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   }
 
   void _onRemoteUserPublishResource(RCRTCRemoteUser user, List<RCRTCInputStream> streams) {
-    RCRTCEngine
-        .getInstance()
-        .room
-        .localUser
-        .subscribeStreams(streams);
+    RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
     streams.forEach((stream) {
       if (stream.type == MediaType.video) {
         RCRTCVideoView videoView = RCRTCVideoView(
@@ -120,10 +107,10 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   @override
   void initVideoView() async {
     model?.initVideoView(
-          (videoView) {
+      (videoView) {
         view?.onVideoViewReady(videoView);
       },
-          () {
+      () {
         push();
       },
     );
@@ -132,10 +119,10 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   @override
   void push() async {
     model?.push(
-          () {
+      () {
         view?.onPushed();
       },
-          (info) {
+      (info) {
         view?.onPushError(info);
       },
     );
@@ -155,10 +142,10 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   void exit(BuildContext context) {
     model?.exit(
       context,
-          (context) {
+      (context) {
         view?.onExit(context);
       },
-          (context, info) {
+      (context, info) {
         view?.onExitWithError(context, info);
       },
     );

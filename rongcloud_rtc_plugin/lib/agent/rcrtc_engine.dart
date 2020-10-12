@@ -9,6 +9,7 @@ import '../rongcloud_rtc_plugin.dart';
 import 'rcrtc_status_report.dart';
 import 'room/rcrtc_room.dart';
 import 'stream/rcrtc_camera_output_stream.dart';
+import 'stream/rcrtc_file_video_output_stream.dart';
 import 'stream/rcrtc_mic_output_stream.dart';
 import 'stream/rcrtc_video_input_stream.dart';
 import 'stream/rcrtc_video_output_stream.dart';
@@ -95,51 +96,13 @@ class RCRTCEngine {
 
   Future<RCRTCCodeResult<RCRTCRoom>> joinRoom({
     @required String roomId,
-    RCRTCRoomType type = RCRTCRoomType.Normal,
-    RCRTCRoomConfig roomConfig,
-  }) async {
-    if (type == RCRTCRoomType.Normal) {
-      String jsonStr = await _channel.invokeMethod('joinRoom', roomId);
-      Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-      print("joinRoom json: ${jsonObj.toString()}");
-
-      int resultCode = jsonObj["code"];
-      RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
-      if (resultCode == 0) {
-        _room = RCRTCRoom.fromJson(jsonObj['data']);
-        result.object = _room;
-      } else {
-        result.reason = jsonObj['data'];
-      }
-      return result;
-    } else {
-      Map<String, dynamic> configMap = roomConfig.toJson();
-      Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
-      String jsonStr = await _channel.invokeMethod('joinLiveRoom', roomMap);
-      Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-      print("joinLiveRoom json: ${jsonObj.toString()}");
-
-      int resultCode = jsonObj["code"];
-      RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
-      if (resultCode == 0) {
-        _room = RCRTCRoom.fromJson(jsonObj['data']);
-        result.object = _room;
-      } else {
-        result.reason = jsonObj['data'];
-      }
-      return result;
-    }
-  }
-
-  Future<RCRTCCodeResult<RCRTCRoom>> joinLiveRoom({
-    @required String roomId,
-    RCRTCRoomConfig roomConfig
+    @required RCRTCRoomConfig roomConfig,
   }) async {
     Map<String, dynamic> configMap = roomConfig.toJson();
     Map<String, dynamic> roomMap = {'roomId': roomId, 'roomConfig': configMap};
-    String jsonStr = await _channel.invokeMethod('joinLiveRoom', roomMap);
+    String jsonStr = await _channel.invokeMethod('joinRoom', roomMap);
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
-    print("joinLiveRoom json: ${jsonObj.toString()}");
+    print("joinRoom json: ${jsonObj.toString()}");
 
     int resultCode = jsonObj["code"];
     RCRTCCodeResult<RCRTCRoom> result = RCRTCCodeResult(jsonObj['code']);
@@ -159,16 +122,16 @@ class RCRTCEngine {
     return jsonObj['code'];
   }
 
-  RCRTCRoom get room {
+  RCRTCRoom getRoom() {
     return _room;
   }
 
-  Future<RCRTCCameraOutputStream> get defaultVideoStream async {
+  Future<RCRTCCameraOutputStream> getDefaultVideoStream() async {
     _cameraOutputStream = _cameraOutputStream ?? RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
     return _cameraOutputStream;
   }
 
-  Future<RCRTCMicOutputStream> get defaultAudioStream async {
+  Future<RCRTCMicOutputStream> getDefaultAudioStream() async {
     _audioOutputStream = _audioOutputStream ?? RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
     return _audioOutputStream;
   }
@@ -176,6 +139,13 @@ class RCRTCEngine {
   Future<RCRTCVideoOutputStream> createVideoOutputStream(String tag) async {
     String jsonStr = await _channel.invokeMethod("createVideoOutputStream", tag);
     return RCRTCVideoOutputStream.fromJson(jsonDecode(jsonStr));
+  }
+
+  Future<RCRTCFileVideoOutputStream> createFileVideoOutputStream(
+      {@required String path, @required String tag, bool replace = true, bool playback = true}) async {
+    var args = {"path": path, "tag": tag, "replace": replace ?? false, "playback": playback ?? true};
+    String jsonStr = await _channel.invokeMethod("createFileVideoOutputStream", args);
+    return RCRTCFileVideoOutputStream.fromJson(jsonDecode(jsonStr));
   }
 
   Future<void> subscribeLiveStream(
