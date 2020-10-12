@@ -215,14 +215,14 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private void getDefaultVideoStream(Result result) {
         RLog.d(TAG, "getDefaultVideoStream: ");
-        if (cameraOutputStream != null)
+        if (cameraOutputStream == null)
             cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
         UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
     }
 
     private void getDefaultAudioStream(Result result) {
         RLog.d(TAG, "getDefaultAudioStream: ");
-        if (micOutputStream != null)
+        if (micOutputStream == null)
             micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
         UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
     }
