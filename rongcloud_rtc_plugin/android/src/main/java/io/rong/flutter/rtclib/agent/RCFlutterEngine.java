@@ -60,8 +60,8 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
     private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
-//    private RCFlutterCameraOutputStream cameraOutputStream;
-//    private RCFlutterMicOutputStream micOutputStream;
+    private RCFlutterCameraOutputStream cameraOutputStream;
+    private RCFlutterMicOutputStream micOutputStream;
     // key => (streamId + "_" + type)
     private Map<String, RCFlutterVideoOutputStream> createdVideoOutputStreams;
     private Context context;
@@ -166,64 +166,64 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         String roomId = call.argument("roomId");
         HashMap<String, Integer> roomConfigMap = call.argument("roomConfig");
         RCRTCRoomType roomType = RCFlutterRoomType.from(roomConfigMap).nativeRoomType();
-        RCRTCEngine.getInstance()
-                .joinRoom(
-                        roomId,
-                        roomType,
-                        new IRCRTCResultDataCallback<RCRTCRoom>() {
-                            @Override
-                            public void onSuccess(RCRTCRoom rtcRoom) {
-                                RCFlutterLog.v(TAG, "joinRoom onSuccess");
-                                RCFlutterRoom room = new RCFlutterRoom(bMsg, rtcRoom);
-                                roomMap.put(room.getId(), room);
-                                RCFlutterRequestResult<RCFlutterRoom> requestResult =
-                                        new RCFlutterRequestResult<>(room, 0);
-                                UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
-                            }
+        RCRTCEngine.getInstance().joinRoom(
+                roomId,
+                roomType,
+                new IRCRTCResultDataCallback<RCRTCRoom>() {
+                    @Override
+                    public void onSuccess(RCRTCRoom rtcRoom) {
+                        RCFlutterLog.v(TAG, "joinRoom onSuccess");
+                        RCFlutterRoom room = new RCFlutterRoom(bMsg, rtcRoom);
+                        roomMap.put(room.getId(), room);
+                        RCFlutterRequestResult<RCFlutterRoom> requestResult = new RCFlutterRequestResult<>(room, 0);
+                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
+                    }
 
-                            @Override
-                            public void onFailed(RTCErrorCode code) {
-                                RCFlutterLog.v(TAG, "joinRoom onFailed code = " + code);
-                                RCFlutterRequestResult<String> requestResult =
-                                        new RCFlutterRequestResult<>(code.getReason(), code.getValue());
-                                UIThreadHandler.success(result, JSONObject.toJSON(requestResult.toString()));
-                            }
-                        });
+                    @Override
+                    public void onFailed(RTCErrorCode code) {
+                        RCFlutterLog.v(TAG, "joinRoom onFailed code = " + code);
+                        RCFlutterRequestResult<String> requestResult = new RCFlutterRequestResult<>(code.getReason(), code.getValue());
+                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult.toString()));
+                    }
+                });
     }
 
     private void leaveRoom(Result result) {
         RLog.d(TAG, "leaveRoom");
-        RCRTCEngine.getInstance()
-                .leaveRoom(
-                        new IRCRTCResultCallback() {
-                            @Override
-                            public void onSuccess() {
-                                RCRTCEngine.getInstance().unInit();
-                                RCFlutterLog.v(TAG, "leaveRoom onSuccess");
-                                JSONObject jsonObject = new JSONObject();
-                                jsonObject.put("code", 0);
-                                UIThreadHandler.success(result, jsonObject.toJSONString());
-                            }
+        RCRTCEngine.getInstance().leaveRoom(new IRCRTCResultCallback() {
+            @Override
+            public void onSuccess() {
+                RCRTCEngine.getInstance().unInit();
+                RCFlutterLog.v(TAG, "leaveRoom onSuccess");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("code", 0);
+                UIThreadHandler.success(result, jsonObject.toJSONString());
+            }
 
-                            @Override
-                            public void onFailed(RTCErrorCode rtcErrorCode) {
-                                RCFlutterLog.v(TAG, "leaveRoom onFailed");
-                                JSONObject jsonObject = new JSONObject();
-                                jsonObject.put("code", rtcErrorCode.getValue());
-                                UIThreadHandler.success(result, jsonObject.toJSONString());
-                            }
-                        });
+            @Override
+            public void onFailed(RTCErrorCode rtcErrorCode) {
+                RCFlutterLog.v(TAG, "leaveRoom onFailed");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("code", rtcErrorCode.getValue());
+                UIThreadHandler.success(result, jsonObject.toJSONString());
+            }
+        });
+
+        cameraOutputStream = null;
+        micOutputStream = null;
     }
 
     private void getDefaultVideoStream(Result result) {
         RLog.d(TAG, "getDefaultVideoStream: ");
-        RCFlutterCameraOutputStream cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
+        if (cameraOutputStream != null)
+            cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
         UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
     }
 
     private void getDefaultAudioStream(Result result) {
         RLog.d(TAG, "getDefaultAudioStream: ");
-        RCFlutterMicOutputStream micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
+        if (micOutputStream != null)
+            micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
         UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
     }
 
