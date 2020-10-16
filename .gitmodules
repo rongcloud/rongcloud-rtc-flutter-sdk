@@ -1,6 +1,0 @@
-[submodule "rong-imlib"]
-	path = rong-imlib
-	url = ssh://git@pha.rongcloud.net:2222/diffusion/FLUIMSDK/flutter-imsdk.git
-[submodule "rong-rtclib"]
-	path = rong-rtclib
-	url = ssh://git@pha.rongcloud.net:2222/diffusion/FLURTCSDK/flutter-rtcsdk.git

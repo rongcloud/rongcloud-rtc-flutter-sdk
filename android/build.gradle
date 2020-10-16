@@ -1,3 +1,6 @@
+group 'io.rong.flutter.rtclib'
+version '1.0'
+
 buildscript {
     repositories {
         google()
@@ -5,25 +8,53 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:3.6.3'
     }
 }
 
-allprojects {
+rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://dl.bintray.com/rongcloud/maven" }
     }
 }
 
-rootProject.buildDir = '../build'
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 21
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+
+    sourceSets.main {
+        jniLibs.srcDir 'libs'
+        jni.srcDirs = []
+    }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+dependencies {
+    implementation 'com.alibaba:fastjson:1.1.71.android'
+
+    def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+    def properties = new Properties()
+
+    assert localPropertiesFile.exists()
+    localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
+
+    def remote = properties.getProperty("rongcloud.flutter.demo.use_remote_rtc_lib", "true")
+
+    if (remote == "true")
+        implementation 'cn.rongcloud.sdk:rtc_lib:4.0.3.2'
+    else
+        implementation project(':rtclib')
 }

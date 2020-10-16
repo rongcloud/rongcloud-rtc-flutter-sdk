@@ -1,0 +1,6 @@
+include ':app'
+
+def localSettingsFile = new File("./settings_local.gradle")
+if (localSettingsFile != null) {
+    apply from: "./settings_local.gradle"
+}
