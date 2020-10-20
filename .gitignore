@@ -50,6 +50,6 @@ app.*.map.json
 **/*.xcworkspace
 
 github.sh
+example/pre_build.py
 example/pre_build.rb
 example/pre_build.sh
-example/pre_build.py
