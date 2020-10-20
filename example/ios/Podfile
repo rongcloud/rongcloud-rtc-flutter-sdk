@@ -31,8 +31,17 @@ target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
+pre_build_path = File.expand_path(File.join('..', '..' ,'pre_build'), __FILE__)
+pre_build_able = File.exist?("#{pre_build_path}.rb")
+if pre_build_able
+  require pre_build_path
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+  end
+  if pre_build_able
+    pre_build(installer.pods_project)
   end
 end

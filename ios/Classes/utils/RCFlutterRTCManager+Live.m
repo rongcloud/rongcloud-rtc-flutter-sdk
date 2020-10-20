@@ -12,7 +12,7 @@
 }
 
 - (void)publishDefaultLiveStreams:(RCFlutterLiveOperationCallback)completion {
-    [[[[RCRTCEngine sharedInstance] currentRoom] localUser] publishDefaultLiveStream:completion];
+    [[RCRTCEngine sharedInstance].currentRoom.localUser publishDefaultLiveStreams:completion];
 }
 
 - (void)publishLiveStream:(RCRTCOutputStream *)stream completion:(RCFlutterLiveOperationCallback)completion {

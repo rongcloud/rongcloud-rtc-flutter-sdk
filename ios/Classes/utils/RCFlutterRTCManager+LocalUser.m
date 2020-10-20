@@ -5,10 +5,10 @@
 @implementation RCFlutterRTCManager (LocalUser)
 
 - (void)publishRTCDefaultAVStream:(RongFlutterOperationCallback)completion {
-    [[RCRTCEngine sharedInstance].currentRoom.localUser publishDefaultStream:completion];
+    [[RCRTCEngine sharedInstance].currentRoom.localUser publishDefaultStreams:completion];
 }
 - (void)unpublishDefaultStream:(RongFlutterOperationCallback)completion{
-    [[RCRTCEngine sharedInstance].currentRoom.localUser unpublishDefaultStream:completion];
+    [[RCRTCEngine sharedInstance].currentRoom.localUser unpublishDefaultStreams:completion];
 }
 - (void)publishStream:(RCRTCOutputStream *)stream completion:(RongFlutterOperationCallback)completion {
     [[RCRTCEngine sharedInstance].currentRoom.localUser publishStream:stream completion:completion];
