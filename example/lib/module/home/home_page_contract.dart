@@ -1,8 +1,8 @@
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'home_page_model.dart';
 
@@ -47,7 +47,7 @@ abstract class Model implements IModel {
   void requestJoinRoom(
     BuildContext context,
     String roomId,
-    RCRTCRoomType type,
+    ChatType type,
     void onCreated(BuildContext context),
     void onCreateError(BuildContext context, String info),
   );
@@ -69,7 +69,7 @@ abstract class Presenter implements IPresenter {
 
   void loadLiveRoomList([bool reset]);
 
-  void requestJoinRoom(BuildContext context, String roomId, RCRTCRoomType type);
+  void requestJoinRoom(BuildContext context, String roomId, ChatType type);
 
   void requestJoinLiveRoom(BuildContext context, Room room);
 }

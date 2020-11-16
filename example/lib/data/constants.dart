@@ -30,3 +30,9 @@ enum PermissionStatus {
   both_denied,
   unknown,
 }
+
+enum ChatType {
+  VideoChat,
+  LiveChat,
+  AudioChat,
+}

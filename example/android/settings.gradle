@@ -14,6 +14,6 @@ assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
 apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
 
 def localSettingsFile = new File("./settings_local.gradle")
-if (localSettingsFile != null) {
+if (localSettingsFile.exists()) {
     apply from: "./settings_local.gradle"
 }

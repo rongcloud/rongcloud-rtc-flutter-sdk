@@ -1,3 +1,4 @@
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
@@ -5,7 +6,6 @@ import 'package:FlutterRTC/frame/ui/toast.dart';
 import 'package:FlutterRTC/router/router.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../../colors.dart';
 import '../../global_config.dart';
@@ -222,7 +222,7 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
             child: Row(
               children: [
                 Radio(
-                  value: 0,
+                  value: ChatType.VideoChat,
                   groupValue: _type,
                   onChanged: null,
                 ),
@@ -235,13 +235,13 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
                 ),
               ],
             ),
-            onTap: () => changeType(0, setter),
+            onTap: () => changeType(ChatType.VideoChat, setter),
           ),
           GestureDetector(
             child: Row(
               children: [
                 Radio(
-                  value: 1,
+                  value: ChatType.LiveChat,
                   groupValue: _type,
                   onChanged: null,
                 ),
@@ -254,14 +254,33 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
                 ),
               ],
             ),
-            onTap: () => changeType(1, setter),
+            onTap: () => changeType(ChatType.LiveChat, setter),
+          ),
+          GestureDetector(
+            child: Row(
+              children: [
+                Radio(
+                  value: ChatType.AudioChat,
+                  groupValue: _type,
+                  onChanged: null,
+                ),
+                Text(
+                  "Audio Chat",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.0,
+                  ),
+                ),
+              ],
+            ),
+            onTap: () => changeType(ChatType.AudioChat, setter),
           ),
         ],
       ),
     );
   }
 
-  void changeType(int type, StateSetter setter) {
+  void changeType(ChatType type, StateSetter setter) {
     setter(() {
       _type = type;
     });
@@ -496,7 +515,7 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
             return;
           }
           Navigator.pop(context);
-          _requestJoinRoom(context, rid, _type == 0 ? RCRTCRoomType.Normal : RCRTCRoomType.Live);
+          _requestJoinRoom(context, rid);
         },
       ),
     );
@@ -542,19 +561,29 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
   @override
   void onLiveRoomCreated(BuildContext context) {
     Loading.dismiss(context);
-    if (_type == 0) {
-      _gotoChat();
-    } else {
-      _gotoHost();
+    switch (_type) {
+      case ChatType.VideoChat:
+        _gotoVideoChat();
+        break;
+      case ChatType.LiveChat:
+        _gotoHost();
+        break;
+      case ChatType.AudioChat:
+        _gotoAudioChat();
+        break;
     }
   }
 
-  void _gotoChat() {
+  void _gotoVideoChat() {
     Navigator.pushNamed(context, RouterManager.VIDEO_CHAT);
   }
 
   void _gotoHost() {
     Navigator.pushNamed(context, RouterManager.LIVE_HOST);
+  }
+
+  void _gotoAudioChat() {
+    Navigator.pushNamed(context, RouterManager.AUDIO_CHAT);
   }
 
   @override
@@ -596,9 +625,9 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
     presenter?.loadLiveRoomList();
   }
 
-  Future<void> _requestJoinRoom(BuildContext context, String rid, RCRTCRoomType type) async {
+  Future<void> _requestJoinRoom(BuildContext context, String rid) async {
     Loading.show(context);
-    presenter.requestJoinRoom(context, rid, type);
+    presenter.requestJoinRoom(context, rid, _type);
   }
 
   Future<void> _requestJoinLiveRoom(BuildContext context, Room room) async {
@@ -611,7 +640,7 @@ class _HomePageState extends AbstractViewState<Presenter, HomePage> implements V
 
   RoomList _list;
 
-  int _type = 0;
+  ChatType _type = ChatType.VideoChat;
   String _userAvatar;
 
   GlobalKey _formKey = new GlobalKey<FormState>();

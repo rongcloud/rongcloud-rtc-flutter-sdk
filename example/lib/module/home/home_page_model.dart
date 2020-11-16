@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/network/network.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
@@ -105,7 +106,7 @@ class HomePageModel extends AbstractModel implements Model {
   void requestJoinRoom(
     BuildContext context,
     String roomId,
-    RCRTCRoomType type,
+    ChatType type,
     void onCreated(BuildContext context),
     void onCreateError(BuildContext context, String info),
   ) async {
@@ -117,7 +118,10 @@ class HomePageModel extends AbstractModel implements Model {
 
           RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
             roomId: roomId,
-            roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
+            roomConfig: RCRTCRoomConfig(
+              type != ChatType.LiveChat ? RCRTCRoomType.Normal : RCRTCRoomType.Live,
+              type != ChatType.AudioChat ? RCRTCLiveType.AudioVideo : RCRTCLiveType.Audio,
+            ),
           );
           if (result.code == 0) {
             onCreated(context);
