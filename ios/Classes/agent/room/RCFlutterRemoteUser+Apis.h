@@ -1,5 +1,5 @@
 #import "RCFlutterRemoteUser.h"
-#import "RCFlutterRTCBridgeProtocol.h"
+#import "RCFlutterRTCProtocol.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCFlutterRemoteUser (Apis)<RCFlutterRemoteUserProtocol>

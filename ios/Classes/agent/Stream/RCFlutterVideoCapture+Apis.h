@@ -1,5 +1,5 @@
 #import "RCFlutterVideoCapture.h"
-#import "RCFlutterRTCBridgeProtocol.h"
+#import "RCFlutterRTCProtocol.h"
 NS_ASSUME_NONNULL_BEGIN
 
 /// 此类掌管 video capture 相关 api
