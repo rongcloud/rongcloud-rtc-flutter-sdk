@@ -1,12 +1,21 @@
-enum MixLayoutMode { ADAPTIVE, CUSTOM, SUSPENSION }
+enum MixLayoutMode {
+  CUSTOM,
+  SUSPENSION,
+  ADAPTIVE,
+}
 
-enum VideoRenderMode { CROPO, WHOLE }
+enum VideoRenderMode {
+  CROP,
+  WHOLE,
+}
 
 class CustomLayoutList {
   List<CustomLayout> customLayout;
 
+  CustomLayoutList(this.customLayout);
+
   Map<String, dynamic> toJson() => {
-        'customLayout': customLayout,
+        'video': customLayout.map((e) => e.toJson()).toList(),
       };
 }
 
@@ -15,19 +24,27 @@ class MediaConfig {
   List<CDNPushUrl> cdn;
   VideoConfig videoConfig;
 
-  Map<String, dynamic> toJson() => {'audioConfig': audioConfig, 'cdn': cdn, 'videoConfig': videoConfig};
+  Map<String, dynamic> toJson() => {
+        'video': videoConfig != null ? videoConfig.toJson() : null,
+        'audio': audioConfig != null ? audioConfig.toJson() : null,
+        'cdn': cdn != null ? cdn.map((e) => e.toJson()).toList() : null,
+      };
 }
 
 class AudioConfig {
   int bitrate;
 
-  Map<String, dynamic> toJson() => {'bitrate': bitrate};
+  Map<String, dynamic> toJson() => {
+        'bitrate': bitrate,
+      };
 }
 
 class CDNPushUrl {
   String pushUrl;
 
-  Map<String, dynamic> toJson() => {'pushUrl': pushUrl};
+  Map<String, dynamic> toJson() => {
+        'pushurl': pushUrl,
+      };
 }
 
 class VideoConfig {
@@ -35,11 +52,13 @@ class VideoConfig {
   VideoLayout tinyVideoLayout;
   VideoLayout videoLayout;
 
-  Map<String, dynamic> toJson() => {
-        'extend': extend.toJson(),
-        'tinyVideoLayout': tinyVideoLayout,
-        'videoLayout': videoLayout,
-      };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> dataJson = new Map();
+    dataJson['normal'] = videoLayout != null ? videoLayout.toJson() : null;
+    dataJson['tiny'] = tinyVideoLayout != null ? tinyVideoLayout.toJson() : null;
+    dataJson['exparams'] = extend != null ? extend.toJson() : null;
+    return dataJson;
+  }
 }
 
 class VideoLayout {
@@ -48,26 +67,33 @@ class VideoLayout {
   int width;
   int fps;
 
-  Map<String, dynamic> toJson() => {'bitrate': bitrate, 'height': height, 'width': width, 'fps': fps};
+  Map<String, dynamic> toJson() => {
+        'bitrate': bitrate,
+        'height': height,
+        'width': width,
+        'fps': fps,
+      };
 }
 
 class VideoExtend {
-  int renderMode;
+  VideoRenderMode renderMode;
 
-  Map<String, dynamic> toJson() => {'renderMode': renderMode};
+  Map<String, dynamic> toJson() => {
+        'renderMode': renderMode.index + 1,
+      };
 }
 
 class CustomLayout {
   String userId;
-  String streamId; //todo json stream_id
+  String streamId;
   int x;
   int y;
   int width;
   int height;
 
   Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'streamId': streamId,
+        'user_id': userId,
+        'stream_id': streamId,
         'x': x,
         'y': y,
         'width': width,
@@ -77,7 +103,7 @@ class CustomLayout {
 
 class RCRTCMixConfig {
   int version = 1;
-  int mode;
+  MixLayoutMode mode;
 
   String hostUserId;
   String hostStreamId;
@@ -86,13 +112,13 @@ class RCRTCMixConfig {
   CustomLayoutList customLayoutList;
 
   Map<String, dynamic> toJson() {
-    return {
-      'version': version,
-      'mode': mode,
-      'hostUserId': hostUserId,
-      'host_stream_id': hostStreamId,
-      'mediaConfig': mediaConfig,
-      'customLayoutList': customLayoutList
-    };
+    final Map<String, dynamic> dataJson = new Map();
+    dataJson['version'] = version;
+    dataJson['mode'] = mode.index + 1;
+    dataJson['host_user_id'] = hostUserId;
+    dataJson['host_stream_id'] = hostStreamId;
+    dataJson['output'] = mediaConfig != null ? mediaConfig.toJson() : null;
+    dataJson['input'] = customLayoutList != null ? customLayoutList.toJson() : null;
+    return dataJson;
   }
 }

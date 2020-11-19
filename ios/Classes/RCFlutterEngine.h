@@ -5,6 +5,7 @@
 #import "RCFlutterMacros.h"
 @class RCFlutterAudioCapture;
 @class RCFlutterVideoCapture;
+@class RCFlutterAudioEffectManager;
 NS_ASSUME_NONNULL_BEGIN
 
 @interface RCFlutterEngine: NSObject <FlutterPlugin>
@@ -14,9 +15,13 @@ SingleInstanceH(Engine);
 
 @property(nonatomic, strong) NSObject <FlutterPluginRegistrar> *pluginRegister;
 
-@property (nonatomic , strong , readonly) RCFlutterVideoCapture *defaultVideoStream;
+@property(nonatomic, strong) FlutterMethodChannel *channel;
 
-@property (nonatomic , strong , readonly) RCFlutterAudioCapture *defaultAudioStream;
+@property(nonatomic , strong , readonly) RCFlutterVideoCapture *defaultVideoStream;
+
+@property(nonatomic , strong , readonly) RCFlutterAudioCapture *defaultAudioStream;
+
+@property(nonatomic , strong , readonly) RCFlutterAudioEffectManager *audioEffectManager;
 
 @end
 

@@ -5,7 +5,7 @@
 #import "RCFlutterRTCManager.h"
 #import "RCFlutterAVStream+Private.h"
 #import "RCFlutterEngine.h"
-#import "RCFlutterRenderViewFactory.h"
+#import "RCFlutterTextureViewFactory.h"
 #import "RCFlutterOutputStream+Private.h"
 #import "RCFlutterTools.h"
 @interface RCFlutterOutputStream ()
@@ -26,14 +26,18 @@
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
     NSLog(@"RCFlutterVideoCapture registerWithRegistrar");
 }
+
+- (void)dealloc{
+    NSLog(@"xuhuan-----RCFlutterVideoCapture dealloc");
+}
+
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     if ([call.method isEqualToString:KStartCapture]) {
         RCLogI(@"ios start capture");
         [self startCapture];
         result([NSNumber numberWithInt:0]);
-    } else if ([call.method isEqualToString:KRenderView]) {
-        [self getRenderView:(NSNumber *) call.arguments];
-        result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KSetVideoTextureView]) {
+        [self setVideoTextureView:call result:result];
     } else if ([call.method isEqualToString:KSwitchCamera]) {
         bool isFront = [self switchCamera];
         result([NSNumber numberWithBool:isFront]);
@@ -44,6 +48,16 @@
         NSDictionary *dic = [RCFlutterTools decodeToDic:call.arguments];
         [self setVideoConfigFromFlutter:dic];
         result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KIsCameraFocusSupported]) {
+        [self isCameraFocusSupported:result];
+    } else if ([call.method isEqualToString:KIsCameraExposurePositionSupported]) {
+        [self isCameraExposurePositionSupported:result];
+    } else if ([call.method isEqualToString:KSetCameraFocusPositionInPreview]) {
+        [self setCameraFocusPositionInPreview:call result:result];
+    } else if ([call.method isEqualToString:KSetCameraExposurePositionInPreview]) {
+        [self setCameraExposurePositionInPreview:call result:result];
+    } else if ([call.method isEqualToString:KSetCameraCaptureOrientation]) {
+        [self setCameraCaptureOrientation:call result:result];
     } else if ([call.method isEqualToString:KMute]){
         [super handleMethodCall:call result:result];
     } else {
@@ -51,8 +65,45 @@
     }
 }
 
+- (void)isCameraFocusSupported:(FlutterResult)result {
+    BOOL supported = [self isCameraFocusSupported];
+    result(@(supported));
+}
+
+- (void)isCameraExposurePositionSupported:(FlutterResult)result {
+    BOOL supported = [self isCameraExposurePositionSupported];
+    result(@(supported));
+}
+
+- (void)setCameraFocusPositionInPreview:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    float x = [dic[@"x"] floatValue];
+    float y = [dic[@"y"] floatValue];
+    CGPoint point = CGPointMake(x, y);
+    BOOL success = [self setCameraFocusPositionInPreview:point];
+    result(@(success));
+}
+
+- (void)setCameraExposurePositionInPreview:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    float x = [dic[@"x"] floatValue];
+    float y = [dic[@"y"] floatValue];
+    CGPoint point = CGPointMake(x, y);
+    BOOL success = [self setCameraExposurePositionInPreview:point];
+    result(@(success));
+}
+
+- (void)setCameraCaptureOrientation:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    int orientation = [dic[@"orientation"] intValue] + 1;
+    [[RCRTCEngine sharedInstance].defaultVideoStream setVideoOrientation:(AVCaptureVideoOrientation)orientation];
+    result(nil);
+}
+
 #pragma mark - instance
+
 SingleInstanceM(VideoCapture);
+
 - (instancetype)init {
     if (self = [super init]) {
         // 默认加载摄像头资源
@@ -60,31 +111,26 @@ SingleInstanceM(VideoCapture);
     }
     return self;
 }
+
 - (void)setVideoConfigFromFlutter:(NSDictionary *)config {
     RCRTCVideoStreamConfig *videoConfig = [self getStreamConfig:config];
     [self setVideoConfig:videoConfig];
 }
 
-- (void)getRenderView:(NSNumber *)args {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        int viewId = args.intValue;
-        RCFlutterRenderView *localView =
-        (RCRTCLocalVideoView *) [[RCFlutterRenderViewFactory sharedViewFactory] getViewWithId:viewId andType:RongFlutterRenderViewTypeLocalView];
-        [self renderLocalView:localView];
-    });
+- (void)setVideoTextureView:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSNumber *textureId = (NSNumber *)call.arguments;
+    RCFlutterTextureView *view = [[RCFlutterTextureViewFactory sharedViewFactory] get:textureId.integerValue];
+    [self setVideoTextureView:view.nativeView];
 }
 
-- (void)renderLocalView:(RCFlutterRenderView *)localView {
-    [self renderView:localView.previewView];
-}
-
-- (RCRTCCameraOutputStream *)rtcVideoCapture{
+- (RCRTCCameraOutputStream *)rtcVideoCapture {
     if (_rtcVideoCapture) {
         return _rtcVideoCapture;
     } else {
         RCRTCCameraOutputStream *camera = [[RCFlutterRTCManager sharedRTCManager] getRTCCameraOutputStream];
         _rtcVideoCapture = camera;
         self.rtcOutputStream = camera;
+        [self registerStream:camera];
         [self registerStreamChannel];
         return camera;
     }
@@ -98,6 +144,7 @@ SingleInstanceM(VideoCapture);
     config.videoSizePreset = [self getResolution:dic[@"videoResolution"]];
     return config;
 }
+
 - (RCRTCVideoSizePreset)getResolution:(NSString *)resolution {
     NSDictionary *resolutionDic = @{
         @"RESOLUTION_132_176":@(RCRTCVideoSizePreset176x144),
@@ -118,6 +165,7 @@ SingleInstanceM(VideoCapture);
         return RCRTCVideoSizePreset640x480;
     }
 }
+
 - (void)destroy {
    
 }

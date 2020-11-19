@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'package:rongcloud_rtc_plugin/agent/rcrtc_engine.dart';
+import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'live_host_page_contract.dart';
@@ -29,7 +30,7 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   void init(BuildContext context) {
     requestPermission();
     RCRTCEngine.getInstance().getRoom().onRemoteUserPublishResource = (user, streams) => _onRemoteUserPublishResource(user, streams);
-    RCRTCEngine.getInstance().getRoom().onRemoteUserUnpublishResource = (user, streams) => _onRemoteUserLeft(user);
+    RCRTCEngine.getInstance().getRoom().onRemoteUserUnPublishResource = (user, streams) => _onRemoteUserLeft(user);
     RCRTCEngine.getInstance().getRoom().onRemoteUserLeft = (user) => _onRemoteUserLeft(user);
     RongIMClient.onMessageReceived = (message, left) => _onMessageReceived(message, left);
   }
@@ -47,9 +48,9 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
     RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
     streams.forEach((stream) {
       if (stream.type == MediaType.video) {
-        RCRTCVideoView videoView = RCRTCVideoView(
-          onCreated: (videoView, id) {
-            (stream as RCRTCVideoInputStream).setVideoView(videoView, id);
+        RCRTCTextureView videoView = RCRTCTextureView(
+          (videoView, id) {
+            (stream as RCRTCVideoInputStream).setTextureView(id);
           },
           viewType: RCRTCViewType.remote,
         );
@@ -108,7 +109,7 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   void initVideoView() async {
     model?.initVideoView(
       (videoView) {
-        view?.onVideoViewReady(videoView);
+        view?.onVideoViewCreated(videoView);
       },
       () {
         push();
@@ -170,5 +171,22 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
     model?.setMirror((state) {
       view?.onCameraMirrorChanged(state);
     });
+  }
+
+  @override
+  void setMixConfig(MixLayoutMode mode) {
+    model?.setMixConfig(mode);
+  }
+
+  @override
+  Future<bool> changeVideoStreamState() {
+    return model?.changeVideoStreamState(
+      (view) {
+        this.view?.onVideoViewCreated(view);
+      },
+      (userId) {
+        this.view?.onRemoveVideoView(userId);
+      },
+    );
   }
 }

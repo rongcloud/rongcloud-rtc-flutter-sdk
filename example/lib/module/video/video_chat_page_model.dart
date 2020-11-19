@@ -3,10 +3,9 @@ import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
-import 'package:FlutterRTC/widgets/video_view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:permission_handler/permission_handler.dart' as PermissionHandler;
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
-import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 class VideoChatPageModel extends AbstractModel implements Model {
@@ -49,19 +48,19 @@ class VideoChatPageModel extends AbstractModel implements Model {
   }
 
   @override
-  void createVideoView(void Function(VideoView view) onVideoViewCreated, void Function() readyToPush) {
+  void createVideoView(void Function(TextureView view) onVideoViewCreated, void Function() readyToPush) {
     RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
       stream.setVideoConfig(_config);
-
-      RCRTCVideoView videoView = RCRTCVideoView(
-        onCreated: (videoView, id) {
-          stream.setVideoView(videoView, id);
+      RCRTCTextureView videoView = RCRTCTextureView(
+        (videoView, id) async {
+          stream.setTextureView(id);
           stream.startCamera().then((value) => readyToPush());
+          onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
         },
-        viewType: RCRTCViewType.local,
+        viewType: RCRTCViewType.remote,
+        mirror: true,
       );
-
-      onVideoViewCreated(VideoView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
+      onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
     });
   }
 
@@ -76,7 +75,7 @@ class VideoChatPageModel extends AbstractModel implements Model {
   }
 
   @override
-  void pull(void Function(VideoView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) {
+  void pull(void Function(TextureView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) {
     RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
     RCRTCLocalUser localUser = room.localUser;
 
@@ -84,13 +83,13 @@ class VideoChatPageModel extends AbstractModel implements Model {
       localUser.subscribeStreams(user.streamList);
       _remoteUsers[user.id] = RemoteUserStatus(user, true, true);
       user.streamList.whereType<RCRTCVideoInputStream>().forEach((stream) {
-        RCRTCVideoView view = RCRTCVideoView(
-          onCreated: (view, id) {
-            stream.setVideoView(view, id);
+        RCRTCTextureView view = RCRTCTextureView(
+          (view, id) async {
+            stream.setTextureView(id);
           },
-          viewType: RCRTCViewType.remote,
+          viewType: RCRTCViewType.local,
         );
-        onVideoViewCreated(VideoView(User.unknown(user.id), view));
+        onVideoViewCreated(TextureView(User.unknown(user.id), view));
       });
     }
 
@@ -99,13 +98,13 @@ class VideoChatPageModel extends AbstractModel implements Model {
       RemoteUserStatus remoteUserStatus = RemoteUserStatus(user, false, false);
 
       streams.whereType<RCRTCVideoInputStream>().forEach((stream) {
-        RCRTCVideoView view = RCRTCVideoView(
-          onCreated: (view, id) {
-            stream.setVideoView(view, id);
+        RCRTCTextureView view = RCRTCTextureView(
+          (view, id) {
+            stream.setTextureView(id);
           },
-          viewType: RCRTCViewType.remote,
+          viewType: RCRTCViewType.local,
         );
-        onVideoViewCreated(VideoView(User.unknown(user.id), view));
+        onVideoViewCreated(TextureView(User.unknown(user.id), view));
         remoteUserStatus?.videoStatus = true;
       });
 
@@ -116,7 +115,7 @@ class VideoChatPageModel extends AbstractModel implements Model {
       _remoteUsers[user.id] = remoteUserStatus;
     };
 
-    room.onRemoteUserUnpublishResource = (user, streams) {
+    room.onRemoteUserUnPublishResource = (user, streams) {
       RemoteUserStatus remoteUserStatus = _remoteUsers[user.id];
       localUser.unsubscribeStreams(streams);
 
@@ -137,9 +136,9 @@ class VideoChatPageModel extends AbstractModel implements Model {
   }
 
   @override
-  void switchCamera() {
+  void switchCamera(void onCameraChanged(bool isFront)) {
     RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
-      stream.switchCamera();
+      stream.switchCamera().then((isFront) => {onCameraChanged(isFront)});
     });
   }
 
@@ -153,7 +152,7 @@ class VideoChatPageModel extends AbstractModel implements Model {
   }
 
   @override
-  Future<bool> changeVideoStreamState(void Function(VideoView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) async {
+  Future<bool> changeVideoStreamState(void Function(TextureView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) async {
     RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
     var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
     _videoStreamState = !_videoStreamState;
@@ -164,16 +163,17 @@ class VideoChatPageModel extends AbstractModel implements Model {
     } else {
       stream.setVideoConfig(_config);
 
-      RCRTCVideoView view = RCRTCVideoView(
-        onCreated: (view, id) {
-          stream.setVideoView(view, id);
+      RCRTCTextureView view = RCRTCTextureView(
+        (view, id) {
+          stream.setTextureView(id);
           stream.startCamera().then((value) {
             localUser.publishStreams([stream]);
           });
         },
         viewType: RCRTCViewType.local,
+        mirror: true,
       );
-      onVideoViewCreated(VideoView(User.unknown(localUser.id), view));
+      onVideoViewCreated(TextureView(User.unknown(localUser.id), view));
     }
     return Future.value(_videoStreamState);
   }
@@ -235,7 +235,7 @@ class VideoChatPageModel extends AbstractModel implements Model {
   Map<String, RemoteUserStatus> _remoteUsers = Map<String, RemoteUserStatus>();
 
   @override
-  void changeVideoResolution(String level, void onVideoViewCreated(VideoView view), void onRemoveVideoView(String userId)) async {
+  void changeVideoResolution(String level, void onVideoViewCreated(TextureView view), void onRemoveVideoView(String userId)) async {
     RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
     var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
 
@@ -268,16 +268,26 @@ class VideoChatPageModel extends AbstractModel implements Model {
       onRemoveVideoView(localUser.id);
 
       stream.setVideoConfig(_config);
-      RCRTCVideoView view = RCRTCVideoView(
-        onCreated: (view, id) {
-          stream.setVideoView(view, id);
+      RCRTCTextureView videoView = RCRTCTextureView(
+        (videoView, id) {
+          stream.setTextureView(id);
           stream.startCamera().then((value) {
             localUser.publishStreams([stream]);
           });
         },
         viewType: RCRTCViewType.local,
+        mirror: true,
       );
-      onVideoViewCreated(VideoView(User.unknown(localUser.id), view));
+      onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
     }
+  }
+
+  @override
+  void setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation) {
+    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async => {
+          await stream.stopCamera(),
+          await stream.setCameraCaptureOrientation(orientation),
+          await stream.startCamera(),
+        });
   }
 }

@@ -1,6 +1,7 @@
 package io.rong.flutter.rtclib.agent;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 
 import androidx.annotation.NonNull;
 
@@ -32,10 +33,12 @@ import cn.rongcloud.rtc.base.RTCErrorCode;
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.view.TextureRegistry;
 import io.rong.flutter.rtclib.RCFlutterRequestResult;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRemoteUser;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoom;
@@ -46,7 +49,8 @@ import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterMicOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoOutputStream;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureView;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
@@ -59,14 +63,17 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
     private RCFlutterCameraOutputStream cameraOutputStream;
     private RCFlutterMicOutputStream micOutputStream;
+    private RCFlutterAudioEffectManager audioEffectManager;
     // key => (streamId + "_" + type)
     private Map<String, RCFlutterVideoOutputStream> createdVideoOutputStreams;
     private Context context;
     private MethodChannel channel;
     private FlutterPlugin.FlutterAssets flutterAssets;
 
-    private static class SingletonHolder {
+    private TextureRegistry textures;
+//    private LongSparseArray<FlutterRTCVideoRenderer> renders = new LongSparseArray<>();
 
+    private static class SingletonHolder {
         private static final RCFlutterEngine instance = new RCFlutterEngine();
     }
 
@@ -78,23 +85,25 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         return SingletonHolder.instance;
     }
 
-    public void init(
-            Context context, BinaryMessenger msg, FlutterPlugin.FlutterAssets flutterAssets) {
+    public void init(Context context, BinaryMessenger msg, FlutterPlugin.FlutterAssets flutterAssets, TextureRegistry textureRegistry) {
         bMsg = msg;
         this.context = context;
         this.flutterAssets = flutterAssets;
+        this.textures = textureRegistry;
         channel = new MethodChannel(bMsg, "rong.flutter.rtclib/engine");
         channel.setMethodCallHandler(this);
+
+        RCFlutterAudioMixer.getInstance().init(bMsg, flutterAssets);
     }
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         switch (call.method) {
             case "init":
-                init(call, result);
+                init(result);
                 break;
             case "unInit":
-                unInit(call, result);
+                unInit(result);
                 break;
             case "joinRoom":
                 joinRoom(call, result);
@@ -117,38 +126,49 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             case "unsubscribeLiveStream":
                 unsubscribeLiveStream(call, result);
                 break;
-            case "mediaServerUrl":
+            case "setMediaServerUrl":
                 setMediaServerUrl(call, result);
                 break;
             case "enableSpeaker":
                 enableSpeaker(call, result);
                 break;
             case "registerStatusReportListener":
-                registerReportStatusListener();
+                registerReportStatusListener(result);
                 break;
             case "unRegisterStatusReportListener":
-                unRegisterReportStatusListener();
-                break;
-            case "releaseVideoView":
-                releaseVideoView(call, result);
+                unRegisterReportStatusListener(result);
                 break;
             case "createFileVideoOutputStream":
                 createFileVideoOutputStream(call, result);
+                break;
+            case "createVideoRenderer":
+                createVideoRenderer(call, result);
+                break;
+            case "disposeVideoRenderer":
+                disposeVideoRenderer(call, result);
+                break;
+            case "getAudioEffectManager":
+                getAudioEffectManager(result);
                 break;
             default:
                 result.notImplemented();
         }
     }
 
-    private void init(MethodCall call, Result result) {
+    private void init(Result result) {
         RCRTCConfig config = RCRTCConfig.Builder.create().build();
         Log.d(TAG, "init: ");
         RCRTCEngine.getInstance().init(context, config);
         UIThreadHandler.success(result, 0);
     }
 
-    private void unInit(MethodCall call, Result result) {
+    private void unInit(Result result) {
         Log.d(TAG, "unInit: ");
+
+        cameraOutputStream = null;
+        micOutputStream = null;
+        audioEffectManager = null;
+
         RCRTCEngine.getInstance().unInit();
         UIThreadHandler.success(result, 0);
     }
@@ -180,17 +200,19 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                     public void onFailed(RTCErrorCode code) {
                         RCFlutterLog.v(TAG, "joinRoom onFailed code = " + code);
                         RCFlutterRequestResult<String> requestResult = new RCFlutterRequestResult<>(code.getReason(), code.getValue());
-                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult.toString()));
+                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
                     }
                 });
     }
 
     private void leaveRoom(Result result) {
         Log.d(TAG, "leaveRoom");
+        final String roomId = RCRTCEngine.getInstance().getRoom().getRoomId();
         RCRTCEngine.getInstance().leaveRoom(new IRCRTCResultCallback() {
             @Override
             public void onSuccess() {
                 RCFlutterLog.v(TAG, "leaveRoom onSuccess");
+                roomMap.remove(roomId);
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("code", 0);
                 UIThreadHandler.success(result, jsonObject.toJSONString());
@@ -207,6 +229,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
         cameraOutputStream = null;
         micOutputStream = null;
+        audioEffectManager = null;
     }
 
     private void getDefaultVideoStream(Result result) {
@@ -296,27 +319,61 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         String tag = call.argument("tag");
         boolean replace = call.argument("replace");
         boolean playback = call.argument("playback");
-        RCRTCVideoStreamConfig config =
-                RCRTCVideoStreamConfig.Builder.create().
+        RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig.Builder.create().
                         setMinRate(50).
                         setMaxRate(500).
                         setVideoFps(RCRTCParamsType.RCRTCVideoFps.Fps_24).
                         setVideoResolution(RCRTCParamsType.RCRTCVideoResolution.RESOLUTION_480_640).build();
         String path = ASSETS_PREFIX + flutterAssets.getAssetFilePathByName(fileName);
-        RCRTCFileVideoOutputStream stream =
-                RCRTCEngine.getInstance().createFileVideoOutputStream(path, replace, playback, tag, config);
+        RCRTCFileVideoOutputStream stream = RCRTCEngine.getInstance().createFileVideoOutputStream(path, replace, playback, tag, config);
         RCFlutterFileVideoOutputStream flutterStream = new RCFlutterFileVideoOutputStream(bMsg, stream);
         String uid = flutterStream.getStreamId() + "_" + flutterStream.getType();
         createdVideoOutputStreams.put(uid, flutterStream);
         UIThreadHandler.success(result, JSON.toJSONString(flutterStream));
     }
 
-    private void registerReportStatusListener() {
-        RCRTCEngine.getInstance().registerStatusReportListener(this);
+    private void createVideoRenderer(MethodCall call, Result result) {
+        TextureRegistry.SurfaceTextureEntry entry = textures.createSurfaceTexture();
+        SurfaceTexture surfaceTexture = entry.surfaceTexture();
+        RCFlutterTextureView render = new RCFlutterTextureView(surfaceTexture, RCRTCEngine.getInstance().getEglBaseContext(), entry);
+        RCFlutterTextureViewFactory.getInstance().put(entry.id(), render);
+
+        EventChannel eventChannel = new EventChannel(bMsg, "rong.flutter.rtclib/VideoTextureView:" + entry.id());
+        eventChannel.setStreamHandler(render);
+        render.setEventChannel(eventChannel);
+        render.setId((int) entry.id());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("textureId", (int) entry.id());
+        UIThreadHandler.success(result, jsonObject.toJSONString());
     }
 
-    private void unRegisterReportStatusListener() {
+    private void disposeVideoRenderer(MethodCall call, Result result) {
+        int textureId = call.argument("textureId");
+        RCFlutterTextureView render = RCFlutterTextureViewFactory.getInstance().get(textureId);
+        if (render != null) {
+            render.Dispose();
+            RCFlutterTextureViewFactory.getInstance().delete(textureId);
+        }
+        result.success(null);
+    }
+
+    private void getAudioEffectManager(Result result) {
+        if (audioEffectManager == null)
+            audioEffectManager = new RCFlutterAudioEffectManager(bMsg, flutterAssets, RCRTCEngine.getInstance().getAudioEffectManager());
+        JSONObject json = new JSONObject();
+        json.put("id", audioEffectManager.getId());
+        UIThreadHandler.success(result, json.toJSONString());
+    }
+
+    private void registerReportStatusListener(Result result) {
+        RCRTCEngine.getInstance().registerStatusReportListener(this);
+        UIThreadHandler.success(result, null);
+    }
+
+    private void unRegisterReportStatusListener(Result result) {
         RCRTCEngine.getInstance().unregisterStatusReportListener();
+        UIThreadHandler.success(result, null);
     }
 
     // todo to be effect.
@@ -331,41 +388,20 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         return streamList;
     }
 
-    public RCFlutterVideoOutputStream getFlutterVideoOutputStream(String streamid, int type) {
-        return createdVideoOutputStreams.get(makeStreamTypeId(streamid, type));
+    public RCFlutterVideoOutputStream getFlutterVideoOutputStream(String streamId, int type) {
+        return createdVideoOutputStreams.get(makeStreamTypeId(streamId, type));
     }
 
     private String makeStreamTypeId(String streamId, int type) {
         return streamId + "_" + type;
     }
 
-    private void releaseVideoView(MethodCall call, Result result) {
-        Log.d(TAG, "releaseVideoView: ");
-        int viewId = (int) call.arguments;
-        RCFlutterVideoViewFactory.getInstance().releaseVideoView(viewId);
-        UIThreadHandler.success(result, null);
-    }
-
     @Override
     public void onAudioReceivedLevel(HashMap<String, String> hashMap) {
-        UIThreadHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        channel.invokeMethod("onAudioReceivedLevel", hashMap);
-                    }
-                });
     }
 
     @Override
     public void onAudioInputLevel(String level) {
-        UIThreadHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        channel.invokeMethod("onAudioInputLevel", level);
-                    }
-                });
     }
 
     @Override
@@ -377,6 +413,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                     public void run() {
                         channel.invokeMethod("onConnectionStats", str);
                     }
-                });
+                }
+        );
     }
 }

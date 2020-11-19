@@ -6,7 +6,7 @@
 
 #pragma mark - api
 
-- (void)publishRTCDefaultLiveStream:(RCFlutterLiveOperationCallback)completion {
+- (void)publishRTCDefaultLiveStreams:(RCFlutterLiveOperationCallback)completion {
     if (self.rtcUser) {
         [[RCFlutterRTCManager sharedRTCManager] publishDefaultLiveStreams:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
             completion(isSuccess, desc, liveInfo);
@@ -19,9 +19,24 @@
     }
 }
 
-- (void)publishRTCDefaultAVStream:(RongFlutterOperationCallback)completion {
+- (void)publishRTCLiveStream:(RCRTCOutputStream *)stream
+                  completion:(RCFlutterLiveOperationCallback)completion {
     if (self.rtcUser) {
-        [[RCFlutterRTCManager sharedRTCManager] publishRTCDefaultAVStream:^(BOOL isSuccess, RCRTCCode desc) {
+        [[RCFlutterRTCManager sharedRTCManager] publishLiveStream:stream
+                                                       completion:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
+            completion(isSuccess, desc, liveInfo);
+        }];
+    } else {
+        RCLogE(@"publishRTCDefaultLiveStream ios RCFlutterLocalUser dont has rtclocaluser");
+        if (completion) {
+            completion(NO, -1, NULL);
+        }
+    }
+}
+
+- (void)publishRTCDefaultAVStreams:(RongFlutterOperationCallback)completion {
+    if (self.rtcUser) {
+        [[RCFlutterRTCManager sharedRTCManager] publishRTCDefaultAVStreams:^(BOOL isSuccess, RCRTCCode desc) {
             self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
             completion(isSuccess,desc);
         }];
@@ -32,27 +47,30 @@
         }
     }
 }
-- (void)unpublishDefaultStream:(RongFlutterOperationCallback)completion {
+
+- (void)unpublishDefaultStreams:(RongFlutterOperationCallback)completion {
     if (self.rtcUser) {
-        [[RCFlutterRTCManager sharedRTCManager] unpublishDefaultStream:^(BOOL isSuccess, RCRTCCode desc) {
+        [[RCFlutterRTCManager sharedRTCManager] unpublishDefaultStreams:^(BOOL isSuccess, RCRTCCode desc) {
             self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
             completion(isSuccess,desc);
         }];
     } else {
-        RCLogE(@"unpublishDefaultStream ios RCFlutterLocalUser dont has rtclocaluser");
+        RCLogE(@"unpublishDefaultStreams ios RCFlutterLocalUser dont has rtclocaluser");
         if (completion) {
             completion(NO, -1);
         }
     }
 }
-- (void)publishStream:(RCRTCOutputStream *)stream completion:(RongFlutterOperationCallback)completion {
-    [[RCFlutterRTCManager sharedRTCManager] publishStream:stream completion:^(BOOL isSuccess, RCRTCCode desc) {
+
+- (void)publishStreams:(NSArray<RCRTCOutputStream *> *)streams completion:(RongFlutterOperationCallback)completion {
+    [[RCFlutterRTCManager sharedRTCManager] publishStreams:streams completion:^(BOOL isSuccess, RCRTCCode desc) {
         self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
         completion(isSuccess,desc);
     }];
 }
-- (void)unpublishStream:(RCRTCOutputStream *)stream completion:(RongFlutterOperationCallback)completion {
-    [[RCFlutterRTCManager sharedRTCManager] unpublishStream:stream completion:^(BOOL isSuccess, RCRTCCode desc) {
+
+- (void)unpublishStreams:(NSArray<RCRTCOutputStream *> *)streams completion:(RongFlutterOperationCallback)completion {
+    [[RCFlutterRTCManager sharedRTCManager] unpublishStreams:streams completion:^(BOOL isSuccess, RCRTCCode desc) {
         self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
         completion(isSuccess,desc);
     }];
@@ -69,14 +87,60 @@
     }
 }
 
-- (void)unsubscribeStream:(NSArray<RCRTCInputStream *> *)streams completion:(RCRTCOperationCallback)completion {
+- (void)unsubscribeStreams:(NSArray<RCRTCInputStream *> *)streams completion:(RCRTCOperationCallback)completion {
     if (self.rtcUser) {
-        [[RCFlutterRTCManager sharedRTCManager] unsubscribeStream:streams completion:completion];
+        [[RCFlutterRTCManager sharedRTCManager] unsubscribeStreams:streams completion:completion];
     } else {
-        RCLogE(@"unsubscribeStream ios RCFlutterLocalUser dont has rtclocaluser");
+        RCLogE(@"unsubscribeStreams ios RCFlutterLocalUser dont has rtclocaluser");
         if (completion) {
             completion(NO, -1);
         }
     }
 }
+
+- (void)setAttributeValue:(NSString *)attributeValue
+                   forKey:(NSString *)key
+                  message:(RCMessageContent *)message
+               completion:(RCRTCOperationCallback)completion {
+    if (self.rtcUser) {
+        [[RCFlutterRTCManager sharedRTCManager] setAttributeValue:attributeValue
+                                                           forKey:key
+                                                          message:message
+                                                       completion:completion];
+    } else {
+        RCLogE(@"setAttributeValue ios RCFlutterLocalUser dont has rtclocaluser");
+        if (completion) {
+            completion(NO, -1);
+        }
+    }
+}
+
+- (void)deleteAttributes:(NSArray<NSString *> *)attributeKeys
+                 message:(RCMessageContent *)message
+              completion:(RCRTCOperationCallback)completion {
+    if (self.rtcUser) {
+        [[RCFlutterRTCManager sharedRTCManager] deleteAttributes:attributeKeys
+                                                         message:message
+                                                      completion:completion];
+    } else {
+        RCLogE(@"deleteAttributes ios RCFlutterLocalUser dont has rtclocaluser");
+        if (completion) {
+            completion(NO, -1);
+        }
+    }
+}
+
+- (void)getAttributes:(NSArray<NSString *> *)attributeKeys
+           completion:(RCRTCAttributeOperationCallback)completion {
+    if (self.rtcUser) {
+        [[RCFlutterRTCManager sharedRTCManager] getAttributes:attributeKeys
+                                                   completion:completion];
+    } else {
+        RCLogE(@"getAttributes ios RCFlutterLocalUser dont has rtclocaluser");
+        if (completion) {
+            completion(NO, -1, nil);
+        }
+    }
+}
+
 @end

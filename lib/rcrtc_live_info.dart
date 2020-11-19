@@ -2,14 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import 'rcrtc_error_code.dart';
 import 'rcrtc_mix_config.dart';
 
 class RCRTCLiveInfo {
-  static final _channelTag = "rong.flutter.rtclib/LiveInfo:";
-  static final _methodAddStreamUrl = "addPublishStreamUrl";
-  static final _methodremoveStreamUrl = "removePublishStreamUrl";
-  static final _methodSetMixConfig = "setMixConfig";
-
   final String roomId;
   final String liveUrl;
   final String userId;
@@ -19,18 +15,34 @@ class RCRTCLiveInfo {
       : roomId = info['roomId'],
         liveUrl = info['liveUrl'],
         userId = info['userId'] {
-    _channel = MethodChannel("$_channelTag$liveUrl");
+    _channel = MethodChannel("rong.flutter.rtclib/LiveInfo:$liveUrl");
   }
 
-  Future<dynamic> addPublishStreamUrl(String url) async {
-    await _channel.invokeMethod(_methodAddStreamUrl);
+  Future<RCRTCCodeResult<List<String>>> addPublishStreamUrl(String url) async {
+    Map<String, dynamic> map = await _channel.invokeMethod("addPublishStreamUrl", url);
+    int code = map["code"];
+    RCRTCCodeResult result = RCRTCCodeResult(code);
+    if (code == 0) {
+      result.object = map["data"];
+    } else {
+      result.reason = map["data"];
+    }
+    return result;
   }
 
-  Future<dynamic> removePublishStreamUrl(String url) async {
-    await _channel.invokeMethod(_methodremoveStreamUrl);
+  Future<RCRTCCodeResult<List<String>>> removePublishStreamUrl(String url) async {
+    Map<String, dynamic> map = await _channel.invokeMethod("removePublishStreamUrl", url);
+    int code = map["code"];
+    RCRTCCodeResult<List<String>> result = RCRTCCodeResult(code);
+    if (code == 0) {
+      result.object = map["data"];
+    } else {
+      result.reason = map["data"];
+    }
+    return result;
   }
 
-  Future<dynamic> setMixConfig(RCRTCMixConfig config) async {
-    await _channel.invokeMethod(_methodSetMixConfig, jsonEncode(config));
+  Future<int> setMixConfig(RCRTCMixConfig config) async {
+    return await _channel.invokeMethod("setMixConfig", jsonEncode(config));
   }
 }

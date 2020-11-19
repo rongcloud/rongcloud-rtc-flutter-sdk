@@ -15,16 +15,16 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   @override
   void pull(
     String url,
-    void onSuccess(RCRTCVideoView videoView),
+    void onSuccess(RCRTCTextureView videoView),
     void onError(int code, String message),
   ) {
     RCRTCEngine.getInstance().subscribeLiveStream(
       url,
       AVStreamType.audio_video,
       (stream) {
-        RCRTCVideoView videoView = RCRTCVideoView(
-          onCreated: (videoView, id) {
-            stream.setVideoView(videoView, id);
+        RCRTCTextureView videoView = RCRTCTextureView(
+          (videoView, id) {
+            stream.setTextureView(id);
           },
           viewType: RCRTCViewType.remote,
         );
@@ -37,7 +37,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   }
 
   void initVideoView(
-    void onVideoViewReady(RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
     void readyToPush(),
   ) {
     RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
@@ -49,9 +49,9 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       );
       stream.setVideoConfig(config);
 
-      RCRTCVideoView videoView = RCRTCVideoView(
-        onCreated: (videoView, id) {
-          stream.setVideoView(videoView, id);
+      RCRTCTextureView videoView = RCRTCTextureView(
+        (videoView, id) {
+          stream.setTextureView(id);
           stream.startCamera().then((value) => readyToPush());
         },
         viewType: RCRTCViewType.local,
@@ -104,8 +104,8 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     String roomId,
     String url,
     LiveType type,
-    void onVideoViewReady(RCRTCVideoView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   ) {
     _sendInviteMessage(true, user.id, type);
@@ -127,8 +127,8 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     String roomId,
     String uid,
     LiveType type,
-    void onVideoViewReady(RCRTCVideoView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   ) async {
     bool hasPermission = await _requestPermission();
@@ -192,7 +192,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
 
   void _subscribe(
     String uid,
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   ) {
     RCRTCEngine.getInstance().getRoom().remoteUserList.forEach((user) {
@@ -200,9 +200,9 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
       streams.forEach((stream) {
         if (stream.type == MediaType.video) {
-          RCRTCVideoView videoView = RCRTCVideoView(
-            onCreated: (view, id) {
-              (stream as RCRTCVideoInputStream).setVideoView(view, id);
+          RCRTCTextureView videoView = RCRTCTextureView(
+            (view, id) {
+              (stream as RCRTCVideoInputStream).setTextureView(id);
             },
             viewType: RCRTCViewType.remote,
           );
@@ -215,9 +215,9 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(_streams);
       _streams.forEach((stream) {
         if (stream.type == MediaType.video) {
-          RCRTCVideoView videoView = RCRTCVideoView(
-            onCreated: (view, id) {
-              (stream as RCRTCVideoInputStream).setVideoView(view, id);
+          RCRTCTextureView videoView = RCRTCTextureView(
+            (view, id) {
+              (stream as RCRTCVideoInputStream).setTextureView(id);
             },
             viewType: RCRTCViewType.remote,
           );
@@ -226,7 +226,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       });
     };
 
-    RCRTCEngine.getInstance().getRoom().onRemoteUserUnpublishResource = (_user, _streams) {
+    RCRTCEngine.getInstance().getRoom().onRemoteUserUnPublishResource = (_user, _streams) {
       onRemoteVideoViewClose(_user.id);
     };
 
@@ -248,7 +248,7 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     int result = 0;
     if (_type != LiveType.normal) {
       RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
-      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(localUser.getStreams());
+      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
       result += await RCRTCEngine.getInstance().leaveRoom();
     } else {
       result = await RCRTCEngine.getInstance().unsubscribeLiveStream(url);

@@ -20,12 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (RCFlutterRemoteUser *)getRemoteUserFromUserId:(NSString *)userId;
 
 /// 从当前 remoteUser 中取出指定 id 的 streams
-/// @param streamIdDics 传进来的数据结构
-- (NSArray<RCFlutterInputStream *> *)getFlutterRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)streamDics;
+/// @param dics 传进来的数据结构
+- (NSArray<RCFlutterInputStream *> *)getFlutterRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)dics;
 
 /// 根据数据结构，获取RTC层Streams
-/// @param streamIdDics 数据结构
-- (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)streamics;
+/// @param dics 数据结构
+- (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)dics;
 
 @end
 

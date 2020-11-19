@@ -27,7 +27,12 @@
 @synthesize streamType = _streamType;
 @synthesize state = _state;
 
+
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
+}
+
+- (void)dealloc{
+    NSLog(@"xuhuan----RCFlutterAVStream dealloc");
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
@@ -55,7 +60,7 @@
 - (void)registerStreamChannel {
     if (self.streamId && self.userId) {
         //rong.flutter.rtclib/RCRTCVideoOutputStream-$streamId
-        NSString *channelId = [NSString stringWithFormat:@"%@%@_%@", KMediaStream, self.streamId, @(self.streamType)];
+        NSString *channelId = [NSString stringWithFormat:@"%@%@_%@_%@", KMediaStream, self.streamId, @(self.streamType), self.tag];
         FlutterMethodChannel *streamChannel = [FlutterMethodChannel methodChannelWithName:channelId binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
         [[RCFlutterEngine sharedEngine].pluginRegister addMethodCallDelegate:self channel:streamChannel];
     }
@@ -76,7 +81,6 @@
         dic[@"streamId"] = self.rtcStream.streamId;
         [dic setObject:[NSNumber numberWithBool:self.rtcStream.resourceState] forKey:@"state"];
         [dic setObject:[NSNumber numberWithBool:self.rtcStream.isMute] forKey:@"mute"];
-
     }
     return dic;
 }

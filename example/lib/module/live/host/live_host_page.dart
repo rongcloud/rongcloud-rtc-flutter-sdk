@@ -5,10 +5,11 @@ import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
 import 'package:FlutterRTC/frame/ui/toast.dart';
-import 'package:FlutterRTC/widgets/video_view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:rongcloud_rtc_plugin/agent/view/rcrtc_video_view.dart';
+import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../../../colors.dart';
 import 'live_host_page_contract.dart';
@@ -90,7 +91,6 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
         child: Stack(
           children: [
             _buildVideoView(context),
-            _buildInfoView(context),
             _buildBottomView(context),
           ],
         ),
@@ -104,7 +104,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
       height: double.infinity,
       child: Stack(
         children: [
-          _videoView ?? Container(),
+          _mainView != null ? _mainView.view : Container(),
           Center(
             child: _buildPushViewByState(context),
           ),
@@ -166,156 +166,6 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
       _pushState = 1;
     });
     presenter.push();
-  }
-
-  Widget _buildInfoView(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(15.0),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(2.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15.0),
-                      color: ColorConfig.blackAlpha66,
-                    ),
-                    child: Row(
-                      children: [
-                        ClipOval(
-                          child: SizedBox(
-                            width: 32.0,
-                            height: 32.0,
-                            child: Image.asset("assets/images/default_user_icon.jpg"),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            left: 10.0,
-                            right: 20.0,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "0",
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  color: Colors.white,
-                                  decoration: TextDecoration.none,
-                                ),
-                              ),
-                              Text(
-                                "本场点赞",
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  color: Colors.white,
-                                  decoration: TextDecoration.none,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 32.0,
-                        height: 32.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 32.0,
-                        height: 32.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 32.0,
-                        height: 32.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      height: 30.0,
-                      constraints: BoxConstraints(
-                        minWidth: 40.0,
-                      ),
-                      padding: EdgeInsets.only(
-                        left: 10.0,
-                        right: 10.0,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: ColorConfig.blackAlpha33,
-                      ),
-                      child: Text(
-                        "0",
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          color: Colors.white,
-                          decoration: TextDecoration.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              top: 10.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  "网络状态",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.0,
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBottomView(BuildContext context) {
@@ -434,7 +284,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     return widgets;
   }
 
-  Widget _buildRemoteView(BuildContext context, VideoView view) {
+  Widget _buildRemoteView(BuildContext context, TextureView view) {
     return Padding(
       padding: EdgeInsets.only(
         top: 10.0,
@@ -496,12 +346,12 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                   left: 20.0,
                 ),
                 child: GestureDetector(
-                  onTap: () => presenter.switchCamera(),
+                  onTap: () => _changeVideoStreamState(),
                   child: SizedBox(
                     width: 32.0,
                     height: 32.0,
                     child: Icon(
-                      FontAwesomeIcons.video,
+                      _videoStreamStateIcon,
                       color: Colors.grey,
                       size: 22.0,
                     ),
@@ -610,6 +460,99 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     );
   }
 
+  void _showVideoMixList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(15.0),
+        ),
+      ),
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setter) {
+          return WillPopScope(
+            child: Container(
+              padding: EdgeInsets.only(
+                top: 10.0,
+                bottom: 20.0,
+              ),
+              constraints: BoxConstraints(
+                maxHeight: 300,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: 10.0,
+                      left: 15.0,
+                      right: 15.0,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          "选择合流布局",
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        Spacer(),
+                        GestureDetector(
+                          child: Icon(FontAwesomeIcons.solidWindowClose),
+                          onTap: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      // shrinkWrap: true,
+                      itemCount: 3,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Container(
+                            child: Row(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                left: 15.0,
+                              ),
+                              child: SizedBox(
+                                width: 300.0,
+                                height: 60.0,
+                                child: TextButton(
+                                  child: Text(
+                                    _videoMixConfigList[index],
+                                  ),
+                                  onPressed: () {
+                                    presenter.setMixConfig(MixLayoutMode.values[index]);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ));
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onWillPop: () {
+              Navigator.pop(context);
+              return Future.value(false);
+            },
+          );
+        });
+      },
+    );
+  }
+
   void _buildOptionsDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -642,7 +585,13 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                     IconButton(
                       icon: Icon(Icons.face),
                       onPressed: () {
-                        presenter.setMirror();
+                        _mainView.view.setMirror(!_mainView.view.isMirror());
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.account_tree_outlined),
+                      onPressed: () {
+                        _showVideoMixList(context);
                       },
                     ),
                   ],
@@ -1052,10 +1001,10 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   @override
-  void onVideoViewReady(RCRTCVideoView videoView) {
+  void onVideoViewReady(RCRTCTextureView videoView) {
     setState(() {
       _pushState = 1;
-      _videoView = videoView;
+      _mainView.view = videoView;
     });
   }
 
@@ -1099,14 +1048,14 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   @override
-  void onCreateRemoteView(String uid, RCRTCVideoView videoView) {
-    VideoView view = _getVideoViewByUserId(uid);
+  void onCreateRemoteView(String uid, RCRTCTextureView videoView) {
+    TextureView view = _getVideoViewByUserId(uid);
     if (view != null) {
       view.view = videoView;
       _remoteViews.remove(view);
     } else {
       User user = _getChattingUserById(uid) ?? User.unknown(uid);
-      view = VideoView(user, videoView);
+      view = TextureView(user, videoView);
     }
     setState(() {
       _remoteViews.add(view);
@@ -1125,7 +1074,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   @override
   void onReleaseRemoteView(String uid) {
     User user = _getChattingUserById(uid);
-    VideoView view = _getVideoViewByUserId(uid);
+    TextureView view = _getVideoViewByUserId(uid);
     if (_memberListSetter != null) {
       _memberListSetter(() {
         if (user != null) _chattingMembers.remove(user);
@@ -1138,8 +1087,8 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     });
   }
 
-  VideoView _getVideoViewByUserId(String uid) {
-    for (VideoView view in _remoteViews) {
+  TextureView _getVideoViewByUserId(String uid) {
+    for (TextureView view in _remoteViews) {
       if (view.user.id == uid) {
         return view;
       }
@@ -1200,6 +1149,28 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     // TODO: implement onCameraMirrorChanged
   }
 
+  @override
+  void onRemoveVideoView(String userId) {
+    setState(() {
+      if (_mainView.user.id == userId) _mainView = null;
+    });
+  }
+
+  @override
+  void onVideoViewCreated(TextureView view) {
+    String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
+    setState(() {
+      if (uid == view.user.id) _mainView = view;
+    });
+  }
+
+  void _changeVideoStreamState() async {
+    bool closed = await presenter?.changeVideoStreamState();
+    setState(() {
+      _videoStreamStateIcon = closed ? FontAwesomeIcons.videoSlash : FontAwesomeIcons.video;
+    });
+  }
+
   ScrollController _messageController = ScrollController();
 
   List<Message> _messages = List();
@@ -1210,9 +1181,12 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
   LiveType _liveType = LiveType.normal;
 
+  bool _cameraEnable = true;
   bool _paused = false;
 
-  RCRTCVideoView _videoView;
+  TextureView _mainView;
+
+  // RCRTCTextureView _videoView;
   int _pushState = 0;
 
   List<User> _members = List();
@@ -1220,7 +1194,14 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
   List<User> _chattingMembers = List();
 
-  List<VideoView> _remoteViews = List();
+  List<TextureView> _remoteViews = List();
 
   IconData _microphoneIcon = FontAwesomeIcons.microphone;
+  IconData _videoStreamStateIcon = FontAwesomeIcons.video;
+
+  var _videoMixConfigList = [
+    "自定义布局",
+    "悬浮布局",
+    "自适应布局",
+  ];
 }

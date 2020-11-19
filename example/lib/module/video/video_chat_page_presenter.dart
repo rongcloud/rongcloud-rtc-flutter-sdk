@@ -5,6 +5,7 @@ import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_model.dart';
 import 'package:flutter/widgets.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements Presenter {
   @override
@@ -72,7 +73,9 @@ class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements P
 
   @override
   void switchCamera() {
-    model?.switchCamera();
+    model?.switchCamera((isFront) => {
+      view?.onCameraChanged(isFront),
+    });
   }
 
   @override
@@ -123,5 +126,10 @@ class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements P
         this.view?.onRemoveVideoView(userId);
       },
     );
+  }
+
+  @override
+  void setCameraCaptureOrientation(RCRTCCameraCaptureOrientation rotation) {
+    model?.setCameraCaptureOrientation(rotation);
   }
 }

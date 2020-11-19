@@ -1,16 +1,27 @@
 package io.rong.flutter.rtclib.agent.room;
 
 import androidx.annotation.NonNull;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import cn.rongcloud.rtc.api.RCRTCRemoteUser;
 import cn.rongcloud.rtc.api.RCRTCRoom;
+import cn.rongcloud.rtc.api.callback.IRCRTCResultCallback;
+import cn.rongcloud.rtc.api.callback.IRCRTCResultDataCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCRoomEventsListener;
 import cn.rongcloud.rtc.api.stream.RCRTCAudioInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.base.RCRTCMediaType;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
+import cn.rongcloud.rtc.base.RTCErrorCode;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -21,9 +32,12 @@ import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoInputStream;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.ThisClassShouldNotBelongHere;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
-import java.util.ArrayList;
-import java.util.List;
+import io.rong.imlib.IRongCallback;
+import io.rong.imlib.RongIMClient;
+import io.rong.imlib.model.Message;
+import io.rong.imlib.model.MessageContent;
 
 public class RCFlutterRoom implements MethodCallHandler {
 
@@ -78,7 +92,7 @@ public class RCFlutterRoom implements MethodCallHandler {
 
           @Override
           public void onRemoteUserMuteAudio(
-              RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
+            RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
             RCFlutterLog.d(TAG, "onRemoteUserMuteAudio userId = " + rtcRemoteUser.getUserId());
             RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
@@ -92,8 +106,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("inputStream", inputStream);
             jsonObj.put("enable", enable);
-            String jsonStr =
-                JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                 new Runnable() {
                   @Override
@@ -105,7 +118,7 @@ public class RCFlutterRoom implements MethodCallHandler {
 
           @Override
           public void onRemoteUserMuteVideo(
-              RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
+            RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
             RCFlutterLog.d(TAG, "onRemoteUserMuteVideo userId = " + rtcRemoteUser.getUserId());
             RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
@@ -119,8 +132,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("inputStream", inputStream);
             jsonObj.put("enable", enable);
-            String jsonStr =
-                JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                 new Runnable() {
                   @Override
@@ -132,9 +144,8 @@ public class RCFlutterRoom implements MethodCallHandler {
 
           @Override
           public void onRemoteUserUnpublishResource(
-              RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
-            RCFlutterLog.d(
-                TAG, "onRemoteUserUnpublishResource userId = " + rtcRemoteUser.getUserId());
+            RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
+            RCFlutterLog.d(TAG, "onRemoteUserUnpublishResource userId = " + rtcRemoteUser.getUserId());
             RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
               return;
@@ -151,13 +162,12 @@ public class RCFlutterRoom implements MethodCallHandler {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("streamList", streamList);
-            String jsonStr =
-                JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                 new Runnable() {
                   @Override
                   public void run() {
-                    channel.invokeMethod("onRemoteUserUnpublishResource", jsonStr);
+                    channel.invokeMethod("onRemoteUserUnPublishResource", jsonStr);
                   }
                 });
           }
@@ -236,7 +246,110 @@ public class RCFlutterRoom implements MethodCallHandler {
   }
 
   @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {}
+  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+      RCFlutterLog.d(TAG, "onMethodCall = " + call.method);
+      switch (call.method) {
+          case "setRoomAttributeValue":
+              setRoomAttributeValue(call, result);
+              break;
+          case "deleteRoomAttributes":
+              deleteRoomAttributes(call, result);
+              break;
+          case "getRoomAttributes":
+              getRoomAttributes(call, result);
+              break;
+          case "sendMessage":
+              sendMessage(call, result);
+              break;
+      }
+  }
+
+  private void setRoomAttributeValue(MethodCall call, Result result) {
+      String key = call.argument("key");
+      String value = call.argument("value");
+      String object = call.argument("object");
+      String content = call.argument("content");
+      assert object != null : "setRoomAttributeValue object should not be null!!!";
+      MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
+      rtcRoom.setRoomAttributeValue(value, key, message, new IRCRTCResultCallback() {
+          @Override
+          public void onSuccess() {
+              UIThreadHandler.success(result, 0);
+          }
+
+          @Override
+          public void onFailed(RTCErrorCode errorCode) {
+              UIThreadHandler.success(result, errorCode.getValue());
+          }
+      });
+  }
+
+  private void deleteRoomAttributes(MethodCall call, Result result) {
+      List<String> keys = JSONArray.parseArray(call.argument("keys"), String.class);
+      String object = call.argument("object");
+      String content = call.argument("content");
+      assert object != null : "deleteRoomAttributes object should not be null!!!";
+      MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
+      rtcRoom.deleteRoomAttributes(keys, message, new IRCRTCResultCallback() {
+          @Override
+          public void onSuccess() {
+              UIThreadHandler.success(result, 0);
+          }
+
+          @Override
+          public void onFailed(RTCErrorCode errorCode) {
+              UIThreadHandler.success(result, errorCode.getValue());
+          }
+      });
+  }
+
+  private void getRoomAttributes(MethodCall call, Result result) {
+      List<String> keys = JSONArray.parseArray(call.argument("keys"), String.class);
+      rtcRoom.getRoomAttributes(keys, new IRCRTCResultDataCallback<Map<String, String>>() {
+          @Override
+          public void onSuccess(Map<String, String> data) {
+              UIThreadHandler.success(result, data);
+          }
+
+          @Override
+          public void onFailed(Map<String, String> data, RTCErrorCode errorCode) {
+              super.onFailed(data, errorCode);
+              UIThreadHandler.success(result, data);
+          }
+
+          @Override
+          public void onFailed(RTCErrorCode errorCode) {
+          }
+      });
+  }
+
+  private void sendMessage(MethodCall call, Result result) {
+      String object = call.argument("object");
+      String content = call.argument("content");
+      assert object != null : "sendMessage object should not be null!!!";
+      MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
+      rtcRoom.sendMessage(message, new IRongCallback.ISendMessageCallback() {
+          @Override
+          public void onAttached(Message message) {
+          }
+
+          @Override
+          public void onSuccess(Message message) {
+              Map<String, Integer> data = new HashMap<>();
+              data.put("id", message.getMessageId());
+              data.put("code", 0);
+              UIThreadHandler.success(result, data);
+          }
+
+          @Override
+          public void onError(Message message, RongIMClient.ErrorCode errorCode) {
+              Map<String, Integer> data = new HashMap<>();
+              data.put("id", message.getMessageId());
+              data.put("code", errorCode.getValue());
+              UIThreadHandler.success(result, data);
+          }
+      });
+  }
 
   public String getId() {
     return rtcRoom.getRoomId();

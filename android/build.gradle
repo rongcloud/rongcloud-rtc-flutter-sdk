@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation 'com.alibaba:fastjson:1.1.71.android'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
     def properties = new Properties()
@@ -53,8 +54,17 @@ dependencies {
 
     def remote = properties.getProperty("rongcloud.flutter.demo.use_remote_rtc_lib", "true")
 
-    if (remote == "true")
-        implementation 'cn.rongcloud.sdk:rtc_lib:4.0.3.2'
-    else
+    if (remote == "true") {
+        def configFile = new File(rootProject.projectDir.parentFile.parentFile, "version.config")
+        def configProperties = new Properties()
+        assert configFile.exists()
+        configFile.withReader("UTF-8") { reader -> configProperties.load(reader) }
+        def im_sdk_version = configProperties.getProperty("im_sdk_version")
+        def rtc_sdk_version = configProperties.getProperty("rtc_sdk_version")
+        assert im_sdk_version != null, "You need to config im_sdk_version in version.config!!"
+        assert rtc_sdk_version != null, "You need to config rtc_sdk_version in version.config!!"
+        implementation 'cn.rongcloud.sdk:im_lib:' + im_sdk_version
+        implementation 'cn.rongcloud.sdk:rtc_lib:' + rtc_sdk_version
+    } else
         implementation project(':rtclib')
 }

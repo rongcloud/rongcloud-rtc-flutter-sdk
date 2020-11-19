@@ -6,4 +6,12 @@
     [[RCFlutterRTCManager sharedRTCManager] setMicrophoneDisable:disable];
 }
 
+- (void)adjustRecordingVolume:(int)volume {
+    [[RCFlutterRTCManager sharedRTCManager] adjustRecordingVolume:volume];
+}
+
+- (int)getRecordingVolume {
+    return [[RCFlutterRTCManager sharedRTCManager] getRecordingVolume];
+}
+
 @end

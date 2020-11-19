@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 
 import '../../utils/rcrtc_debug_checker.dart';
 import '../stream/rcrtc_audio_input_stream.dart';
@@ -19,7 +20,7 @@ class RCRTCRoom {
   Function(RCRTCRemoteUser remoteUser) onRemoteUserJoined;
   Function(RCRTCRemoteUser remoteUser) onRemoteUserLeft;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserPublishResource;
-  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnpublishResource;
+  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnPublishResource;
 
   RCRTCRoom.fromJson(Map<String, dynamic> jsonObj)
       : _channel = MethodChannel('rong.flutter.rtclib/Room:${jsonObj['id']}'),
@@ -41,8 +42,8 @@ class RCRTCRoom {
       case 'onRemoteUserPublishResource':
         _handleOnRemoteUserPublishResource(call.arguments);
         break;
-      case 'onRemoteUserUnpublishResource':
-        _handleOnRemoteUserUnpublishResource(call.arguments);
+      case 'onRemoteUserUnPublishResource':
+        _handleOnRemoteUserUnPublishResource(call.arguments);
         break;
     }
     return null;
@@ -94,7 +95,7 @@ class RCRTCRoom {
     if (onRemoteUserPublishResource != null) onRemoteUserPublishResource(targetUser, targetStreamList);
   }
 
-  void _handleOnRemoteUserUnpublishResource(String jsonStr) {
+  void _handleOnRemoteUserUnPublishResource(String jsonStr) {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     String userId = jsonObj['remoteUser']['id'];
     RCRTCRemoteUser targetUser;
@@ -117,6 +118,53 @@ class RCRTCRoom {
     }
     RCRTCDebugChecker.isTrue(targetStreamList.length == jsonStreamList.length);
     for (RCRTCStream stream in targetStreamList) targetUser.streamList.remove(stream);
-    if (onRemoteUserUnpublishResource != null) onRemoteUserUnpublishResource(targetUser, targetStreamList);
+    if (onRemoteUserUnPublishResource != null) onRemoteUserUnPublishResource(targetUser, targetStreamList);
+  }
+
+  Future<int> setRoomAttributeValue(String key, String value, MessageContent message) async {
+    Map<String, dynamic> arguments = {
+      "key": key,
+      "value": value,
+      "object": message.getObjectName(),
+      "content": message.encode(),
+    };
+    int result = await _channel.invokeMethod('setRoomAttributeValue', arguments);
+    return Future.value(result);
+  }
+
+  Future<int> deleteRoomAttributes(List<String> keys, MessageContent message) async {
+    Map<String, dynamic> arguments = {
+      "keys": jsonEncode(keys),
+      "object": message.getObjectName(),
+      "content": message.encode(),
+    };
+    int result = await _channel.invokeMethod('deleteRoomAttributes', arguments);
+    return Future.value(result);
+  }
+
+  Future<Map<String, String>> getRoomAttributes(List<String> keys) async {
+    Map<String, dynamic> arguments = {
+      "keys": jsonEncode(keys),
+    };
+    Map<String, String> results = await _channel.invokeMapMethod('getRoomAttributes', arguments);
+    return Future.value(results);
+  }
+
+  Future<void> sendMessage(
+    MessageContent message,
+    void onSuccess(int id),
+    void onError(int id, int code),
+  ) async {
+    Map<String, dynamic> arguments = {
+      "object": message.getObjectName(),
+      "content": message.encode(),
+    };
+    Map result = await _channel.invokeMethod('sendMessage', arguments);
+    int id = result["id"];
+    int code = result["code"];
+    if (code != 0)
+      onError(id, code);
+    else
+      onSuccess(id);
   }
 }

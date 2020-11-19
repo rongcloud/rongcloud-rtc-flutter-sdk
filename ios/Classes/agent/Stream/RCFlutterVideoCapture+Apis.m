@@ -14,8 +14,24 @@
     [[RCFlutterRTCManager sharedRTCManager] stopCamera];
 }
 
-- (void)renderView:(RCRTCLocalVideoView *)localView {
-    [[RCFlutterRTCManager sharedRTCManager] renderView:localView];
+- (BOOL)isCameraFocusSupported {
+    return [[RCFlutterRTCManager sharedRTCManager] isCameraFocusSupported];
+}
+
+- (BOOL)isCameraExposurePositionSupported {
+    return [[RCFlutterRTCManager sharedRTCManager] isCameraExposurePositionSupported];
+}
+
+- (BOOL)setCameraExposurePositionInPreview:(CGPoint)point {
+    return [[RCFlutterRTCManager sharedRTCManager] setCameraExposurePositionInPreview:point];
+}
+
+- (BOOL)setCameraFocusPositionInPreview:(CGPoint)point {
+    return [[RCFlutterRTCManager sharedRTCManager] setCameraFocusPositionInPreview:point];
+}
+
+- (void)setVideoTextureView:(RCRTCVideoTextureView *)view {
+    [[RCFlutterRTCManager sharedRTCManager] setVideoTextureView:view];
 }
 
 - (void)setVideoConfig:(RCRTCVideoStreamConfig *)config {

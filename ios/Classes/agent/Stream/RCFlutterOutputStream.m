@@ -25,6 +25,12 @@
 @synthesize streamType = _streamType;
 @synthesize state = _state;
 
+
+- (void)dealloc {
+    RCLogI(@"RCFlutterOutputStream dealloc");
+    self.rtcOutputStream = nil;
+}
+
 + (void)registerWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
 }
 
@@ -40,9 +46,6 @@
     [self registerStream:self.rtcOutputStream];
 }
 
-- (void)dealloc {
-    RCLogI(@"RCFlutterOutputStream dealloc");
-    self.rtcOutputStream = nil;
-}
+
 
 @end

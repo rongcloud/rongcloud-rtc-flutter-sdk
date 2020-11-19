@@ -4,25 +4,62 @@
 
 @implementation RCFlutterRTCManager (LocalUser)
 
-- (void)publishRTCDefaultAVStream:(RongFlutterOperationCallback)completion {
+- (void)publishRTCDefaultAVStreams:(RongFlutterOperationCallback)completion {
     [[RCRTCEngine sharedInstance].currentRoom.localUser publishDefaultStreams:completion];
 }
-- (void)unpublishDefaultStream:(RongFlutterOperationCallback)completion{
+
+- (void)unpublishDefaultStreams:(RongFlutterOperationCallback)completion{
     [[RCRTCEngine sharedInstance].currentRoom.localUser unpublishDefaultStreams:completion];
 }
-- (void)publishStream:(RCRTCOutputStream *)stream completion:(RongFlutterOperationCallback)completion {
-    [[RCRTCEngine sharedInstance].currentRoom.localUser publishStream:stream completion:completion];
+
+- (void)publishStreams:(nullable NSArray<RCRTCOutputStream *> *)streams
+            completion:(RongFlutterOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser publishStreams:streams
+                                                            completion:completion];
 }
-- (void)unpublishStream:(RCRTCOutputStream *)stream completion:(RongFlutterOperationCallback)completion {
-    [[RCRTCEngine sharedInstance].currentRoom.localUser unpublishStream:stream completion:completion];
+
+- (void)unpublishStreams:(nullable NSArray<RCRTCOutputStream *> *)streams
+              completion:(RongFlutterOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser unpublishStreams:streams
+                                                              completion:completion];
 }
+
 - (void)subscribeStreams:(nullable NSArray<RCRTCInputStream *> *)avStreams
              tinyStreams:(nullable NSArray<RCRTCInputStream *> *)tinyStreams
               completion:(nullable RCRTCOperationCallback)completion {
-    [[RCRTCEngine sharedInstance].currentRoom.localUser subscribeStream:avStreams tinyStreams:tinyStreams completion:completion];
+    [[RCRTCEngine sharedInstance].currentRoom.localUser subscribeStream:avStreams
+                                                            tinyStreams:tinyStreams
+                                                             completion:completion];
 }
-- (void)unsubscribeStream:(NSArray<RCRTCInputStream *> *)streams completion:(RCRTCOperationCallback)completion {
-    [[RCRTCEngine sharedInstance].currentRoom.localUser unsubscribeStream:streams completion:completion];
+
+- (void)unsubscribeStreams:(NSArray<RCRTCInputStream *> *)streams
+               completion:(RCRTCOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser unsubscribeStreams:streams
+                                                               completion:completion];
+}
+
+- (void)setAttributeValue:(NSString *)attributeValue
+                   forKey:(NSString *)key
+                  message:(RCMessageContent *)message
+               completion:(RCRTCOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser setAttributeValue:attributeValue
+                                                                   forKey:key
+                                                                  message:message
+                                                               completion:completion];
+}
+
+- (void)deleteAttributes:(NSArray<NSString *> *)attributeKeys
+                 message:(RCMessageContent *)message
+              completion:(RCRTCOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser deleteAttributes:attributeKeys
+                                                                 message:message
+                                                              completion:completion];
+}
+
+- (void)getAttributes:(NSArray<NSString *> *)attributeKeys
+           completion:(RCRTCAttributeOperationCallback)completion {
+    [[RCRTCEngine sharedInstance].currentRoom.localUser getAttributes:attributeKeys
+                                                           completion:completion];
 }
 
 @end

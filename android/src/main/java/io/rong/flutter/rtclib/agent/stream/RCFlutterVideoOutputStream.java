@@ -11,8 +11,8 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureView;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
@@ -21,8 +21,6 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
 
   private static final String TAG = "RCFlutterVideoOutputStream";
   private RCRTCVideoOutputStream videoOutputStream;
-
-  protected int viewId;
 
   public RCFlutterVideoOutputStream(BinaryMessenger bMsg, RCRTCStream rtcStream) {
     super(bMsg, rtcStream);
@@ -40,8 +38,8 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
       case "setVideoConfig":
         setVideoConfig(call, result);
         break;
-      case "setVideoView":
-        setVideoView(call, result);
+      case "setTextureView":
+        setTextureView(call, result);
         break;
     }
   }
@@ -60,10 +58,10 @@ public class RCFlutterVideoOutputStream extends RCFlutterOutputStream {
     UIThreadHandler.success(result, null);
   }
 
-  protected void setVideoView(MethodCall call, MethodChannel.Result result) {
-    viewId = (int) call.arguments;
-    RCFlutterVideoView videoView = RCFlutterVideoViewFactory.getInstance().getVideoView(viewId);
-    videoOutputStream.setVideoView(videoView.getNativeVideoView());
+  protected void setTextureView(MethodCall call, MethodChannel.Result result) {
+    int textureId = (int) call.arguments;
+    RCFlutterTextureView textureView = RCFlutterTextureViewFactory.getInstance().get(textureId);
+    videoOutputStream.setTextureView(textureView.getTextureView());
     UIThreadHandler.success(result, null);
   }
 }

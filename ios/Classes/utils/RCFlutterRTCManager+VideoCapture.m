@@ -20,8 +20,24 @@
     [[RCRTCEngine sharedInstance].defaultVideoStream stopCapture];
 }
 
-- (void)renderView:(RCRTCLocalVideoView *)localView {
-    [[RCRTCEngine sharedInstance].defaultVideoStream setVideoView:localView];
+- (BOOL)isCameraFocusSupported {
+    return [[RCRTCEngine sharedInstance].defaultVideoStream isCameraFocusSupported];
+}
+
+- (BOOL)isCameraExposurePositionSupported {
+    return [[RCRTCEngine sharedInstance].defaultVideoStream isCameraExposurePositionSupported];
+}
+
+- (BOOL)setCameraFocusPositionInPreview:(CGPoint)point {
+    return [[RCRTCEngine sharedInstance].defaultVideoStream setCameraFocusPositionInPreview:point];
+}
+
+- (BOOL)setCameraExposurePositionInPreview:(CGPoint)point {
+    return [[RCRTCEngine sharedInstance].defaultVideoStream setCameraExposurePositionInPreview:point];
+}
+
+- (void)setVideoTextureView:(RCRTCVideoTextureView *)view {
+    [[RCRTCEngine sharedInstance].defaultVideoStream setVideoTextureView:view];
 }
 
 - (void)setVideoConfig:(RCRTCVideoStreamConfig *)config {

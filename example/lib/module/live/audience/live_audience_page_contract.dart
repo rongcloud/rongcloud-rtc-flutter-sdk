@@ -5,14 +5,14 @@ import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
-import 'package:rongcloud_rtc_plugin/agent/view/rcrtc_video_view.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 abstract class View implements IView {
   void onReceiveMessage(Data.Message message);
 
   void onReceiveInviteMessage(Data.User user, LiveType type);
 
-  void onPulled(RCRTCVideoView videoView);
+  void onPulled(RCRTCTextureView videoView);
 
   void onPullError(int code, String message);
 
@@ -37,14 +37,14 @@ abstract class Model implements IModel {
     String roomId,
     String url,
     LiveType type,
-    void onVideoViewReady(RCRTCVideoView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   );
 
   void pull(
     String url,
-    void onSuccess(RCRTCVideoView videoView),
+    void onSuccess(RCRTCTextureView videoView),
     void onError(int code, String message),
   );
 
@@ -65,8 +65,8 @@ abstract class Presenter implements IPresenter {
   void agreeInvite(
     Data.User user,
     LiveType type,
-    void onVideoViewReady(RCRTCVideoView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   );
 

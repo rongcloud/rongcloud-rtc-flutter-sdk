@@ -8,15 +8,17 @@
 #import "RCFlutterAudioCapture.h"
 #import "RCFlutterVideoCapture+Apis.h"
 #import "RCFlutterAudioCapture+Apis.h"
-#import "RCFlutterRenderViewFactory.h"
+#import "RCFlutterTextureViewFactory.h"
 #import "RCFlutterTools.h"
 
 #import "RCFlutterAVStream+Private.h"
 #import "RCFlutterInputStream.h"
 #import "RCFlutterInputStream+Private.h"
 
+#import "RCFlutterAudioEffectManager+Private.h"
+#import "RCFlutterAudioMixer.h"
 
-@interface RCFlutterEngine () <NSCopying>
+@interface RCFlutterEngine () <NSCopying, RCRTCActivityMonitorDelegate>
 
 /**
  rtc room
@@ -30,28 +32,39 @@
 #pragma mark - flutter 映射
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    if ([KJoinRoom isEqualToString:call.method]) {
+    if ([call.method isEqualToString:KInit]){
+        // not implement
+    } else if ([call.method isEqualToString:KUnInit]) {
+        // not implement
+    } else if ([call.method isEqualToString:KJoinRoom]) {
         [self joinRTCRoom:call result:result];
     } else if ([call.method isEqualToString:KLeaveRTCRoom]) {
         [self leaveRTCRoom:call result:result];
-    } else if([call.method isEqualToString:KGetDefaultVideoStream]){
+    } else if ([call.method isEqualToString:KGetDefaultVideoStream]) {
         [self getDefaultVideoStream:result];
-    } else if([call.method isEqualToString:KGetDefaultAudioStream]){
+    } else if ([call.method isEqualToString:KGetDefaultAudioStream]) {
         [self getDefaultAudioStream:result];
-    } else if([call.method isEqualToString:KJoinLiveRoom]){
-        [self joinRTCRoom:call result:result];
-    } else if([call.method isEqualToString:KInit]){
-        // not implement
-    } else if([call.method isEqualToString:KEnableSpeaker]){
+    } else if ([call.method isEqualToString:KSubscribeLiveStream]) {
+        [self subscribeLiveStream:call result:result];
+    } else if ([call.method isEqualToString:KUnsubscribeLiveStream]) {
+        [self unsubscribeLiveStream:call result:result];
+    } else if ([call.method isEqualToString:KSetMediaServerUrl]) {
+        [self setMediaServerUrl:call result:result];
+    } else if ([call.method isEqualToString:KEnableSpeaker]) {
         BOOL enable = ((NSNumber *)(call.arguments)).boolValue;
         [self enableSpeaker:enable];
-    } else if([call.method isEqualToString:KReleaseVideoView]){
-        NSNumber *viewId = ((NSNumber *)(call.arguments));
-        [self releaseVideoView:viewId];
-    } else if([call.method isEqualToString:KSubscribeLiveStream]) {
-        [self subscribeLiveStream:call result:result];
-    } else if([call.method isEqualToString:KUnsubscribeLiveStream]) {
-        [self unsubscribeLiveStream:call result:result];
+    } else if ([call.method isEqualToString:KRegisterStatusReportListener]) {
+        [self registerReportStatusListener:result];
+    } else if ([call.method isEqualToString:KUnRegisterStatusReportListener]) {
+        [self unRegisterStatusReportListener:result];
+    } else if ([call.method isEqualToString:KCreateVideoOutputStream]) {
+        [self createVideoOutputStream:call result:result];
+    } else if ([call.method isEqualToString:KCreateVideoTextureView]) {
+        [self createVideoTextureView:call result:result];
+    } else if ([call.method isEqualToString:KReleaseVideoTextureView]) {
+        [self releaseVideoTextureView:call result:result];
+    } else if ([call.method isEqualToString:KGetAudioEffectManager]) {
+        [self getAudioEffectManager:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -60,10 +73,8 @@
 - (void)setPluginRegister:(NSObject<FlutterPluginRegistrar> *)pluginRegister {
     _pluginRegister = pluginRegister;
     
-    RCFlutterRenderViewFactory *factory = [RCFlutterRenderViewFactory sharedViewFactory];
-    [factory withMessenger:pluginRegister.messenger];
-    [pluginRegister registerViewFactory:factory withId:RongFlutterRenderViewKey];
-    
+    [[RCFlutterTextureViewFactory sharedViewFactory] withTextureRegistry:pluginRegister.textures messenger:pluginRegister.messenger];
+    [RCFlutterAudioMixer sharedAudioMixer];
 }
 
 #pragma mark - instance
@@ -73,77 +84,48 @@ SingleInstanceM(Engine);
 }
 - (void)destroyCache {
     self.room = nil;
-    [[RCFlutterRenderViewFactory sharedViewFactory] destroy];
+    [[RCFlutterAudioEffectManager sharedAudioEffectManager] destroy];
+    [[RCFlutterTextureViewFactory sharedViewFactory] destroy];
 }
 #pragma mark - 调用原生
 
 - (void)joinRTCRoom:(FlutterMethodCall *)call result:(FlutterResult)result {
     [self allocInstance];
-    NSString *roomId;
+    NSDictionary *dic = (NSDictionary *)call.arguments;
+    NSString *roomId = dic[@"roomId"];
+    NSDictionary *roomConfig = dic[@"roomConfig"];
     RCRTCRoomConfig *config = [[RCRTCRoomConfig alloc] init];
-    config.roomType = RCRTCRoomTypeNormal;
-    config.liveType = RCRTCLiveTypeAudioVideo;
-    if ([call.arguments isKindOfClass:[NSString class]]) {
-        roomId = call.arguments;
-        [self joinNormalRoom:roomId result:result];
-        
-    } else if ([call.arguments isKindOfClass:[NSDictionary class]]) {
-        NSDictionary *dic = (NSDictionary *)call.arguments;
-        roomId = dic[@"roomId"];
-        NSDictionary *roomConfig = dic[@"roomConfig"];
-        config.roomType = ((NSNumber *)roomConfig[@"roomType"]).integerValue == 0 ? RCRTCRoomTypeNormal : RCRTCRoomTypeLive;
-        config.liveType = ((NSNumber *)roomConfig[@"liveType"]).integerValue;
-        [self joinLiveRoom:roomId roomConfig:config result:result];
-    }
-    
-}
-
-- (void)joinNormalRoom:(NSString *)roomId result:(FlutterResult)result{
-    
-    RLogV(@"ios joinRTCRoom id = %@", roomId);
-    Weak(self);
-    [[RCFlutterRTCManager sharedRTCManager] joinRTCRoom:roomId
-                                             completion:^(RCRTCRoom *_Nullable room, RCRTCCode code) {
-        RLogV(@"ios join room code:%@", @(code));
-        Strong(self);
-        
-        if (code == RCRTCCodeSuccess) {
-            selfStrong.room.rtcRoom = room;
-            // 注册和房间无关的硬件资源
-            //                [[RCFlutterVideoCapture sharedVideoCapture] registerVideo];
-            NSMutableDictionary *roomDic = [selfStrong.room toDesc];
-            roomDic[@"code"] = @(RCRTCCodeSuccess);
-            NSString *jsonObj = [RCFlutterTools dictionaryToJson:roomDic];
-            RLogV(@"ios join room success");
-            result(jsonObj);
-        } else {
-            result([NSDictionary new]);
-        }
-        
-    }];
-}
-
-- (void)joinLiveRoom:(NSString *)roomId roomConfig:(RCRTCRoomConfig *)config result:(FlutterResult)result{
+    config.roomType = ((NSNumber *)roomConfig[@"roomType"]).integerValue == 0 ? RCRTCRoomTypeNormal : RCRTCRoomTypeLive;
+    config.liveType = ((NSNumber *)roomConfig[@"liveType"]).integerValue;
     
     RLogV(@"ios live joinRTCRoom id = %@", roomId);
+    
     Weak(self);
+    
     [[RCFlutterRTCManager sharedRTCManager] joinRTCRoom:roomId
                                                  config:config
                                              completion:^(RCRTCRoom *_Nullable room, RCRTCCode code) {
+        
         RLogV(@"ios join room code:%@", @(code));
+        
         Strong(self);
         
         if (code == RCRTCCodeSuccess) {
             selfStrong.room.rtcRoom = room;
             // 注册和房间无关的硬件资源
             //                [[RCFlutterVideoCapture sharedVideoCapture] registerVideo];
-            NSMutableDictionary *roomDic = [selfStrong.room toDesc];
-            roomDic[@"code"] = @(RCRTCCodeSuccess);
-            NSString *jsonObj = [RCFlutterTools dictionaryToJson:roomDic];
+            NSMutableDictionary *dic = [selfStrong.room toDesc];
+            dic[@"code"] = @(RCRTCCodeSuccess);
+            NSString *jsonObj = [RCFlutterTools dictionaryToJson:dic];
             RLogV(@"ios join room success");
             result(jsonObj);
         } else {
-            result(@{@"code":@(-1)});
+            NSMutableDictionary *dic = [NSMutableDictionary new];
+            dic[@"code"] = @((int) code);
+            dic[@"data"] = @"ios join room error";
+            NSString *json = [RCFlutterTools dictionaryToJson:dic];
+            RLogV(@"ios join room error");
+            result(json);
         }
         
     }];
@@ -176,8 +158,21 @@ SingleInstanceM(Engine);
     return [RCFlutterAudioCapture sharedAudioCapture];
 }
 
-- (void)releaseVideoView:(NSNumber *)viewId {
-    [[RCFlutterRenderViewFactory sharedViewFactory] releaseVideoView:viewId.intValue];
+- (RCFlutterAudioEffectManager *)audioEffectManager {
+    return [RCFlutterAudioEffectManager sharedAudioEffectManager];
+}
+
+- (void)createVideoTextureView:(FlutterMethodCall *)call result:(FlutterResult)result {
+    RCFlutterTextureView *view = [[RCFlutterTextureViewFactory sharedViewFactory] createTextureView];
+    NSDictionary *resultDic = @{@"textureId":@(view.textureId)};
+    NSString *jsonResult = [RCFlutterTools dictionaryToJson:resultDic];
+    result(jsonResult);
+}
+
+- (void)releaseVideoTextureView:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = (NSDictionary *)call.arguments;
+    NSNumber *textureId = dic[@"textureId"];
+    [[RCFlutterTextureViewFactory sharedViewFactory] remove:textureId.integerValue];
 }
 
 - (void)getDefaultVideoStream:(FlutterResult)result{
@@ -192,6 +187,24 @@ SingleInstanceM(Engine);
     NSDictionary *desc = [audio toDesc];
     NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
     result(jsonObj);
+}
+
+- (void)createVideoOutputStream:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSString *tag = call.arguments;
+    RCRTCCameraOutputStream *stream = [[RCRTCCameraOutputStream alloc] initVideoOutputStreamWithTag:tag];
+    RCFlutterVideoOutputStream *output = [[RCFlutterVideoOutputStream alloc] init];
+    [output registerStream:stream];
+    [output registerStreamChannel];
+    NSDictionary *desc = [output toDesc];
+    NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+    result(jsonObj);
+}
+
+- (void)getAudioEffectManager:(FlutterResult)result{
+    RCFlutterAudioEffectManager *manager = self.audioEffectManager;
+    NSDictionary *dic = [manager toDic];
+    NSString *json = [RCFlutterTools dictionaryToJson:dic];
+    result(json);
 }
 
 - (void)subscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
@@ -220,7 +233,7 @@ SingleInstanceM(Engine);
     }];
 }
 
--(void) unsubscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
+- (void)unsubscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSString *url = (NSString *)call.arguments;
     [[RCFlutterRTCManager sharedRTCManager] unsubscribeLiveStream:url completion:^(BOOL isSuccess, RCRTCCode code) {
         NSMutableDictionary *desc = [NSMutableDictionary dictionary];
@@ -232,6 +245,92 @@ SingleInstanceM(Engine);
         NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
         result(jsonObj);
     }];
+}
+
+- (void)setMediaServerUrl:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSString *url = (NSString *)call.arguments;
+    [[RCRTCEngine sharedInstance] setMediaServerUrl:url];
+    result(nil);
+}
+
+- (void)registerReportStatusListener:(FlutterResult)result {
+    [RCRTCEngine sharedInstance].monitorDelegate = self;
+    result(nil);
+}
+
+- (void)unRegisterStatusReportListener:(FlutterResult)result {
+    [RCRTCEngine sharedInstance].monitorDelegate = nil;
+    result(nil);
+}
+
+- (void)didReportStatForm:(RCRTCStatisticalForm *)form {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    
+    NSMutableDictionary *vss = [NSMutableDictionary dictionary];
+    NSMutableDictionary *ass = [NSMutableDictionary dictionary];
+    for (RCRTCStreamStat *stat in form.sendStats) {
+        NSDictionary *avs = [self toDic:stat];
+        if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
+            [vss setObject:avs forKey:stat.trackId];
+        } else {
+            [ass setObject:avs forKey:stat.trackId];
+        }
+    }
+    
+    NSMutableDictionary *vrs = [NSMutableDictionary dictionary];
+    NSMutableDictionary *ars = [NSMutableDictionary dictionary];
+    for (RCRTCStreamStat *stat in form.recvStats) {
+        NSDictionary *avs = [self toDic:stat];
+        if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
+            [vrs setObject:avs forKey:stat.trackId];
+        } else {
+            [ars setObject:avs forKey:stat.trackId];
+        }
+    }
+    
+    [dic setObject:vss forKey:@"statusVideoSends"];
+    [dic setObject:ass forKey:@"statusAudioSends"];
+    [dic setObject:vrs forKey:@"statusVideoRcvs"];
+    [dic setObject:ars forKey:@"statusAudioRcvs"];
+    
+    [dic setObject:@(form.totalSendBitRate) forKey:@"bitRateSend"];
+    [dic setObject:@(form.totalRecvBitRate) forKey:@"bitRateRcv"];
+    
+    [dic setObject:@(form.rtt) forKey:@"rtt"];
+    
+    [dic setObject:form.networkType forKey:@"networkType"];
+    NSString *ipAddress = form.ipAddress != nil ? form.ipAddress : @"Unknown";
+    [dic setObject:ipAddress forKey:@"ipAddress"];
+    [dic setObject:@(form.availableReceiveBandwidth) forKey:@"googAvailableReceiveBandwidth"];
+    [dic setObject:@(form.availableSendBandwidth) forKey:@"googAvailableSendBandwidth"];
+    [dic setObject:@(form.packetsDiscardedOnSend) forKey:@"packetsDiscardedOnSend"];
+    
+    [_channel invokeMethod:@"onConnectionStats" arguments:[RCFlutterTools dictionaryToJson:dic]];
+}
+
+- (NSDictionary *)toDic:(RCRTCStreamStat *)stat {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:stat.trackId forKey:@"id"];
+    NSString *uid = [RCRTCStatisticalForm fetchUserIdFromTrackId:stat.trackId];
+    [dic setObject:uid != nil ? uid : @"Unknown" forKey:@"uid"];
+    [dic setObject:stat.codecName forKey:@"codecName"];
+    [dic setObject:stat.mediaType forKey:@"mediaType"];
+    [dic setObject:@(stat.packetLoss) forKey:@"packetLostRate"];
+//    [dic setObject:@"Unknown" forKey:@"isSend"];
+    [dic setObject:@(stat.frameWidth) forKey:@"frameWidth"];
+    [dic setObject:@(stat.frameHeight) forKey:@"frameHeight"];
+    [dic setObject:@(stat.frameRate) forKey:@"frameRate"];
+    [dic setObject:@(stat.bitRate) forKey:@"bitRate"];
+    [dic setObject:@(stat.rtt) forKey:@"rtt"];
+    [dic setObject:@(stat.jitterReceived) forKey:@"googJitterReceived"];
+//    [dic setObject:@"Unknown" forKey:@"googFirsReceived"];
+    [dic setObject:@(stat.renderDelayMs) forKey:@"googRenderDelayMs"];
+    [dic setObject:@(stat.audioLevel) forKey:@"audioOutputLevel"];
+    NSString *codecImplementationName = stat.codecImplementationName != nil ? stat.codecImplementationName : @"Unknown";
+    [dic setObject:codecImplementationName forKey:@"codecImplementationName"];
+    [dic setObject:@(stat.googNacksReceived) forKey:@"googNacksReceived"];
+//    [dic setObject:@"Unknown" forKey:@"googPlisReceived"];
+    return dic;
 }
 
 @end

@@ -1,3 +1,6 @@
-## 0.0.1
+## 4.0.4
 
-* TODO: Describe initial release.
+* 升级IM，RTC SDK版本到4.0.4
+* 解决预览窗口闪烁BUG
+* 解决平台层缓存BUG
+* 增加纯音频功能DEMO

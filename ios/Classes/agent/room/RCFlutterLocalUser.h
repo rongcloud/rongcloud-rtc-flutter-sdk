@@ -8,11 +8,6 @@ typedef void(^RongFlutterRTCOperationCallback)(BOOL isSuccess, RCRTCCode desc);
 
 @interface RCFlutterLocalUser: RCFlutterUser
 
-/*!
- 用户发布的音视频流
- */
-@property(nonatomic, copy, readonly) NSArray<RCFlutterOutputStream *> *localAVStreams;
-
 @end
 
 NS_ASSUME_NONNULL_END

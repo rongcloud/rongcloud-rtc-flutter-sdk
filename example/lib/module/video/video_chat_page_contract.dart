@@ -3,12 +3,11 @@ import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
-import 'package:FlutterRTC/widgets/video_view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:rongcloud_rtc_plugin/agent/room/rcrtc_remote_user.dart';
+import 'package:rongcloud_rtc_plugin/agent/stream/rcrtc_camera_output_stream.dart';
 
 enum StreamType { StreamTypeAudio, StreamTypeVideo }
-
-var videoStreamLevelList = ["超清", "高清", "标清"];
 
 class RemoteUserStatus {
   bool audioStatus;
@@ -21,13 +20,15 @@ class RemoteUserStatus {
 abstract class View implements IView {
   void onPermissionStatus(PermissionStatus status);
 
-  void onVideoViewCreated(VideoView view);
+  void onVideoViewCreated(TextureView view);
 
   void onRemoveVideoView(String userId);
 
   void onPushed();
 
   void onPushError(String info);
+
+  void onCameraChanged(bool isFront);
 }
 
 abstract class Model implements IModel {
@@ -38,23 +39,25 @@ abstract class Model implements IModel {
   Future<PermissionStatus> requestMicPermission();
 
   void createVideoView(
-    void onVideoViewCreated(VideoView view),
+    void onVideoViewCreated(TextureView view),
     void readyToPush(),
   );
 
   Future<StatusCode> push();
 
   void pull(
-    void onVideoViewCreated(VideoView view),
+    void onVideoViewCreated(TextureView view),
     void onRemoveVideoView(String userId),
   );
 
-  void switchCamera();
+  void switchCamera(void onCameraChanged(bool isFront));
+
+  void setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation);
 
   Future<bool> changeAudioStreamState();
 
   Future<bool> changeVideoStreamState(
-    void onVideoViewCreated(VideoView view),
+    void onVideoViewCreated(TextureView view),
     void onRemoveVideoView(String userId),
   );
 
@@ -64,7 +67,7 @@ abstract class Model implements IModel {
 
   Future<bool> changeRemoteVideoStreamState(RemoteUserStatus user);
 
-  void changeVideoResolution(String level, void onVideoViewCreated(VideoView view), void onRemoveVideoView(String userId));
+  void changeVideoResolution(String level, void onVideoViewCreated(TextureView view), void onRemoveVideoView(String userId));
 
   Future<StatusCode> exit();
 }
@@ -83,6 +86,8 @@ abstract class Presenter implements IPresenter {
   void pull();
 
   void switchCamera();
+
+  void setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation);
 
   Future<bool> changeAudioStreamState();
 

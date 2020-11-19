@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 import '../../utils/rcrtc_log.dart';
 import 'rcrtc_video_output_stream.dart';
 
+enum RCRTCCameraCaptureOrientation {
+  Portrait,
+  PortraitUpsideDown,
+  LandscapeRight,
+  LandscapeLeft,
+}
+
 class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   static const _tag = "RCRTCCameraOutputStream";
 
@@ -24,8 +31,9 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   }
 
   /// 切换摄像头
-  Future<void> switchCamera() async {
+  Future<bool> switchCamera() async {
     _isFrontCamera = await channel.invokeMethod("switchCamera");
+    return _isFrontCamera;
   }
 
   /// 停用摄像头
@@ -40,5 +48,40 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
 
   bool isFrontCamera() {
     return _isFrontCamera;
+  }
+
+  Future<bool> isCameraFocusSupported() async {
+    bool supported = await channel.invokeMethod("isCameraFocusSupported");
+    return Future.value(supported);
+  }
+
+  Future<bool> isCameraExposurePositionSupported() async {
+    bool supported = await channel.invokeMethod("isCameraExposurePositionSupported");
+    return Future.value(supported);
+  }
+
+  Future<bool> setCameraExposurePositionInPreview(double x, double y) async {
+    Map<String, dynamic> arguments = {
+      "x": x,
+      "y": y,
+    };
+    bool success = await channel.invokeMethod("setCameraExposurePositionInPreview", arguments);
+    return Future.value(success);
+  }
+
+  Future<bool> setCameraFocusPositionInPreview(double x, double y) async {
+    Map<String, dynamic> arguments = {
+      "x": x,
+      "y": y,
+    };
+    bool success = await channel.invokeMethod("setCameraFocusPositionInPreview", arguments);
+    return Future.value(success);
+  }
+
+  Future<void> setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation) async {
+    Map<String, dynamic> arguments = {
+      "orientation": orientation.index,
+    };
+    await channel.invokeMethod("setCameraCaptureOrientation", arguments);
   }
 }

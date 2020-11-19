@@ -4,9 +4,9 @@ import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
 import 'package:FlutterRTC/frame/ui/toast.dart';
 import 'package:FlutterRTC/module/live/audience/live_audience_page_presenter.dart';
-import 'package:FlutterRTC/widgets/video_view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
-import 'package:rongcloud_rtc_plugin/agent/view/rcrtc_video_view.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../../../colors.dart';
 import 'live_audience_page_contract.dart';
@@ -310,7 +310,7 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
     return widgets;
   }
 
-  Widget _buildRemoteView(BuildContext context, VideoView view) {
+  Widget _buildRemoteView(BuildContext context, TextureView view) {
     return Container(
       color: Colors.yellow,
       alignment: Alignment.center,
@@ -478,7 +478,7 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
   }
 
   @override
-  void onPulled(RCRTCVideoView videoView) {
+  void onPulled(RCRTCTextureView videoView) {
     setState(() {
       _pullState = 1;
       _videoView = videoView;
@@ -578,15 +578,15 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
   }
 
   void _removeSmallView(String uid) {
-    VideoView view = getUsersViewById(uid);
+    TextureView view = getUsersViewById(uid);
     if (view != null)
       setState(() {
         _smallVideoViews.remove(view);
       });
   }
 
-  VideoView getUsersViewById(String uid) {
-    for (VideoView view in _smallVideoViews) {
+  TextureView getUsersViewById(String uid) {
+    for (TextureView view in _smallVideoViews) {
       if (view.user.id == uid) {
         return view;
       }
@@ -594,16 +594,16 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
     return null;
   }
 
-  void _setSmallView(User user, RCRTCVideoView videoView) {
-    VideoView view = getUsersView(user);
+  void _setSmallView(User user, RCRTCTextureView videoView) {
+    TextureView view = getUsersView(user);
     if (view == null) {
       setState(() {
-        _smallVideoViews.add(VideoView(user, videoView));
+        _smallVideoViews.add(TextureView(user, videoView));
       });
     }
   }
 
-  VideoView getUsersView(User user) {
+  TextureView getUsersView(User user) {
     return getUsersViewById(user.id);
   }
 
@@ -629,9 +629,9 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
 
   List<Message> _messages = List();
 
-  RCRTCVideoView _videoView;
+  RCRTCTextureView _videoView;
 
-  List<VideoView> _smallVideoViews = List();
+  List<TextureView> _smallVideoViews = List();
 
   int _pullState = 0;
 

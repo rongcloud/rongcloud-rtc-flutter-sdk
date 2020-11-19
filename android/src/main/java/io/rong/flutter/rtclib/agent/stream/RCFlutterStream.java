@@ -27,13 +27,14 @@ public class RCFlutterStream implements MethodCallHandler {
   public RCFlutterStream(BinaryMessenger bMsg, RCRTCStream stream) {
     messenger = bMsg;
     rtcStream = stream;
-    channel =
-        new MethodChannel(
+    channel = new MethodChannel(
             messenger,
             "rong.flutter.rtclib/Stream:"
-                + rtcStream.getStreamId()
-                + "_"
-                + rtcStream.getMediaType().getValue());
+              + rtcStream.getStreamId()
+              + "_"
+              + rtcStream.getMediaType().getValue()
+              + "_"
+              + rtcStream.getTag());
     channel.setMethodCallHandler(this);
   }
 

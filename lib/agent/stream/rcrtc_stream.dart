@@ -29,7 +29,7 @@ class RCRTCStream {
   RCRTCStream.fromJson(stream)
       : _streamId = stream['streamId'],
         _streamTag = stream['tag'],
-        channel = MethodChannel("rong.flutter.rtclib/Stream:${stream['streamId']}_${stream['type']}"),
+        channel = MethodChannel("rong.flutter.rtclib/Stream:${stream['streamId']}_${stream['type']}_${stream['tag']}"),
         _type = MediaType.values[stream['type']],
         _mute = stream['mute'] ?? true {
     channel.setMethodCallHandler(methodHandler);

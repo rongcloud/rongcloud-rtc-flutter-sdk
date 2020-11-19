@@ -6,8 +6,8 @@ import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureView;
+import io.rong.flutter.rtclib.agent.view.RCFlutterTextureViewFactory;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
 public class RCFlutterVideoInputStream extends RCFlutterInputStream {
@@ -24,16 +24,17 @@ public class RCFlutterVideoInputStream extends RCFlutterInputStream {
     super.onMethodCall(call, result);
 
     switch (call.method) {
-      case "setVideoView":
-        setVideoView(call, result);
+      case "setTextureView":
+        setTextureView(call, result);
         break;
     }
   }
 
-  protected void setVideoView(MethodCall call, MethodChannel.Result result) {
-    int viewId = (int) call.arguments;
-    RCFlutterVideoView videoView = RCFlutterVideoViewFactory.getInstance().getVideoView(viewId);
-    videoInputStream.setVideoView(videoView.getNativeVideoView());
+  protected void setTextureView(MethodCall call, MethodChannel.Result result) {
+    int textureId = (int) call.arguments;
+    RCFlutterTextureView textureView = RCFlutterTextureViewFactory.getInstance().get(textureId);
+    videoInputStream.setTextureView(textureView.getTextureView());
     UIThreadHandler.success(result, null);
   }
+
 }

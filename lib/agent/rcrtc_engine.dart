@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:rongcloud_rtc_plugin/agent/rcrtc_audio_effect_manager.dart';
 
 import '../rcrtc_error_code.dart';
 import '../rcrtc_room_config.dart';
@@ -9,7 +10,6 @@ import '../rongcloud_rtc_plugin.dart';
 import 'rcrtc_status_report.dart';
 import 'room/rcrtc_room.dart';
 import 'stream/rcrtc_camera_output_stream.dart';
-import 'stream/rcrtc_file_video_output_stream.dart';
 import 'stream/rcrtc_mic_output_stream.dart';
 import 'stream/rcrtc_video_input_stream.dart';
 import 'stream/rcrtc_video_output_stream.dart';
@@ -28,6 +28,7 @@ class RCRTCEngine {
   static RCRTCEngine _instance;
   RCRTCCameraOutputStream _cameraOutputStream;
   RCRTCMicOutputStream _audioOutputStream;
+  RCRTCAudioEffectManager _audioEffectManager;
   RCRTCRoom _room;
   IRCRTCStatusReportListener _statusReportListener;
 
@@ -42,35 +43,11 @@ class RCRTCEngine {
 
   Future<dynamic> _handlerMethod(MethodCall call) {
     switch (call.method) {
-      case "onAudioReceivedLevel":
-        {
-          _handlerOnAudioReceivedLevel(call);
-          break;
-        }
-
-      case "onAudioInputLevel":
-        {
-          _handlerOnAudioInputLevel(call);
-          break;
-        }
       case "onConnectionStats":
-        {
-          _handlerOnConnectionStats(call);
-          break;
-        }
+        _handlerOnConnectionStats(call);
+        break;
     }
-
     return null;
-  }
-
-  _handlerOnAudioReceivedLevel(MethodCall call) {
-    Map<String, String> data = jsonDecode(call.arguments);
-    _statusReportListener.onAudioReceivedLevel(data);
-  }
-
-  _handlerOnAudioInputLevel(MethodCall call) {
-    String level = call.arguments;
-    _statusReportListener?.onAudioInputLevel(level);
   }
 
   _handlerOnConnectionStats(MethodCall call) {
@@ -85,7 +62,12 @@ class RCRTCEngine {
   }
 
   Future<void> unInit() async {
-    _channel.invokeMethod('unInit');
+    _cameraOutputStream = null;
+    if (_audioOutputStream != null) _audioOutputStream.release();
+    _audioOutputStream = null;
+    if (_audioEffectManager != null) _audioEffectManager.release();
+    _audioEffectManager = null;
+    return await _channel.invokeMethod('unInit');
   }
 
   Future<RCRTCCodeResult<RCRTCRoom>> joinRoom({
@@ -114,7 +96,10 @@ class RCRTCEngine {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     if (jsonObj['code'] == 0) _room = null;
     _cameraOutputStream = null;
+    if (_audioOutputStream != null) _audioOutputStream.release();
     _audioOutputStream = null;
+    if (_audioEffectManager != null) _audioEffectManager.release();
+    _audioEffectManager = null;
     return jsonObj['code'];
   }
 
@@ -132,16 +117,21 @@ class RCRTCEngine {
     return _audioOutputStream;
   }
 
+  Future<RCRTCAudioEffectManager> getAudioEffectManager() async {
+    _audioEffectManager = _audioEffectManager ?? RCRTCAudioEffectManager.fromJson(jsonDecode(await _channel.invokeMethod('getAudioEffectManager')));
+    return _audioEffectManager;
+  }
+
   Future<RCRTCVideoOutputStream> createVideoOutputStream(String tag) async {
     String jsonStr = await _channel.invokeMethod("createVideoOutputStream", tag);
     return RCRTCVideoOutputStream.fromJson(jsonDecode(jsonStr));
   }
 
-  Future<RCRTCFileVideoOutputStream> createFileVideoOutputStream({@required String path, @required String tag, bool replace = true, bool playback = true}) async {
-    var args = {"path": path, "tag": tag, "replace": replace ?? false, "playback": playback ?? true};
-    String jsonStr = await _channel.invokeMethod("createFileVideoOutputStream", args);
-    return RCRTCFileVideoOutputStream.fromJson(jsonDecode(jsonStr));
-  }
+  // Future<RCRTCFileVideoOutputStream> createFileVideoOutputStream({@required String path, @required String tag, bool replace = true, bool playback = true}) async {
+  //   var args = {"path": path, "tag": tag, "replace": replace ?? false, "playback": playback ?? true};
+  //   String jsonStr = await _channel.invokeMethod("createFileVideoOutputStream", args);
+  //   return RCRTCFileVideoOutputStream.fromJson(jsonDecode(jsonStr));
+  // }
 
   Future<void> subscribeLiveStream(
     String url,
@@ -188,10 +178,16 @@ class RCRTCEngine {
   }
 
   setMediaServerUrl(String serverUrl) async {
-    await _channel.invokeMethod("mediaServerUrl", serverUrl);
+    await _channel.invokeMethod("setMediaServerUrl", serverUrl);
   }
 
-  releaseVideoView(int viewId) async {
-    await _channel.invokeMethod("releaseVideoView", viewId);
+  Future<int> createVideoRenderer() async {
+    String result = await _channel.invokeMethod("createVideoRenderer");
+    Map<String, dynamic> json = jsonDecode(result);
+    return json['textureId'];
+  }
+
+  disposeVideoRenderer(int textureId) async {
+    await _channel.invokeMethod("disposeVideoRenderer", <String, dynamic>{'textureId': textureId});
   }
 }

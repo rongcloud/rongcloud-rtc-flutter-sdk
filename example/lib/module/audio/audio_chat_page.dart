@@ -39,7 +39,7 @@ class _AudioChatPageState extends State<AudioChatPage> {
       _addUser(user.id);
     };
 
-    room.onRemoteUserUnpublishResource = (user, streams) {
+    room.onRemoteUserUnPublishResource = (user, streams) {
       localUser.unsubscribeStreams(streams);
 
       streams.whereType<RCRTCAudioInputStream>().forEach((stream) {

@@ -7,6 +7,9 @@
 #import "RCFlutterInputStream+Private.h"
 #import "RCFlutterAVStream+Private.h"
 #import "RCFlutterUser+Private.h"
+#import "ThisClassShouldNotBelongHere.h"
+#import "RCFlutterTools.h"
+
 @interface RCFlutterRoom ()
 
 @property(nonatomic, strong) RCRTCRoom *rtcRoom;
@@ -17,6 +20,13 @@
 @end
 
 @implementation RCFlutterRoom
+
+- (void)dealloc {
+    RCLogI(@"RCFlutterRoom dealloc");
+    self.localUser = nil;
+    self.remoteUsers = nil;
+    self.rtcRoom = nil;
+}
 
 - (instancetype)init {
     if (self = [super init]) {
@@ -33,12 +43,7 @@
     self.methodChannel = channel;
 }
 
-- (void)dealloc {
-    RCLogI(@"RCFlutterRoom dealloc");
-    self.localUser = nil;
-    self.remoteUsers = nil;
-    self.rtcRoom = nil;
-}
+
 
 - (void)setRtcRoom:(RCRTCRoom *)rtcRoom {
     @synchronized (self) {
@@ -103,9 +108,9 @@
     return arr;;
 }
 
-- (NSArray<RCFlutterInputStream *> *)getFlutterRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)streamDics{
+- (NSArray<RCFlutterInputStream *> *)getFlutterRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)dics{
     NSMutableArray *arr = [NSMutableArray array];
-    for (NSDictionary *dic in streamDics) {
+    for (NSDictionary *dic in dics) {
         for (RCFlutterRemoteUser *remoteUser in self.remoteUsers) {
             for (RCFlutterInputStream *inputStream in remoteUser.remoteAVStreams) {
                 if ([inputStream isEqualToStreamDic:dic]) {
@@ -116,9 +121,10 @@
     }
     return arr;
 }
-- (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)streamics{
+
+- (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)dics{
     NSMutableArray *arr = [NSMutableArray array];
-    for (NSDictionary *dic in streamics) {
+    for (NSDictionary *dic in dics) {
         for (RCFlutterRemoteUser *remoteUser in self.remoteUsers) {
             for (RCFlutterInputStream *inputStream in remoteUser.remoteAVStreams) {
                 if ([inputStream isEqualToStreamDic:dic]) {
@@ -129,4 +135,76 @@
     }
     return arr;
 }
+
+- (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+    if ([call.method isEqualToString:KSetRoomAttributeValue]) {
+        [self setRoomAttributeValue:call result:result];
+    } else if ([call.method isEqualToString:KDeleteRoomAttributes]) {
+        [self deleteRoomAttributes:call result:result];
+    } else if ([call.method isEqualToString:KGetRoomAttributes]) {
+        [self getRoomAttributes:call result:result];
+    } else if ([call.method isEqualToString:KSendMessage]) {
+        [self sendMessage:call result:result];
+    } else {
+        result(FlutterMethodNotImplemented);
+    }
+}
+
+- (void)setRoomAttributeValue:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSString *key = dic[@"key"];
+    NSString *value = dic[@"value"];
+    NSString *object = dic[@"object"];
+    NSString *content = dic[@"content"];
+    RCMessageContent *message = [ThisClassShouldNotBelongHere string2MessageContent:object content:content];
+    [_rtcRoom setRoomAttributeValue:value
+                     forKey:key
+                    message:message
+                 completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
+    }];
+}
+
+- (void)deleteRoomAttributes:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSArray *keys = [RCFlutterTools decodeToArray:dic[@"keys"]];
+    NSString *object = dic[@"object"];
+    NSString *content = dic[@"content"];
+    RCMessageContent *message = [ThisClassShouldNotBelongHere string2MessageContent:object content:content];
+    [_rtcRoom deleteRoomAttributes:keys
+                   message:message
+                completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
+    }];
+}
+
+- (void)getRoomAttributes:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSArray *keys = [RCFlutterTools decodeToArray:dic[@"keys"]];
+    [_rtcRoom getRoomAttributes:keys
+             completion:^(BOOL isSuccess, RCRTCCode desc, NSDictionary * _Nullable attr) {
+        result(attr);
+    }];
+}
+
+- (void)sendMessage:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSString *object = dic[@"object"];
+    NSString *content = dic[@"content"];
+    RCMessageContent *message = [ThisClassShouldNotBelongHere string2MessageContent:object content:content];
+    [_rtcRoom sendMessage:message
+                  success:^(long messageId) {
+        NSMutableDictionary *dic = [NSMutableDictionary new];
+        [dic setObject:[NSNumber numberWithLong:messageId] forKey:@"id"];
+        [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+        result(dic);
+    }
+                    error:^(RCErrorCode nErrorCode, long messageId) {
+        NSMutableDictionary *dic = [NSMutableDictionary new];
+        [dic setObject:[NSNumber numberWithLong:messageId] forKey:@"id"];
+        [dic setObject:[NSNumber numberWithInt:(int) nErrorCode] forKey:@"code"];
+        result(dic);
+    }];
+}
+
 @end

@@ -48,8 +48,3 @@ app.*.map.json
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 # XCode
 **/*.xcworkspace
-
-github.sh
-example/pre_build.py
-example/pre_build.rb
-example/pre_build.sh

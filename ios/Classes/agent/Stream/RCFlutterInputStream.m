@@ -2,7 +2,7 @@
 #import <RongRTCLib/RongRTCLib.h>
 #import "RCFlutterAVStream+Private.h"
 #import "RCFlutterInputStream+Private.h"
-#import "RCFlutterRenderViewFactory.h"
+#import "RCFlutterTextureViewFactory.h"
 
 @interface RCFlutterInputStream ()
 
@@ -25,8 +25,8 @@
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSLog(@"RCFlutterInputStream handleMethodCall %@", call.method);
-    if ([call.method isEqualToString:KRenderView]) {
-        [self renderView:(NSNumber *) call.arguments];
+    if ([call.method isEqualToString:KSetVideoTextureView]) {
+        [self setVideoTextureView:(NSNumber *) call.arguments];
     } else if ([call.method isEqualToString:KMute]) {
         [super handleMethodCall:call result:result];
     } else {
@@ -41,12 +41,10 @@
     }
 }
 
-- (void)renderView:(NSNumber *)args {
-    int viewId = args.intValue;
-    RCFlutterRenderView *remoteView = (RCRTCRemoteVideoView *) [[RCFlutterRenderViewFactory sharedViewFactory] getViewWithId:viewId andType:RongFlutterRenderViewTypeRemoteView];
-    [(RCRTCVideoInputStream *) (self.rtcInputStream) setVideoView:remoteView.previewView];
+- (void)setVideoTextureView:(NSNumber *)textureId {
+    RCFlutterTextureView *view = [[RCFlutterTextureViewFactory sharedViewFactory] get:textureId.integerValue];
+    [(RCRTCVideoInputStream *) (self.rtcInputStream) setVideoTextureView:view.nativeView];
 }
-
 
 - (void)dealloc {
     RCLogI(@"RongFlutterInputStream dealloc");

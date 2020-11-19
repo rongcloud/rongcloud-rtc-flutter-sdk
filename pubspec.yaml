@@ -1,8 +1,7 @@
 name: rongcloud_rtc_plugin
-description: A new flutter plugin project.
-version: 0.0.1
-author:
-homepage:
+description: RongCloud RTC Flutter Plugin.
+version: 4.0.4
+homepage: https://www.rongcloud.cn/
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
@@ -11,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  rongcloud_im_plugin: ^4.0.4
 
 dev_dependencies:
   flutter_test:

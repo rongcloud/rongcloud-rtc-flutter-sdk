@@ -22,15 +22,11 @@
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSLog(@"%@", call.method);
-    if ([call.method isEqualToString:KSubscribeStream]) {
-        result(FlutterMethodNotImplemented);
-    } else if ([call.method isEqualToString:KSwitchToTinyStream]) {
-        NSArray
-        *streams = [RCFlutterTools decodeToArray:call.arguments];
+    if ([call.method isEqualToString:KSwitchToTinyStream]) {
+        NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self switchToTinyStream:streams result:result];
     } else if ([call.method isEqualToString:KSwitchToNormalStream]) {
-        NSArray
-        *streams = [RCFlutterTools decodeToArray:call.arguments];
+        NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self switchToNormalStream:streams result:result];
     } else {
         result(FlutterMethodNotImplemented);

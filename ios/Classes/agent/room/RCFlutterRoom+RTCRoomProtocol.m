@@ -53,6 +53,7 @@
         [self.methodChannel invokeMethod:kOnRemoteUserPublishStream arguments:json];
     });
 }
+
 - (void)didUnpublishStreams:(NSArray<RCRTCInputStream *> *)streams{
     dispatch_to_workQueue(^{
         self.rtcRoom = [RCRTCEngine sharedInstance].currentRoom;

@@ -7,19 +7,19 @@ package io.rong.flutter.rtclib;
  */
 public class RCFlutterRequestResult<T> {
 
-  private T data;
-  private int code;
+    private T data;
+    private int code;
 
-  public RCFlutterRequestResult(T data, int code) {
-    this.data = data;
-    this.code = code;
-  }
+    public RCFlutterRequestResult(T data, int code) {
+        this.data = data;
+        this.code = code;
+    }
 
-  public T getData() {
-    return data;
-  }
+    public T getData() {
+        return data;
+    }
 
-  public int getCode() {
-    return code;
-  }
+    public int getCode() {
+        return code;
+    }
 }

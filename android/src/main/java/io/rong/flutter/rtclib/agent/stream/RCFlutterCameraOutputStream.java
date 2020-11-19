@@ -10,8 +10,6 @@ import cn.rongcloud.rtc.core.CameraVideoCapturer;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoView;
-import io.rong.flutter.rtclib.agent.view.RCFlutterVideoViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
@@ -44,6 +42,21 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
         break;
       case "enableTinyStream":
         enableTinyStream(call, result);
+        break;
+      case "isCameraFocusSupported":
+        isCameraFocusSupported(result);
+        break;
+      case "isCameraExposurePositionSupported":
+        isCameraExposurePositionSupported(result);
+        break;
+      case "setCameraExposurePositionInPreview":
+        setCameraExposurePositionInPreview(call, result);
+        break;
+      case "setCameraFocusPositionInPreview":
+        setCameraFocusPositionInPreview(call, result);
+        break;
+      case "setCameraCaptureOrientation":
+        setCameraCaptureOrientation(call, result);
         break;
     }
   }
@@ -79,20 +92,55 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
     UIThreadHandler.success(result, null);
   }
 
+  private void isCameraFocusSupported(Result result) {
+    boolean supported = cameraOutputStream.isCameraFocusSupported();
+    UIThreadHandler.success(result, supported);
+  }
+
+  private void isCameraExposurePositionSupported(Result result) {
+    boolean supported = cameraOutputStream.isCameraExposurePositionSupported();
+    UIThreadHandler.success(result, supported);
+  }
+
+  private void setCameraExposurePositionInPreview(MethodCall call, Result result) {
+    Float x = call.argument("x");
+    Float y = call.argument("y");
+    assert x != null && y != null : "setCameraExposurePositionInPreview x y should not be null!!!!";
+    boolean success = cameraOutputStream.setCameraExposurePositionInPreview(x, y);
+    UIThreadHandler.success(result, success);
+  }
+
+  private void setCameraFocusPositionInPreview(MethodCall call, Result result) {
+    Float x = call.argument("x");
+    Float y = call.argument("y");
+    assert x != null && y != null : "setCameraFocusPositionInPreview x y should not be null!!!!";
+    boolean success = cameraOutputStream.setCameraFocusPositionInPreview(x, y);
+    UIThreadHandler.success(result, success);
+  }
+
+  private void setCameraCaptureOrientation(MethodCall call, Result result){
+    Integer orientation = call.argument("orientation");
+    assert orientation != null : "setCameraCaptureOrientation orientation should not be null!!!!";
+    switch (orientation) {
+      case 1:
+        cameraOutputStream.setCameraDisplayOrientation(180);
+        break;
+      case 2:
+        cameraOutputStream.setCameraDisplayOrientation(270);
+        break;
+      case 3:
+        cameraOutputStream.setCameraDisplayOrientation(90);
+        break;
+      default:
+        cameraOutputStream.setCameraDisplayOrientation(0);
+        break;
+    }
+    UIThreadHandler.success(result, null);
+  }
+
   @JSONField
   public boolean isFrontCamera() {
     return cameraOutputStream.isFrontCamera();
-  }
-
-  private void setPreviewMirror(MethodCall call, Result result){
-    boolean enabled = (boolean) call.arguments;
-    //TODO 临时解决 cameraOutputStream.setPreviewMirror(enabled) 不生效的问题
-//    cameraOutputStream.setPreviewMirror(enabled);
-    RCFlutterVideoViewFactory.getInstance()
-            .getVideoView(viewId)
-            .getNativeVideoView()
-            .setMirror(enabled);
-    UIThreadHandler.success(result, enabled);
   }
 
   @JSONField

@@ -92,8 +92,8 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   void agreeInvite(
     Data.User user,
     LiveType type,
-    void onVideoViewReady(RCRTCVideoView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCVideoView videoView),
+    void onVideoViewReady(RCRTCTextureView videoView),
+    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
   ) {
     model?.agreeInvite(

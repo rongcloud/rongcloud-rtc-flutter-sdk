@@ -20,19 +20,13 @@ class StatusReport {
   final Map<String, StatusBean> statusAudioRcvs = {};
 
   /// 发送码率大小，单位是 kbps
-  final double bitRateSend;
+  final String bitRateSend;
 
   /// 接收码率大小，单位是 kbps
-  final double bitRateRcv;
+  final String bitRateRcv;
 
   /// 往返延时(ms)
-  final int rtt;
-//
-//  /// 临时存储发送的总数,单位是kb
-//  final double bitRateTotalSend;
-//
-//  /// 临时存储收到的总数,单位是kb
-//  final double bitRateTotalRcv;
+  final String rtt;
 
   /// 网络环境
   final String networkType;
@@ -50,14 +44,14 @@ class StatusReport {
   final String packetsDiscardedOnSend;
 
   StatusReport.fromJson(Map<String, dynamic> map)
-      : this.bitRateRcv = map['bitRateRcv'],
-        this.bitRateSend = map['bitRateSend'],
-        this.googAvailableReceiveBandwidth = map['googAvailableReceiveBandwidth'],
-        this.googAvailableSendBandwidth = map['googAvailableReceiveBandwidth'],
-        this.ipAddress = map['ipAddress'],
+      : this.bitRateRcv = "${map['bitRateRcv']}",
+        this.bitRateSend = "${map['bitRateSend']}",
+        this.googAvailableReceiveBandwidth = "${map['googAvailableReceiveBandwidth']}",
+        this.googAvailableSendBandwidth = "${map['googAvailableSendBandwidth']}",
+        this.ipAddress = map.containsKey('ipAddress') ? map['ipAddress'] : 'Unknown',
         this.networkType = map['networkType'],
-        this.packetsDiscardedOnSend = map['packetsDiscardedOnSend'],
-        this.rtt = map['rtt'] {
+        this.packetsDiscardedOnSend = "${map['packetsDiscardedOnSend']}",
+        this.rtt = "${map['rtt']}" {
     Map<String, dynamic> jsonAudioRcvs = map['statusAudioRcvs'];
     jsonAudioRcvs.forEach((key, value) {
       this.statusAudioRcvs.putIfAbsent(key, () => StatusBean.fromJson(value));
@@ -67,10 +61,12 @@ class StatusReport {
     jsonAudioSends.forEach((key, value) {
       this.statusAudioSends.putIfAbsent(key, () => StatusBean.fromJson(value));
     });
+
     Map<String, dynamic> jsonVideoRcvs = map['statusVideoRcvs'];
     jsonVideoRcvs.forEach((key, value) {
       this.statusVideoRcvs.putIfAbsent(key, () => StatusBean.fromJson(value));
     });
+
     Map<String, dynamic> jsonVideoSends = map['statusVideoSends'];
     jsonVideoSends.forEach((key, value) {
       this.statusVideoSends.putIfAbsent(key, () => StatusBean.fromJson(value));
@@ -92,16 +88,10 @@ class StatusBean {
   final String mediaType;
 
   /// 丢包率:取值范围是 0-100
-  final int packetLostRate;
+  final String packetLostRate;
 
   /// 发送类型，true为发送
-  final int isSend;
-
-  /// 接收/发送的包
-  final int packets;
-
-  /// 丢包数量
-  final int packetsLost;
+  // final int isSend; // iOS 没有暂时去掉
 
   /// 视频高
   final int frameHeight;
@@ -113,19 +103,16 @@ class StatusBean {
   final int frameRate;
 
   /// 码率大小，单位是 kbps
-  final int bitRate;
-
-  /// 接收/发送的字节总数.单位是kb
-  final int totalBitRate;
+  final String bitRate;
 
   /// 往返延时(ms)
-  final int rtt;
+  final String rtt;
 
   /// jitter 􏰙􏱁􏱂抖动缓冲接收到的数据
   final int googJitterReceived;
 
   /// 第一个关键帧是否正常收到
-  final int googFirsReceived;
+  // final int googFirsReceived; // iOS没有暂时去掉
 
   /// 接收卡顿延时
   final int googRenderDelayMs;
@@ -140,40 +127,30 @@ class StatusBean {
   final String googNacksReceived;
 
   /// (Picture Loss Indication) 􏰶􏰷􏱫􏰙 PLI请求
-  final String googPlisReceived;
+  // final String googPlisReceived; // iOS没有暂时去掉
+
   StatusBean.fromJson(Map<String, dynamic> map)
-      : this.rtt = map['rtt'],
+      : this.rtt = "${map['rtt']}",
         this.id = map['id'],
-        this.audioOutputLevel = map['audioOutputLevel'],
-        this.bitRate = map['bitRate'],
+        this.audioOutputLevel = "${map['audioOutputLevel']}",
+        this.bitRate = "${map['bitRate']}",
         this.codecImplementationName = map['codecImplementationName'],
         this.codecName = map['codecName'],
         this.frameHeight = map['frameHeight'],
         this.frameRate = map['frameRate'],
         this.frameWidth = map['frameWidth'],
-        this.googFirsReceived = map['googFirsReceived'],
+        // this.isSend = map['isSend'],
+        // this.googFirsReceived = map['googFirsReceived'],
+        // this.googPlisReceived = map['googPlisReceived'],
         this.googJitterReceived = map['googJitterReceived'],
-        this.googNacksReceived = map['googNacksReceived'],
-        this.googPlisReceived = map['googPlisReceived'],
+        this.googNacksReceived = "${map['googNacksReceived']}",
         this.googRenderDelayMs = map['googRenderDelayMs'],
         this.uid = map['uid'],
         this.mediaType = map['mediaType'],
-        this.packetLostRate = map['packetLostRate'],
-        this.isSend = map['isSend'],
-        this.packets = map['packets'],
-        this.packetsLost = map['packetsLost'],
-        this.totalBitRate = map['totalBitRate'];
+        this.packetLostRate = "${map['packetLostRate']}";
 }
 
 abstract class IRCRTCStatusReportListener {
-  /// 以HashMap形式返回参与者的userID和[audioLevel]，每秒钟刷新一次。
-  /// 当 AudioLevel 大于 0 时候，即认为该参与者正在讲话。
-  onAudioReceivedLevel(Map<String, String> audioLevel);
-
-  /// 输入端的音频输入等级
-  /// [audioLevel] 返回输入端audio level
-  onAudioInputLevel(String audioLevel);
-
   /// 状态信息的输出，每秒输出一次。
   /// [statusReport]
   onConnectionStats(StatusReport statusReport);

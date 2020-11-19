@@ -11,6 +11,7 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import cn.rongcloud.rtc.api.RCRTCEngine;
 import cn.rongcloud.rtc.api.RCRTCLocalUser;
@@ -36,44 +37,34 @@ import io.rong.flutter.rtclib.agent.stream.RCFlutterTempStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoOutputStream;
 import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
+import io.rong.flutter.rtclib.utils.ThisClassShouldNotBelongHere;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
+import io.rong.imlib.model.MessageContent;
 
 public class RCFlutterLocalUser extends RCFlutterUser {
 
     private static final String TAG = "RCFlutterLocalUser";
 
     private static final String METHOD_PUB_DEFAULT = "publishDefaultStreams";
-    private static final String METHOD_UNPUB_DEFAULT = "unpublishDefaultStreams";
-    private static final String METHOD_PUB_LIVE_STREAMS = "publishLiveStreams";
+    private static final String METHOD_PUB_LIVE_STREAMS = "publishDefaultLiveStreams";
     private static final String METHOD_PUB_LIVE_STREAM = "publishLiveStream";
     private static final String METHOD_PUB_STREAMS = "publishStreams";
-    private static final String METHOD_UNPUB_STREAMS = "unpublishStreams";
+    private static final String METHOD_UN_PUB_DEFAULT = "unPublishDefaultStreams";
+    private static final String METHOD_UN_PUB_STREAMS = "unPublishStreams";
     private static final String METHOD_SUB_STREAMS = "subscribeStreams";
-    private static final String METHOD_UNSUB_STREAMS = "unsubscribeStreams";
+    private static final String METHOD_UN_SUB_STREAMS = "unsubscribeStreams";
     private static final String METHOD_GET_STREAMS = "getStreams";
-    //    private static final String METHOD_SUB_STREAM = "subscribeStreams";
+    private static final String METHOD_SET_ATTRIBUTE = "setAttributeValue";
+    private static final String METHOD_DEL_ATTRIBUTE = "deleteAttributes";
+    private static final String METHOD_GET_ATTRIBUTE = "getAttributes";
 
     private final BinaryMessenger bMsg;
     private final RCRTCLocalUser rtcLocalUser;
-    private final List<RCFlutterOutputStream> streamList = new ArrayList<>();
 
     public RCFlutterLocalUser(BinaryMessenger msg, RCRTCLocalUser localUser) {
         super(msg, localUser);
         bMsg = msg;
         rtcLocalUser = localUser;
-        List<RCRTCOutputStream> rtcStreams = localUser.getStreams();
-        for (RCRTCOutputStream stream : rtcStreams) {
-            RCFlutterOutputStream flutterOutputStream;
-            if (stream instanceof RCRTCMicOutputStream) {
-                flutterOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
-            } else if (stream instanceof RCRTCCameraOutputStream) {
-                flutterOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
-            } else {
-                RCFlutterDebugChecker.throwError("Need to add unknown type!");
-                break;
-            }
-            streamList.add(flutterOutputStream);
-        }
     }
 
     @Override
@@ -83,29 +74,38 @@ public class RCFlutterLocalUser extends RCFlutterUser {
             case METHOD_PUB_DEFAULT:
                 publishDefaultStreams(result);
                 break;
-            case METHOD_UNPUB_DEFAULT:
-                unpublishDefaultStreams(result);
-                break;
-            case METHOD_PUB_STREAMS:
-                publishStreams(call, result);
-                break;
-            case METHOD_UNPUB_STREAMS:
-                unpublishStreams(call, result);
-                break;
-            case METHOD_SUB_STREAMS:
-                subscribeStreams(call, result);
-                break;
-            case METHOD_UNSUB_STREAMS:
-                unsubscribeStreams(call, result);
-                break;
             case METHOD_PUB_LIVE_STREAMS:
                 publishDefaultLiveStreams(result);
                 break;
             case METHOD_PUB_LIVE_STREAM:
                 publishLiveStream(call, result);
                 break;
+            case METHOD_PUB_STREAMS:
+                publishStreams(call, result);
+                break;
+            case METHOD_UN_PUB_DEFAULT:
+                unPublishDefaultStreams(result);
+                break;
+            case METHOD_UN_PUB_STREAMS:
+                unPublishStreams(call, result);
+                break;
+            case METHOD_SUB_STREAMS:
+                subscribeStreams(call, result);
+                break;
+            case METHOD_UN_SUB_STREAMS:
+                unsubscribeStreams(call, result);
+                break;
             case METHOD_GET_STREAMS:
                 getStreams(result);
+                break;
+            case METHOD_SET_ATTRIBUTE:
+                setAttributeValue(call, result);
+                break;
+            case METHOD_DEL_ATTRIBUTE:
+                deleteAttributes(call, result);
+                break;
+            case METHOD_GET_ATTRIBUTE:
+                getAttributes(call, result);
                 break;
         }
     }
@@ -114,31 +114,7 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         return rtcLocalUser.getUserId();
     }
 
-    public List<RCFlutterOutputStream> getStreams() {
-        return streamList;
-    }
-
-    public void getStreams(Result result) {
-        List<RCRTCOutputStream> rtcStreams = rtcLocalUser.getStreams();
-        List<String> jsonStreams = new ArrayList<>(rtcStreams.size());
-        streamList.clear();
-        for (RCRTCOutputStream stream : rtcStreams) {
-            RCFlutterOutputStream flutterOutputStream;
-            if (stream instanceof RCRTCMicOutputStream) {
-                flutterOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
-            } else if (stream instanceof RCRTCCameraOutputStream) {
-                flutterOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
-            } else {
-                RCFlutterDebugChecker.throwError("Need to add unknown type!");
-                continue;
-            }
-            streamList.add(flutterOutputStream);
-            jsonStreams.add(JSON.toJSONString(flutterOutputStream));
-        }
-        UIThreadHandler.success(result, jsonStreams);
-    }
-
-    public void publishDefaultStreams(final Result result) {
+    private void publishDefaultStreams(final Result result) {
         rtcLocalUser.publishDefaultStreams(
                 new IRCRTCResultCallback() {
                     @Override
@@ -182,11 +158,10 @@ public class RCFlutterLocalUser extends RCFlutterUser {
                     streams.get(0),
                     new IRCRTCResultDataCallback<RCRTCLiveInfo>() {
                         @Override
-                        public void onSuccess(RCRTCLiveInfo rcrtcLiveInfo) {
-                            RCFlutterLiveInfo rcFlutterLiveInfo = new RCFlutterLiveInfo(bMsg, rcrtcLiveInfo);
+                        public void onSuccess(RCRTCLiveInfo info) {
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.put("code", 0);
-                            jsonObject.put("content", JSON.toJSONString(rcFlutterLiveInfo));
+                            jsonObject.put("content", JSON.toJSONString(new RCFlutterLiveInfo(bMsg, info)));
                             UIThreadHandler.success(result, jsonObject.toJSONString());
                         }
 
@@ -201,22 +176,6 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         } else {
             RCFlutterLog.e(TAG, "arguments:" + call.arguments);
         }
-    }
-
-    private void unpublishDefaultStreams(Result result) {
-        rtcLocalUser.unpublishDefaultStreams(
-                new IRCRTCResultCallback() {
-                    @Override
-                    public void onSuccess() {
-                        UIThreadHandler.success(result, 0);
-                    }
-
-                    @Override
-                    public void onFailed(RTCErrorCode rtcErrorCode) {
-                        //            String errorCode = String.valueOf(rtcErrorCode.getValue());
-                        UIThreadHandler.success(result, rtcErrorCode.getValue());
-                    }
-                });
     }
 
     private void publishStreams(MethodCall call, Result result) {
@@ -237,7 +196,22 @@ public class RCFlutterLocalUser extends RCFlutterUser {
                 });
     }
 
-    private void unpublishStreams(MethodCall call, Result result) {
+    private void unPublishDefaultStreams(Result result) {
+        rtcLocalUser.unpublishDefaultStreams(
+                new IRCRTCResultCallback() {
+                    @Override
+                    public void onSuccess() {
+                        UIThreadHandler.success(result, 0);
+                    }
+
+                    @Override
+                    public void onFailed(RTCErrorCode rtcErrorCode) {
+                        UIThreadHandler.success(result, rtcErrorCode.getValue());
+                    }
+                });
+    }
+
+    private void unPublishStreams(MethodCall call, Result result) {
         List<String> jsonStreams = (List<String>) call.arguments;
         List<RCRTCOutputStream> rtcStreams = mapRTCOutputStreams(jsonStreams);
         rtcLocalUser.unpublishStreams(
@@ -267,20 +241,17 @@ public class RCFlutterLocalUser extends RCFlutterUser {
             int type = stream.getIntValue("type");
             RCRTCMediaType mediaType = RCRTCMediaType.getMediaType(type);
 
-            if (TextUtils.equals(cameraOutputStream.getStreamId(), streamId)
-                    && cameraOutputStream.getMediaType() == mediaType) {
+            if (TextUtils.equals(cameraOutputStream.getStreamId(), streamId) && cameraOutputStream.getMediaType() == mediaType) {
                 rtcStreams.add(cameraOutputStream);
                 continue;
             }
 
-            if (TextUtils.equals(micOutputStream.getStreamId(), streamId)
-                    && micOutputStream.getMediaType() == mediaType) {
+            if (TextUtils.equals(micOutputStream.getStreamId(), streamId) && micOutputStream.getMediaType() == mediaType) {
                 rtcStreams.add(micOutputStream);
                 continue;
             }
 
-            RCFlutterVideoOutputStream flutterStream =
-                    RCFlutterEngine.getInstance().getFlutterVideoOutputStream(streamId, type);
+            RCFlutterVideoOutputStream flutterStream = RCFlutterEngine.getInstance().getFlutterVideoOutputStream(streamId, type);
             if (flutterStream != null) {
                 rtcStreams.add((RCRTCOutputStream) flutterStream.getRtcStream());
             }
@@ -290,20 +261,16 @@ public class RCFlutterLocalUser extends RCFlutterUser {
 
     private void subscribeStreams(MethodCall call, Result result) {
         String streamListJson = (String) call.arguments;
-        List<RCFlutterTempStream> tempStreams =
-                JSONArray.parseArray(streamListJson, RCFlutterTempStream.class);
+        List<RCFlutterTempStream> tempStreams = JSONArray.parseArray(streamListJson, RCFlutterTempStream.class);
 
-        ArrayList<RCFlutterInputStream> inputStreamList =
-                RCFlutterEngine.getInstance().getAllInputStreamList();
+        ArrayList<RCFlutterInputStream> inputStreamList = RCFlutterEngine.getInstance().getAllInputStreamList();
 
         ArrayList<RCRTCInputStream> targetStreamList = new ArrayList<>();
         for (RCFlutterTempStream tempStream : tempStreams) {
-            live:
             for (RCFlutterInputStream inputStream : inputStreamList) {
-                if (tempStream.getStreamId().equals(inputStream.getStreamId())
-                        && tempStream.getType() == inputStream.getType()) {
+                if (tempStream.getStreamId().equals(inputStream.getStreamId()) && tempStream.getType() == inputStream.getType()) {
                     targetStreamList.add((RCRTCInputStream) inputStream.getRtcStream());
-                    break live;
+                    break;
                 }
             }
         }
@@ -330,22 +297,18 @@ public class RCFlutterLocalUser extends RCFlutterUser {
         }
     }
 
-    private void unsubscribeStreams(MethodCall call, Result result){
+    private void unsubscribeStreams(MethodCall call, Result result) {
         String streamListJson = (String) call.arguments;
-        List<RCFlutterTempStream> tempStreams =
-                JSONArray.parseArray(streamListJson, RCFlutterTempStream.class);
+        List<RCFlutterTempStream> tempStreams = JSONArray.parseArray(streamListJson, RCFlutterTempStream.class);
 
-        ArrayList<RCFlutterInputStream> inputStreamList =
-                RCFlutterEngine.getInstance().getAllInputStreamList();
+        ArrayList<RCFlutterInputStream> inputStreamList = RCFlutterEngine.getInstance().getAllInputStreamList();
 
         ArrayList<RCRTCInputStream> targetStreamList = new ArrayList<>();
         for (RCFlutterTempStream tempStream : tempStreams) {
-            live:
             for (RCFlutterInputStream inputStream : inputStreamList) {
-                if (tempStream.getStreamId().equals(inputStream.getStreamId())
-                        && tempStream.getType() == inputStream.getType()) {
+                if (tempStream.getStreamId().equals(inputStream.getStreamId()) && tempStream.getType() == inputStream.getType()) {
                     targetStreamList.add((RCRTCInputStream) inputStream.getRtcStream());
-                    break live;
+                    break;
                 }
             }
         }
@@ -371,4 +334,82 @@ public class RCFlutterLocalUser extends RCFlutterUser {
                     });
         }
     }
+
+    private void getStreams(Result result) {
+        List<RCRTCOutputStream> streams = rtcLocalUser.getStreams();
+        List<String> jsonStreams = new ArrayList<>(streams.size());
+        for (RCRTCOutputStream stream : streams) {
+            RCFlutterOutputStream flutterOutputStream;
+            if (stream instanceof RCRTCMicOutputStream) {
+                flutterOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
+            } else if (stream instanceof RCRTCCameraOutputStream) {
+                flutterOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
+            } else {
+                RCFlutterLog.e(TAG, "Need to add unknown type : " + stream.getClass());
+                continue;
+            }
+            jsonStreams.add(JSON.toJSONString(flutterOutputStream));
+        }
+        UIThreadHandler.success(result, jsonStreams);
+    }
+
+    private void setAttributeValue(MethodCall call, Result result) {
+        String key = call.argument("key");
+        String value = call.argument("value");
+        String object = call.argument("object");
+        String content = call.argument("content");
+        assert object != null : "setAttributeValue object should not be null!!!";
+        MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
+        rtcLocalUser.setAttributeValue(key, value, message, new IRCRTCResultCallback() {
+            @Override
+            public void onSuccess() {
+                UIThreadHandler.success(result, 0);
+            }
+
+            @Override
+            public void onFailed(RTCErrorCode errorCode) {
+                UIThreadHandler.success(result, errorCode.getValue());
+            }
+        });
+    }
+
+    private void deleteAttributes(MethodCall call, Result result) {
+        List<String> keys = JSONArray.parseArray(call.argument("keys"), String.class);
+        String object = call.argument("object");
+        String content = call.argument("content");
+        assert object != null : "deleteAttributes object should not be null!!!";
+        MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
+        rtcLocalUser.deleteAttributes(keys, message, new IRCRTCResultCallback() {
+            @Override
+            public void onSuccess() {
+                UIThreadHandler.success(result, 0);
+            }
+
+            @Override
+            public void onFailed(RTCErrorCode errorCode) {
+                UIThreadHandler.success(result, errorCode.getValue());
+            }
+        });
+    }
+
+    private void getAttributes(MethodCall call, Result result) {
+        List<String> keys = JSONArray.parseArray(call.argument("keys"), String.class);
+        rtcLocalUser.getAttributes(keys, new IRCRTCResultDataCallback<Map<String, String>>() {
+            @Override
+            public void onSuccess(Map<String, String> data) {
+                UIThreadHandler.success(result, data);
+            }
+
+            @Override
+            public void onFailed(Map<String, String> data, RTCErrorCode errorCode) {
+                super.onFailed(data, errorCode);
+                UIThreadHandler.success(result, data);
+            }
+
+            @Override
+            public void onFailed(RTCErrorCode errorCode) {
+            }
+        });
+    }
+
 }

@@ -29,33 +29,68 @@
 #import "RCFlutterTools.h"
 #import "RCFlutterVideoCapture.h"
 #import "RCFlutterAudioCapture.h"
-@interface RCFlutterLocalUser ()
 
-@property(nonatomic, copy) NSArray<RCFlutterOutputStream *> *localAVStreams;
-
-/**
- video capture
- */
-@property(nonatomic, strong) RCFlutterVideoCapture *videoCapture;
-
-/**
- audio capture
- */
-@property(nonatomic, strong) RCFlutterAudioCapture *audioCapture;
-
-@end
+#import "ThisClassShouldNotBelongHere.h"
 
 @implementation RCFlutterLocalUser
 
+- (void)dealloc {
+    RCLogI(@"RCFlutterLocalUser dealloc");
+    self.rtcUser = nil;
+}
+
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    if ([call.method isEqualToString:KPublishDefaultLiveStreams]) {
-        [self publishRTCDefaultLiveStreamWithResult:result];
+    if ([call.method isEqualToString:KGetStreams]) {
+        NSMutableArray *array = [NSMutableArray array];
+        for (RCRTCOutputStream *outputStream in ((RCRTCLocalUser *)self.rtcUser).localStreams) {
+            RCFlutterOutputStream *stream = nil;
+            if ([outputStream isMemberOfClass:[RCRTCCameraOutputStream class]]) {
+                stream = [RCFlutterVideoCapture sharedVideoCapture];
+            } else if ([outputStream isMemberOfClass:[RCRTCMicOutputStream class]]) {
+                stream = [RCFlutterAudioCapture sharedAudioCapture];
+            } else {
+                continue;
+            }
+            [array addObject:[RCFlutterTools dictionaryToJson:[stream toDesc]]];
+        }
+        result(array);
+    } else if ([call.method isEqualToString:KPublishDefaultLiveStreams]) {
+        [self publishRTCDefaultLiveStreams:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
+            NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+            if (isSuccess) {
+                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
+                [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+                [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInt:(int)desc] forKey:@"code"];
+                [dic setObject:[RCRTCCodeDefine codeDesc:desc] forKey:@"content"];
+            }
+            NSString *jsonObj = [RCFlutterTools dictionaryToJson:dic];
+            result(jsonObj);
+        }];
+    } else if ([call.method isEqualToString:KPublishLiveStream]) {
+        NSString *json = call.arguments;
+        RCRTCOutputStream *stream = [self getOutputStreamFromJSON:json];
+        [self publishRTCLiveStream:stream
+                        completion:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
+            NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+            if (isSuccess) {
+                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
+                [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
+                [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInt:(int)desc] forKey:@"code"];
+                [dic setObject:[RCRTCCodeDefine codeDesc:desc] forKey:@"content"];
+            }
+            NSString *jsonObj = [RCFlutterTools dictionaryToJson:dic];
+            result(jsonObj);
+        }];
     } else if ([call.method isEqualToString:KPublishDefaultStreams]) {
-        [self publishRTCDefaultAVStream:^(BOOL isSuccess, RCRTCCode desc) {
+        [self publishRTCDefaultAVStreams:^(BOOL isSuccess, RCRTCCode desc) {
             result(@(desc));
         }];
     } else if ([call.method isEqualToString:KUnPublishDefaultStreams]) {
-        [self unpublishDefaultStream:^(BOOL isSuccess, RCRTCCode desc) {
+        [self unpublishDefaultStreams:^(BOOL isSuccess, RCRTCCode desc) {
             result(@(desc));
         }];
     } else if ([call.method isEqualToString:KPublishStreams]) {
@@ -64,20 +99,26 @@
             NSDictionary *dic = [RCFlutterTools decodeToDic:json];
             [arr addObject:dic];
         }
-        [self publishStream:arr result:result];
-    } else if ([call.method isEqualToString:KUnpublishStreams]) {
+        [self publishStreams:arr result:result];
+    } else if ([call.method isEqualToString:KUnPublishStreams]) {
         NSMutableArray *arr = [NSMutableArray array];
         for (NSString *json in (NSArray *)call.arguments) {
             NSDictionary *dic = [RCFlutterTools decodeToDic:json];
             [arr addObject:dic];
         }
-        [self unpublishStream:arr result:result];
+        [self unpublishStreams:arr result:result];
     } else if ([call.method isEqualToString:KSubscribeStream]) {
         NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self subscribeStreams:streams result:result];
     } else if ([call.method isEqualToString:KUnSubscribeStream]) {
         NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self unsubscribeStreams:streams result:result];
+    } else if ([call.method isEqualToString:KSetAttributeValue]) {
+        [self setAttributeValue:call result:result];
+    } else if ([call.method isEqualToString:KDeleteAttributes]) {
+        [self deleteAttributes:call result:result];
+    } else if ([call.method isEqualToString:KGetAttributes]) {
+        [self getAttributes:call result:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -86,107 +127,26 @@
 - (void)setRtcUser:(RCRTCUser *)rtcUser {
     [super setRtcUser:rtcUser];
     [self registerChannel];
-    NSMutableArray *arr = [NSMutableArray array];
-    for (RCRTCOutputStream *outputStream in ((RCRTCLocalUser *)rtcUser).localStreams) {
-        RCFlutterOutputStream *rfstm = [[RCFlutterOutputStream alloc] init];
-        // 将本地资源摄像头和麦克风分别映射
-        if ([outputStream isMemberOfClass:[RCRTCCameraOutputStream class]]) {
-            // 映射摄像头资源
-            rfstm = [self mapVideoCapture:outputStream];
-        } else if ([outputStream isMemberOfClass:[RCRTCMicOutputStream class]]) {
-            // 映射麦克风资源
-            rfstm = [self mapAudioCapture:outputStream];
-        } else {
-            // 其他，如文件等
-            rfstm.rtcOutputStream = outputStream;
-            [rfstm registerStreamChannel];
-        }
-        [arr addObject:rfstm];
-    }
-    self.localAVStreams = arr;
-    // 如果本地没有发布资源也有可能启动麦克风或者摄像头
-    // 此处可掉可不掉
-    if (!self.videoCapture && !self.audioCapture) {
-        [self privateStartVideoAndAudioCapture];
-    }
-}
-
-- (RCFlutterOutputStream *)mapVideoCapture:(RCRTCOutputStream *)outputStream {
-    self.videoCapture = [RCFlutterVideoCapture sharedVideoCapture];
-    [self.videoCapture setRtcOutputStream:outputStream];
-    [self.videoCapture registerStreamChannel];
-    return self.videoCapture;
-}
-
-- (RCFlutterOutputStream *)mapAudioCapture:(RCRTCOutputStream *)outputStream {
-    self.audioCapture = [RCFlutterAudioCapture sharedAudioCapture];
-    [self.audioCapture setRtcOutputStream:outputStream];
-    [self.audioCapture registerStreamChannel];
-    return self.audioCapture;
-}
-
-// 内部初始化摄像头和麦克风
-- (void)privateStartVideoAndAudioCapture {
-    // 内部初始化音视频资源，可以不用
-    self.videoCapture = [RCFlutterVideoCapture sharedVideoCapture];
-    [self.videoCapture registerStream:self.videoCapture.rtcOutputStream];
-    [self.videoCapture registerStreamChannel];
-    
-    self.audioCapture = [RCFlutterAudioCapture sharedAudioCapture];
-    [self.audioCapture registerStream:self.audioCapture.rtcOutputStream];
-    [self.audioCapture registerStreamChannel];
-    // 默认挂音视频流
-    NSMutableArray *arr = [NSMutableArray array];
-    [arr addObject:self.videoCapture];
-    [arr addObject:self.audioCapture];
-    self.localAVStreams = arr.copy;
 }
 
 - (NSDictionary *)toDesc {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     [dic setObject:self.userId forKey:@"id"];
-    // local streams
-    NSMutableArray *streams = [NSMutableArray array];
-    for (RCFlutterOutputStream *stream in self.localAVStreams) {
-        NSDictionary *_dic = [stream toDesc];
-        [streams addObject:_dic];
-    }
-    [dic setObject:streams forKey:@"streams"];
     return dic;
 }
 
-- (void)publishRTCDefaultLiveStreamWithResult:(FlutterResult) result {
-    [self publishRTCDefaultLiveStream:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
-        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-        if (isSuccess) {
-            RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
-            [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
-            [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
-        } else {
-            [dic setObject:[NSNumber numberWithInt:(int)desc] forKey:@"code"];
-            [dic setObject:[RCRTCCodeDefine codeDesc:desc] forKey:@"content"];
-        }
-        NSString *jsonObj = [RCFlutterTools dictionaryToJson:dic];
-        result(jsonObj);
+- (void)publishStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
+    NSArray *array = [self getPublishRTCStreamsFromEngineWithArr:streams];
+    [self publishStreams:array completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
     }];
 }
 
-- (void)publishStream:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
-    NSArray *arr = [self getPublishRTCStreamsFromEngineWithArr:streams];
-    for (RCRTCOutputStream *stream in arr) {
-        [self publishStream:stream completion:^(BOOL isSuccess, RCRTCCode desc) {
-            result(@(desc));
-        }];
-    }
-}
-
-- (void)unpublishStream:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
-    NSArray *arr = [self getUnPublishStreamsFromLocalUserWithArr:streams];
-    for (RCRTCOutputStream *stream in arr) {
-        [self unpublishStream:stream completion:^(BOOL isSuccess, RCRTCCode desc) {
-            result([NSNumber numberWithInt:(int)desc]);
-        }];
-    }
+- (void)unpublishStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
+    NSArray *array = [self getUnPublishStreamsFromLocalUserWithArr:streams];
+    [self unpublishStreams:array completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
+    }];
 }
 
 - (void)subscribeStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
@@ -198,18 +158,22 @@
 
 - (void)unsubscribeStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
     NSArray<RCRTCInputStream *> *inputStreams = [self getAllStreamsWithArr:streams];
-    [self unsubscribeStream:inputStreams completion:^(BOOL isSuccess, RCRTCCode desc) {
+    [self unsubscribeStreams:inputStreams completion:^(BOOL isSuccess, RCRTCCode desc) {
         result(@(desc));
-        
     }];
 }
 
-- (void)dealloc {
-    RCLogI(@"RCFlutterLocalUser dealloc");
-    self.rtcUser = nil;
-    self.localAVStreams = nil;
-    self.videoCapture = nil;
-    self.audioCapture = nil;
+
+
+- (RCRTCOutputStream *)getOutputStreamFromJSON:(NSString *)json {
+    NSDictionary *dic = [RCFlutterTools decodeToDic:json];
+    NSArray *streams = [RCRTCEngine sharedInstance].currentRoom.localUser.localStreams;
+    for (RCRTCOutputStream *output in streams) {
+        if ([self stream:output isEqualToStreamDic:dic]) {
+            return output;
+        }
+    }
+    return nil;
 }
 
 - (NSArray<RCRTCOutputStream *> *)getUnPublishStreamsFromLocalUserWithArr:(NSArray<NSDictionary *> *)streams {
@@ -266,4 +230,42 @@
     }
     return arr;
 }
+
+- (void)setAttributeValue:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSString *key = dic[@"key"];
+    NSString *value = dic[@"value"];
+    NSString *object = dic[@"object"];
+    NSString *content = dic[@"content"];
+    RCMessageContent *message = [ThisClassShouldNotBelongHere string2MessageContent:object content:content];
+    [self setAttributeValue:value
+                     forKey:key
+                    message:message
+                 completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
+    }];
+}
+
+- (void)deleteAttributes:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSArray *keys = [RCFlutterTools decodeToArray:dic[@"keys"]];
+    NSString *object = dic[@"object"];
+    NSString *content = dic[@"content"];
+    RCMessageContent *message = [ThisClassShouldNotBelongHere string2MessageContent:object content:content];
+    [self deleteAttributes:keys
+                   message:message
+                completion:^(BOOL isSuccess, RCRTCCode desc) {
+        result(@(desc));
+    }];
+}
+
+- (void)getAttributes:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *dic = call.arguments;
+    NSArray *keys = [RCFlutterTools decodeToArray:dic[@"keys"]];
+    [self getAttributes:keys
+             completion:^(BOOL isSuccess, RCRTCCode desc, NSDictionary * _Nullable attr) {
+        result(attr);
+    }];
+}
+
 @end

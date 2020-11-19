@@ -1,4 +1,6 @@
 class RCRTCErrorCode {
+  static const int UnknownError = -1;
+
   static const int OK = 0;
 
   /// IM concern.

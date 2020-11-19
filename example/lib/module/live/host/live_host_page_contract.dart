@@ -3,8 +3,10 @@ import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:rongcloud_rtc_plugin/agent/view/rcrtc_video_view.dart';
+import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 abstract class View implements IView {
   void onPermissionGranted();
@@ -19,7 +21,7 @@ abstract class View implements IView {
 
   void onMicPermissionDenied();
 
-  void onVideoViewReady(RCRTCVideoView videoView);
+  void onVideoViewReady(RCRTCTextureView videoView);
 
   void onPushed();
 
@@ -35,7 +37,7 @@ abstract class View implements IView {
 
   void onMemberInvited(User user, bool agree, LiveType type);
 
-  void onCreateRemoteView(String uid, RCRTCVideoView videoView);
+  void onCreateRemoteView(String uid, RCRTCTextureView videoView);
 
   void onReleaseRemoteView(String uid);
 
@@ -44,6 +46,10 @@ abstract class View implements IView {
   void onCameraMirrorChanged(bool state);
 
   void onMicrophoneStatusChanged(bool state);
+
+  void onVideoViewCreated(TextureView view);
+
+  void onRemoveVideoView(String userId);
 }
 
 abstract class Model implements IModel {
@@ -69,7 +75,7 @@ abstract class Model implements IModel {
   );
 
   void initVideoView(
-    void onVideoViewReady(RCRTCVideoView view),
+    void onVideoViewReady(TextureView view),
     void readyToPush(),
   );
 
@@ -78,9 +84,16 @@ abstract class Model implements IModel {
     void onError(String info),
   );
 
+  void setMixConfig(MixLayoutMode mode);
+
   void requestMemberList();
 
   void inviteMember(User user, LiveType type);
+
+  Future<bool> changeVideoStreamState(
+    void onVideoViewCreated(TextureView view),
+    void onRemoveVideoView(String userId),
+  );
 
   void exit(
     BuildContext context,
@@ -90,6 +103,8 @@ abstract class Model implements IModel {
 }
 
 abstract class Presenter implements IPresenter {
+  void setMixConfig(MixLayoutMode mode);
+
   void setMirror();
 
   void switchCamera();
@@ -109,6 +124,8 @@ abstract class Presenter implements IPresenter {
   void requestMemberList();
 
   void inviteMember(User user, LiveType type);
+
+  Future<bool> changeVideoStreamState();
 
   void exit(BuildContext context);
 }
