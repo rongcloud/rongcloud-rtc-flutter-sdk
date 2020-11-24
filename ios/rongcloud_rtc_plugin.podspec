@@ -1,4 +1,7 @@
-config = File.expand_path(File.join('..', '..', '..', '..', '..', '..', '..' ,'version.config'), __FILE__)
+require 'pathname'
+current_path = Pathname.new(__FILE__).realpath
+
+config = File.expand_path(File.join('..', '..' ,'version.config'), current_path)
 
 rongcloud_rtc_plugin_version = 'Unknown'
 im_sdk_version = 'Unknown'

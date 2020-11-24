@@ -55,7 +55,7 @@ dependencies {
     def remote = properties.getProperty("rongcloud.flutter.demo.use_remote_rtc_lib", "true")
 
     if (remote == "true") {
-        def configFile = new File(rootProject.projectDir.parentFile.parentFile, "version.config")
+        def configFile = file('../version.config')
         def configProperties = new Properties()
         assert configFile.exists()
         configFile.withReader("UTF-8") { reader -> configProperties.load(reader) }
