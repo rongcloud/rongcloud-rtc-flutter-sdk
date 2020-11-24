@@ -1,6 +1,6 @@
 name: rongcloud_rtc_plugin
 description: RongCloud RTC Flutter Plugin.
-version: 4.0.4
+version: 4.0.4+1
 homepage: https://www.rongcloud.cn/
 
 environment:
