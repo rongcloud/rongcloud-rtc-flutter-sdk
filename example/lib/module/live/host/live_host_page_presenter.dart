@@ -1,15 +1,12 @@
 import 'dart:convert';
 
+import 'package:FlutterRTC/data/codes.dart';
 import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart' as Data;
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
-import 'package:rongcloud_rtc_plugin/agent/rcrtc_engine.dart';
-import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'live_host_page_contract.dart';
 import 'live_host_page_model.dart';
@@ -27,41 +24,9 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   }
 
   @override
-  void init(BuildContext context) {
-    requestPermission();
-    RCRTCEngine.getInstance().getRoom().onRemoteUserPublishResource = (user, streams) => _onRemoteUserPublishResource(user, streams);
-    RCRTCEngine.getInstance().getRoom().onRemoteUserUnPublishResource = (user, streams) => _onRemoteUserLeft(user);
-    RCRTCEngine.getInstance().getRoom().onRemoteUserLeft = (user) => _onRemoteUserLeft(user);
+  Future<void> init(BuildContext context) async {
     RongIMClient.onMessageReceived = (message, left) => _onMessageReceived(message, left);
-  }
-
-  @override
-  void requestPermission() {
-    model?.requestPermission(() {
-      view?.onPermissionGranted();
-    }, (camera, mic) {
-      view?.onPermissionDenied(camera, mic);
-    });
-  }
-
-  void _onRemoteUserPublishResource(RCRTCRemoteUser user, List<RCRTCInputStream> streams) {
-    RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
-    streams.forEach((stream) {
-      if (stream.type == MediaType.video) {
-        RCRTCTextureView videoView = RCRTCTextureView(
-          (videoView, id) {
-            (stream as RCRTCVideoInputStream).setTextureView(id);
-          },
-          viewType: RCRTCViewType.remote,
-        );
-        view?.onCreateRemoteView(user.id, videoView);
-        return;
-      }
-    });
-  }
-
-  void _onRemoteUserLeft(RCRTCRemoteUser user) {
-    view?.onReleaseRemoteView(user.id);
+    subscribe();
   }
 
   void _onMessageReceived(Message message, int left) {
@@ -77,8 +42,7 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
       case MessageType.invite:
         Map<String, dynamic> data = jsonDecode(msg.message);
         bool agree = data['agree'];
-        LiveType type = LiveType.values[data['type']];
-        view?.onMemberInvited(msg.user, agree, type);
+        view?.onMemberInvited(msg.user, agree);
         break;
       case MessageType.kick: // 断线
         break;
@@ -88,45 +52,33 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   }
 
   @override
-  void requestCameraPermission() {
-    model?.requestCameraPermission(() {
-      view?.onCameraPermissionGranted();
-    }, () {
-      view?.onCameraPermissionDenied();
-    });
-  }
-
-  @override
-  void requestMicPermission() {
-    model?.requestMicPermission(() {
-      view?.onMicPermissionGranted();
-    }, () {
-      view?.onMicPermissionDenied();
-    });
-  }
-
-  @override
-  void initVideoView() async {
-    model?.initVideoView(
-      (videoView) {
-        view?.onVideoViewCreated(videoView);
+  void subscribe() {
+    model?.subscribe(
+      (view) {
+        this.view?.onViewCreated(view);
       },
-      () {
-        push();
+      (userId) {
+        this.view?.onRemoveView(userId);
+      },
+      (userId) {
+        this.view?.onMemberJoined(userId);
       },
     );
   }
 
   @override
-  void push() async {
-    model?.push(
-      () {
-        view?.onPushed();
-      },
-      (info) {
-        view?.onPushError(info);
+  void publish(Data.Config config) async {
+    StatusCode code = await model?.publish(
+      config,
+      (view) {
+        this.view?.onViewCreated(view);
       },
     );
+    if (code.status == Status.ok) {
+      view?.onPublished();
+    } else {
+      view?.onPublishError(code.message);
+    }
   }
 
   @override
@@ -135,8 +87,8 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
   }
 
   @override
-  void inviteMember(Data.User user, LiveType type) {
-    model?.inviteMember(user, type);
+  void inviteMember(Data.User user) {
+    model?.inviteMember(user);
   }
 
   @override
@@ -148,44 +100,6 @@ class LiveHostPagePresenter extends AbstractPresenter<View, Model> implements Pr
       },
       (context, info) {
         view?.onExitWithError(context, info);
-      },
-    );
-  }
-
-  @override
-  void muteMicrophone() {
-    model?.muteMicrophone((state) {
-      view?.onMicrophoneStatusChanged(state);
-    });
-  }
-
-  @override
-  void switchCamera() {
-    model?.switchCamera((isFront) {
-      view?.onCameraStatusChanged(isFront);
-    });
-  }
-
-  @override
-  void setMirror() {
-    model?.setMirror((state) {
-      view?.onCameraMirrorChanged(state);
-    });
-  }
-
-  @override
-  void setMixConfig(MixLayoutMode mode) {
-    model?.setMixConfig(mode);
-  }
-
-  @override
-  Future<bool> changeVideoStreamState() {
-    return model?.changeVideoStreamState(
-      (view) {
-        this.view?.onVideoViewCreated(view);
-      },
-      (userId) {
-        this.view?.onRemoveVideoView(userId);
       },
     );
   }

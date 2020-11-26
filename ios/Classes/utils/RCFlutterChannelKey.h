@@ -41,6 +41,8 @@ FOUNDATION_EXTERN NSString * const KJoinRoom;
 // startCapture
 FOUNDATION_EXTERN NSString * const KStartCapture;
 
+FOUNDATION_EXTERN NSString * const KStartCaptureByType;
+
 // switchCamera
 FOUNDATION_EXTERN NSString * const KSwitchCamera;
 

@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'dart:ui';
 
-import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
 import 'package:FlutterRTC/frame/ui/toast.dart';
+import 'package:FlutterRTC/frame/utils/extension.dart';
+import 'package:FlutterRTC/widgets/buttons.dart';
+import 'package:FlutterRTC/widgets/status_panel.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
+import 'package:intl/intl.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../../../colors.dart';
@@ -22,189 +25,255 @@ class LiveHostPage extends AbstractView {
 
 class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with WidgetsBindingObserver implements View {
   @override
-  void initState() {
-    super.initState();
+  Presenter createPresenter() {
+    return LiveHostPagePresenter();
+  }
 
-    WidgetsBinding.instance.addObserver(this);
+  @override
+  void init(BuildContext context) {
+    Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
+    _config = Config.fromJSON(arguments);
+    presenter?.publish(_config);
+    RCRTCEngine.getInstance().enableSpeaker(_config.speaker);
+  }
+
+  @override
+  Size designSize() {
+    return const Size(375, 667);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    if (_timer != null) _timer.cancel();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused && !_paused) {
-      _paused = true;
-    } else if (state == AppLifecycleState.resumed && _paused) {
-      _paused = false;
-      if (_showPermissionGuide) presenter?.requestPermission();
-    }
   }
 
   @override
   Widget buildWidget(BuildContext context) {
     return WillPopScope(
-      child: Stack(
-        children: [
-          Center(
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.black,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              top: 30.0,
-              bottom: 50.0,
-              left: 2.0,
-              right: 2.0,
-            ),
-            child: _buildMainView(context),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: 10.0,
-              left: 20.0,
-              right: 20.0,
-            ),
-            child: _buildBottomBar(context),
-          ),
-          _buildPermissionGuild(context),
-        ],
-      ),
-      onWillPop: () => _buildConfirmExit(context),
-    );
-  }
-
-  Widget _buildMainView(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(15.0),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.lightBlue,
-        child: Stack(
+      child: Scaffold(
+        body: Stack(
           children: [
-            _buildVideoView(context),
+            _buildMainView(context),
+            _buildTopBar(context),
             _buildBottomView(context),
           ],
         ),
       ),
+      onWillPop: () => _showConfirmExit(context),
     );
   }
 
-  Widget _buildVideoView(BuildContext context) {
+  Widget _buildMainView(BuildContext context) {
+    int count = _views.length;
+    if (count < 3) {
+      return _buildSingleMeeting(context);
+    } else if (count <= _quattroCount) {
+      return _buildQuattroMeeting(context);
+    } else if (count <= _noveCount) {
+      return _buildNoveMeeting(context);
+    } else {
+      return _buildMultiMeeting(context);
+    }
+  }
+
+  Widget _buildSingleMeeting(BuildContext context) {
+    var views = viewsWithOutMain();
+    return Stack(
+      alignment: Alignment.topRight,
+      children: [
+        _mainView?.widget ?? Container(),
+        views.isNotEmpty
+            ? GestureDetector(
+                child: Container(
+                  width: 90.0.width,
+                  height: 160.0.height,
+                  padding: EdgeInsets.only(
+                    top: 60.0.height,
+                    right: 15.0.width,
+                  ),
+                  child: views.first.widget,
+                ),
+                onTap: () => _switchMainView(views.first),
+              )
+            : Container(),
+      ],
+    );
+  }
+
+  void _switchMainView(VideoStreamWidget view) {
+    _mainView.invalidate();
+    view.invalidate();
+    _mainView = view;
+    setState(() {});
+  }
+
+  List<VideoStreamWidget> viewsWithOutMain() {
+    if (_mainView == null) return _views;
+    return _views.where((view) => view.user.id != _mainView.user.id).toList();
+  }
+
+  Widget _buildQuattroMeeting(BuildContext context) {
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      child: Stack(
+      color: Colors.black,
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        children: _buildViews(context),
+      ),
+    );
+  }
+
+  Widget _buildNoveMeeting(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: EdgeInsets.all(10.0.width),
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        children: _buildViews(context),
+      ),
+    );
+  }
+
+  List<Widget> _buildViews(BuildContext context) {
+    List<Widget> widgets = List();
+    _views.forEach((view) {
+      widgets.add(view.widget);
+    });
+    return widgets;
+  }
+
+  Widget _buildMultiMeeting(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      child: PageView.builder(
+        itemCount: (_views.length / _noveCount).ceil(),
+        itemBuilder: (context, index) {
+          return _buildMultiMeetingPage(context, index);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMultiMeetingPage(BuildContext context, int index) {
+    int start = index * _noveCount;
+    int end = index * _noveCount + _noveCount;
+    if (end > _views.length) end = _views.length;
+    List<VideoStreamWidget> views = _views.sublist(start, end);
+    List<Widget> widgets = List();
+    views.forEach((view) {
+      widgets.add(view.widget);
+    });
+    return Container(
+      color: Colors.black,
+      padding: EdgeInsets.all(10.0.width),
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        children: widgets,
+      ),
+    );
+  }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 15.0.width,
+        right: 15.0.width,
+        top: 28.0.height,
+      ),
+      child: Row(
         children: [
-          _mainView != null ? _mainView.view : Container(),
-          Center(
-            child: _buildPushViewByState(context),
+          GestureDetector(
+            child: Text(
+              _generateRoomInfo(),
+              style: TextStyle(
+                fontSize: 15.0.sp,
+                color: Colors.white,
+                decoration: TextDecoration.none,
+              ),
+            ),
+            onTap: () => _showStatusPanel(context),
           ),
+          Spacer(),
+          GestureDetector(
+            onTap: () => _exit(context),
+            child: Icon(
+              Icons.power_settings_new,
+              color: Colors.white,
+              size: 30.0.width,
+            ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildPushViewByState(BuildContext context) {
-    switch (_pushState) {
-      case 0:
-        return _buildPushInitInfo(context);
-      case 1:
-        return _buildPushWaitInfo(context);
-      case 3:
-        return _buildPushErrorInfo(context);
-    }
-    return Container();
+  String _generateRoomInfo() {
+    String time = _timeFormat.format(DateTime.fromMillisecondsSinceEpoch(_timeCount * 1000));
+    return "直播中:($time)";
   }
 
-  Widget _buildPushInitInfo(BuildContext context) {
-    return Text(
-      "初始化...",
-      style: TextStyle(
-        color: Colors.lightGreen,
-        fontSize: 30.0,
-        decoration: TextDecoration.none,
-      ),
+  void _showStatusPanel(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.black12,
+          insetPadding: EdgeInsets.only(
+            top: 45.0.height,
+            bottom: 100.0.height,
+          ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              alignment: Alignment.center,
+              child: StatusPanel(),
+            ),
+            onTap: () => Navigator.pop(context),
+          ),
+        );
+      },
     );
-  }
-
-  Widget _buildPushWaitInfo(BuildContext context) {
-    return Text(
-      "正在链接...",
-      style: TextStyle(
-        color: Colors.lightGreen,
-        fontSize: 30.0,
-        decoration: TextDecoration.none,
-      ),
-    );
-  }
-
-  Widget _buildPushErrorInfo(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _rePush(),
-      child: Text(
-        "推流失败，点击重试",
-        style: TextStyle(
-          color: Colors.lightGreen,
-          fontSize: 30.0,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
-  void _rePush() {
-    setState(() {
-      _pushState = 1;
-    });
-    presenter.push();
   }
 
   Widget _buildBottomView(BuildContext context) {
-    return Row(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
         _buildMessageView(context),
-        _buildSideRemoteView(context),
+        _buildBottomBar(context),
       ],
     );
   }
 
   Widget _buildMessageView(BuildContext context) {
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          padding: EdgeInsets.only(
-            bottom: 5.0,
-            left: 15.0,
-            right: 15.0,
-          ),
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: 200,
-          ),
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: ListView.builder(
-                shrinkWrap: true,
-                controller: _messageController,
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  return _buildMessage(context, _messages[index]);
-                }),
-          ),
-        ),
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: 5.0.height,
+        left: 15.0.width,
+        right: 15.0.width,
+      ),
+      constraints: BoxConstraints(
+        maxHeight: 200.height,
+      ),
+      child: MediaQuery.removePadding(
+        context: context,
+        removeTop: true,
+        child: ListView.builder(
+            shrinkWrap: true,
+            controller: _messageController,
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              return _buildMessage(context, _messages[index]);
+            }),
       ),
     );
   }
@@ -215,19 +284,19 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
         Flexible(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: 10.0,
+              bottom: 10.0.height,
             ),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0),
+                borderRadius: BorderRadius.circular(10.0.width),
                 color: ColorConfig.blackAlpha33,
               ),
               child: Padding(
                 padding: EdgeInsets.only(
-                  left: 10.0,
-                  right: 10.0,
-                  top: 5.0,
-                  bottom: 5.0,
+                  left: 10.0.width,
+                  right: 10.0.width,
+                  top: 5.0.width,
+                  bottom: 5.0.width,
                 ),
                 child: RichText(
                   text: TextSpan(
@@ -236,7 +305,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                       TextSpan(
                         text: '${message.user.name}:',
                         style: TextStyle(
-                          fontSize: 13.0,
+                          fontSize: 13.0.sp,
                           color: Colors.lightBlueAccent,
                           decoration: TextDecoration.none,
                         ),
@@ -244,15 +313,13 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                       TextSpan(
                         text: message.message,
                         style: TextStyle(
-                          fontSize: 13.0,
+                          fontSize: 13.0.sp,
                           color: Colors.white,
                           decoration: TextDecoration.none,
                         ),
                       ),
                     ],
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -262,414 +329,54 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     );
   }
 
-  Widget _buildSideRemoteView(BuildContext context) {
-    if (_liveType == LiveType.normal) return Container();
-    return Container(
-      padding: EdgeInsets.only(
-        right: 15.0,
-        bottom: 10.0,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: _buildSideRemoteViews(context),
-      ),
-    );
-  }
-
-  List<Widget> _buildSideRemoteViews(BuildContext context) {
-    List<Widget> widgets = List();
-    _remoteViews.forEach((view) {
-      widgets.add(_buildRemoteView(context, view));
-    });
-    return widgets;
-  }
-
-  Widget _buildRemoteView(BuildContext context, TextureView view) {
-    return Padding(
-      padding: EdgeInsets.only(
-        top: 10.0,
-      ),
-      child: Container(
-        width: 90.0,
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: Container(
-            color: Colors.yellow,
-            alignment: Alignment.center,
-            child: view.view,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      alignment: Alignment.bottomCenter,
-      child: Stack(
+      padding: EdgeInsets.only(
+        bottom: 5.0.height,
+        left: 15.0.width,
+        right: 15.0.width,
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(
-                  right: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => _buildPKDialog(context),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Image.asset("assets/images/pk.png"),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  right: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => _buildRoomDialog(context),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Image.asset("assets/images/contact.png"),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(
-                  left: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => _changeVideoStreamState(),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Icon(
-                      _videoStreamStateIcon,
-                      color: Colors.grey,
-                      size: 22.0,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => presenter.muteMicrophone(),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Icon(
-                      _microphoneIcon,
-                      color: Colors.grey,
-                      size: 22.0,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => _buildConfirmExit(context),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Image.asset("assets/images/close.png"),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: 20.0,
-                ),
-                child: GestureDetector(
-                  onTap: () => _buildOptionsDialog(context),
-                  child: SizedBox(
-                    width: 32.0,
-                    height: 32.0,
-                    child: Image.asset("assets/images/options.png"),
-                  ),
-                ),
-              ),
-            ],
+          GestureDetector(
+            child: FontAwesomeIcons.user.black54,
+            onTap: () => _showMemberList(context),
           ),
         ],
       ),
     );
   }
 
-  void _buildPKDialog(BuildContext context) {
-    // TODO pk
-  }
-
-  void _buildRoomDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.only(
-              top: 10.0,
-              bottom: 20.0,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    bottom: 10.0,
-                  ),
-                  child: Text(
-                    "观众联线",
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.black,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildSingleModeButton(context),
-                    _buildGroupModeButton(context),
-                  ],
-                ),
-              ],
-            ),
+  Future<bool> _showConfirmExit(BuildContext context) {
+    showDialog(
+        context: context,
+        child: AlertDialog(
+          content: Text(
+            "确定退出吗？",
           ),
-        );
-      },
-    );
-  }
-
-  void _showVideoMixList(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setter) {
-          return WillPopScope(
-            child: Container(
-              padding: EdgeInsets.only(
-                top: 10.0,
-                bottom: 20.0,
-              ),
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: 10.0,
-                      left: 15.0,
-                      right: 15.0,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "选择合流布局",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        Spacer(),
-                        GestureDetector(
-                          child: Icon(FontAwesomeIcons.solidWindowClose),
-                          onTap: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      // shrinkWrap: true,
-                      itemCount: 3,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Container(
-                            child: Row(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(
-                                left: 15.0,
-                              ),
-                              child: SizedBox(
-                                width: 300.0,
-                                height: 60.0,
-                                child: TextButton(
-                                  child: Text(
-                                    _videoMixConfigList[index],
-                                  ),
-                                  onPressed: () {
-                                    presenter.setMixConfig(MixLayoutMode.values[index]);
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ));
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onWillPop: () {
-              Navigator.pop(context);
-              return Future.value(false);
-            },
-          );
-        });
-      },
-    );
-  }
-
-  void _buildOptionsDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.only(
-              top: 10.0,
-              bottom: 20.0,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.add_a_photo),
-                      onPressed: () {
-                        presenter.switchCamera();
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.face),
-                      onPressed: () {
-                        _mainView.view.setMirror(!_mainView.view.isMirror());
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.account_tree_outlined),
-                      onPressed: () {
-                        _showVideoMixList(context);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSingleModeButton(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        right: 20.0,
-      ),
-      child: GestureDetector(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: Image.asset("assets/images/default_user_icon.jpg"),
-            ),
-            Text(
-              "双人聊",
-              style: TextStyle(
-                fontSize: 12.0,
-                color: Colors.black,
-                decoration: TextDecoration.none,
-              ),
-            ),
+          actions: [
+            FlatButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("取消")),
+            FlatButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exit(context);
+                },
+                child: Text("确定")),
           ],
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          _buildMemberList(context, LiveType.single);
-        },
-      ),
-    );
+        ));
+    return Future.value(false);
   }
 
-  Widget _buildGroupModeButton(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20.0,
-      ),
-      child: GestureDetector(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 100,
-                height: 100,
-                child: Image.asset("assets/images/default_user_icon.jpg"),
-              ),
-              Text(
-                "聊天室",
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.black,
-                  decoration: TextDecoration.none,
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            Navigator.pop(context);
-            _buildMemberList(context, LiveType.group);
-          }),
-    );
+  void _exit(BuildContext context) {
+    Loading.show(context);
+    presenter.exit(context);
   }
 
-  void _buildMemberList(BuildContext context, LiveType type) {
+  void _showMemberList(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -717,7 +424,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                         ),
                         Spacer(),
                         GestureDetector(
-                          child: Icon(FontAwesomeIcons.solidWindowClose),
+                          child: Icon(Icons.close),
                           onTap: () => _onCloseMemberList(context),
                         ),
                       ],
@@ -728,7 +435,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
                         shrinkWrap: true,
                         itemCount: _members.length,
                         itemBuilder: (context, index) {
-                          return _buildMember(context, _members[index], type);
+                          return _buildMember(context, _members[index]);
                         }),
                   ),
                 ],
@@ -749,7 +456,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     _memberListSetter = null;
   }
 
-  Widget _buildMember(BuildContext context, User user, LiveType type) {
+  Widget _buildMember(BuildContext context, User user) {
     return Container(
       padding: EdgeInsets.only(
         left: 20.0,
@@ -780,14 +487,14 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
             ),
           ),
           Spacer(),
-          _buildMemberActionButton(context, user, type),
+          _buildMemberActionButton(context, user),
         ],
       ),
     );
   }
 
-  Widget _buildMemberActionButton(BuildContext context, User user, LiveType type) {
-    bool inChatting = _isMemberInChatting(user);
+  Widget _buildMemberActionButton(BuildContext context, User user) {
+    bool inChatting = _isMemberInvited(user);
     return GestureDetector(
       child: Container(
         decoration: BoxDecoration(
@@ -811,305 +518,80 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
           ),
         ),
       ),
-      onTap: () => _onClickMemberAction(context, user, inChatting, type),
+      onTap: () => _onClickMemberAction(context, user, inChatting),
     );
   }
 
-  bool _isMemberInChatting(User user) {
-    for (User _user in _chattingMembers) {
-      if (_user.id == user.id) {
-        return true;
-      }
-    }
+  bool _isMemberInvited(User user) {
+    for (User _user in _invitedMembers) if (_user.id == user.id) return true;
     return false;
   }
 
-  void _onClickMemberAction(BuildContext context, User user, bool inChatting, LiveType type) {
+  void _onClickMemberAction(BuildContext context, User user, bool inChatting) {
     _onCloseMemberList(context);
     if (inChatting) {
-      _kickMember(context, user, type);
+      _kickMember(context, user);
     } else {
-      _inviteMember(context, user, type);
+      _inviteMember(context, user);
     }
   }
 
-  void _kickMember(BuildContext context, User user, LiveType type) {
+  void _kickMember(BuildContext context, User user) {
     // TODO 断开
   }
 
-  void _inviteMember(BuildContext context, User user, LiveType type) {
-    int max = type == LiveType.single ? 1 : 6;
-    if (_chattingMembers.length >= max) {
-      Toast.show(context, "已达最大邀请用户上限。");
-      return;
+  void _inviteMember(BuildContext context, User user) {
+    presenter?.inviteMember(user);
+  }
+
+  @override
+  void onViewCreated(VideoStreamWidget view) {
+    String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
+    if (uid == view.user.id) {
+      view.mirror = _config.frontCamera;
+      _mainView = view;
     }
-    presenter?.inviteMember(user, type);
-  }
-
-  Future<bool> _buildConfirmExit(BuildContext context) {
-    showDialog(
-        context: context,
-        child: AlertDialog(
-          content: Text(
-            "确定退出吗？",
-          ),
-          actions: [
-            FlatButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("取消")),
-            FlatButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _exit(context);
-                },
-                child: Text("确定")),
-          ],
-        ));
-    return Future.value(false);
-  }
-
-  void _exit(BuildContext context) {
-    Loading.show(context);
-    presenter.exit(context);
-  }
-
-  Widget _buildPermissionGuild(BuildContext context) {
-    if (_showPermissionGuide)
-      return BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: ColorConfig.blackAlpha66,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildCameraPermissionGuild(context),
-                Container(
-                  height: 30.0,
-                ),
-                _buildMicPermissionGuild(context),
-              ],
-            ),
-          ),
-        ),
-      );
-    return Container();
-  }
-
-  Widget _buildCameraPermissionGuild(BuildContext context) {
-    if (_hasCameraPermission)
-      return Text(
-        "已有摄像机权限",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      );
-    return GestureDetector(
-      onTap: () => presenter.requestCameraPermission(),
-      child: Text(
-        "允许使用摄像机",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMicPermissionGuild(BuildContext context) {
-    if (_hasMicPermission)
-      return Text(
-        "已有麦克风权限",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      );
-    return GestureDetector(
-      onTap: () => presenter.requestMicPermission(),
-      child: Text(
-        "允许使用麦克风",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Presenter createPresenter() {
-    return LiveHostPagePresenter();
-  }
-
-  @override
-  void onPermissionGranted() {
-    setState(() {
-      _showPermissionGuide = false;
-      presenter.initVideoView();
+    _addSubView(view);
+    _views.forEach((element) {
+      element.invalidate();
     });
+    setState(() {});
   }
 
-  @override
-  void onPermissionDenied(bool camera, bool mic) {
-    setState(() {
-      _showPermissionGuide = true;
-      _hasCameraPermission = camera;
-      _hasMicPermission = mic;
+  void _addSubView(VideoStreamWidget view) {
+    _views.removeWhere((element) {
+      return element.user.id == view.user.id;
     });
+    _views.add(view);
   }
 
   @override
-  void onCameraPermissionGranted() {
-    setState(() {
-      if (_hasMicPermission) _showPermissionGuide = false;
-      _hasCameraPermission = true;
-      if (!_showPermissionGuide) presenter.initVideoView();
-    });
-  }
+  void onPublished() {
+    if (_timer != null) _timer.cancel();
 
-  @override
-  void onCameraPermissionDenied() {
-    setState(() {
-      _hasCameraPermission = false;
-    });
-  }
-
-  @override
-  void onMicPermissionGranted() {
-    setState(() {
-      if (_hasCameraPermission) _showPermissionGuide = false;
-      _hasMicPermission = true;
-      if (!_showPermissionGuide) presenter.initVideoView();
-    });
-  }
-
-  @override
-  void onMicPermissionDenied() {
-    setState(() {
-      _hasMicPermission = false;
-    });
-  }
-
-  @override
-  void onVideoViewReady(RCRTCTextureView videoView) {
-    setState(() {
-      _pushState = 1;
-      _mainView.view = videoView;
-    });
-  }
-
-  @override
-  void onPushed() {
-    setState(() {
-      _pushState = 2;
-    });
-  }
-
-  @override
-  void onPushError(String info) {
-    print("onPushError info = $info");
-    setState(() {
-      _pushState = 3;
-    });
-  }
-
-  @override
-  void onReceiveMember(User user) {
-    if (_memberListSetter != null)
-      _memberListSetter(() {
-        _members.add(user);
-      });
-  }
-
-  @override
-  void onMemberInvited(User user, bool agree, LiveType type) {
-    if (agree) {
-      if (_memberListSetter != null) {
-        _memberListSetter(() {
-          _chattingMembers.add(user);
-        });
-      } else {
-        _chattingMembers.add(user);
-      }
+    _timeCount = 0;
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
-        _liveType = type;
+        _timeCount++;
       });
-    }
-  }
-
-  @override
-  void onCreateRemoteView(String uid, RCRTCTextureView videoView) {
-    TextureView view = _getVideoViewByUserId(uid);
-    if (view != null) {
-      view.view = videoView;
-      _remoteViews.remove(view);
-    } else {
-      User user = _getChattingUserById(uid) ?? User.unknown(uid);
-      view = TextureView(user, videoView);
-    }
-    setState(() {
-      _remoteViews.add(view);
     });
   }
 
-  User _getChattingUserById(String id) {
-    for (User user in _chattingMembers) {
-      if (user.id == id) {
-        return user;
-      }
-    }
-    return null;
+  @override
+  void onPublishError(String info) {
+    // TODO: implement onPublishError
   }
 
   @override
-  void onReleaseRemoteView(String uid) {
-    User user = _getChattingUserById(uid);
-    TextureView view = _getVideoViewByUserId(uid);
-    if (_memberListSetter != null) {
-      _memberListSetter(() {
-        if (user != null) _chattingMembers.remove(user);
-      });
-    } else {
-      if (user != null) _chattingMembers.remove(user);
-    }
-    setState(() {
-      if (view != null) _remoteViews.remove(view);
+  void onRemoveView(String userId) {
+    _views.removeWhere((view) {
+      return view.user.id == userId;
     });
-  }
-
-  TextureView _getVideoViewByUserId(String uid) {
-    for (TextureView view in _remoteViews) {
-      if (view.user.id == uid) {
-        return view;
-      }
-    }
-    return null;
-  }
-
-  @override
-  void onExit(BuildContext context) {
-    Loading.dismiss(context);
-    _doExit();
-  }
-
-  void _doExit() {
-    Navigator.pop(context);
-  }
-
-  @override
-  void onExitWithError(BuildContext context, String info) {
-    Toast.show(context, info);
-    onExit(context);
+    if (_mainView.user.id == userId) _mainView = _views.isNotEmpty ? _views.first : null;
+    _views.forEach((element) {
+      element.invalidate();
+    });
+    setState(() {});
   }
 
   @override
@@ -1129,79 +611,58 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   @override
-  void onMicrophoneStatusChanged(bool state) {
-    setState(() {
-      if (state) {
-        _microphoneIcon = FontAwesomeIcons.microphoneSlash;
-      } else {
-        _microphoneIcon = FontAwesomeIcons.microphone;
-      }
-    });
+  void onReceiveMember(User user) {
+    if (_memberListSetter != null)
+      _memberListSetter(() {
+        _members.add(user);
+      });
   }
 
   @override
-  void onCameraStatusChanged(bool isFront) {
-    // TODO: implement onCameraStatusChanged
+  void onMemberInvited(User user, bool agree) {
+    if (!agree) return;
+    _invitedMembers.add(user);
+    if (_memberListSetter != null) _memberListSetter(() {});
   }
 
   @override
-  void onCameraMirrorChanged(bool state) {
-    // TODO: implement onCameraMirrorChanged
+  void onMemberJoined(String userId) {
+    // TODO: implement onMemberJoined
   }
 
   @override
-  void onRemoveVideoView(String userId) {
-    setState(() {
-      if (_mainView.user.id == userId) _mainView = null;
-    });
+  void onExit(BuildContext context) {
+    Loading.dismiss(context);
+    _doExit();
   }
 
   @override
-  void onVideoViewCreated(TextureView view) {
-    String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
-    setState(() {
-      if (uid == view.user.id) _mainView = view;
-    });
+  void onExitWithError(BuildContext context, String info) {
+    Toast.show(context, info);
+    onExit(context);
   }
 
-  void _changeVideoStreamState() async {
-    bool closed = await presenter?.changeVideoStreamState();
-    setState(() {
-      _videoStreamStateIcon = closed ? FontAwesomeIcons.videoSlash : FontAwesomeIcons.video;
-    });
+  void _doExit() {
+    Navigator.pop(context);
   }
 
-  ScrollController _messageController = ScrollController();
+  Config _config;
+
+  VideoStreamWidget _mainView;
+  List<VideoStreamWidget> _views = List();
+
+  Timer _timer;
+  int _timeCount = 0;
+  DateFormat _timeFormat = DateFormat('mm:ss');
 
   List<Message> _messages = List();
-
-  bool _showPermissionGuide = false;
-  bool _hasCameraPermission = false;
-  bool _hasMicPermission = false;
-
-  LiveType _liveType = LiveType.normal;
-
-  bool _cameraEnable = true;
-  bool _paused = false;
-
-  TextureView _mainView;
-
-  // RCRTCTextureView _videoView;
-  int _pushState = 0;
+  ScrollController _messageController = ScrollController();
 
   List<User> _members = List();
   StateSetter _memberListSetter;
 
-  List<User> _chattingMembers = List();
+  List<User> _invitedMembers = List();
 
-  List<TextureView> _remoteViews = List();
-
-  IconData _microphoneIcon = FontAwesomeIcons.microphone;
-  IconData _videoStreamStateIcon = FontAwesomeIcons.video;
-
-  var _videoMixConfigList = [
-    "自定义布局",
-    "悬浮布局",
-    "自适应布局",
-  ];
+  int _quattroCount = 0;
+  int _noveCount = 0;
 }

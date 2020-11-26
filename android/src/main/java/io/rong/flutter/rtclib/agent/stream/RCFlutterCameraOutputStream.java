@@ -1,5 +1,7 @@
 package io.rong.flutter.rtclib.agent.stream;
 
+import android.hardware.Camera;
+
 import androidx.annotation.NonNull;
 
 import com.alibaba.fastjson.annotation.JSONField;
@@ -34,6 +36,9 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
       case "startCamera":
         startCamera(result);
         break;
+      case "startCameraByType":
+        startCamera(call, result);
+        break;
       case "stopCamera":
         stopCamera(result);
         break;
@@ -64,6 +69,50 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
   private void startCamera(Result result) {
     cameraOutputStream.startCamera(null);
     UIThreadHandler.success(result, 0);
+  }
+
+  private void startCamera(MethodCall call, Result result) {
+    Integer type = (Integer) call.arguments;
+    if (type == 0) { // 前面
+      int id = findFrontCameraId();
+      if (id > -1) {
+        cameraOutputStream.startCamera(id, true, null);
+      } else {
+        cameraOutputStream.startCamera(null);
+      }
+    } else { // 后面
+      int id = findBackCameraId();
+      if (id > -1) {
+        cameraOutputStream.startCamera(id, false, null);
+      } else {
+        cameraOutputStream.startCamera(null);
+      }
+    }
+    UIThreadHandler.success(result, 0);
+  }
+
+  private int findFrontCameraId() {
+    int numberOfCameras = Camera.getNumberOfCameras();
+    for (int i = 0; i <= numberOfCameras; i++) {
+      Camera.CameraInfo info = new Camera.CameraInfo();
+      Camera.getCameraInfo(i, info);
+      if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private int findBackCameraId() {
+    int numberOfCameras = Camera.getNumberOfCameras();
+    for (int i = 0; i <= numberOfCameras; i++) {
+      Camera.CameraInfo info = new Camera.CameraInfo();
+      Camera.getCameraInfo(i, info);
+      if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private void stopCamera(Result result) {

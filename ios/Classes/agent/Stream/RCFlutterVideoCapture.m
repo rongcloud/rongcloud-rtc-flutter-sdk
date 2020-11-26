@@ -36,6 +36,9 @@
         RCLogI(@"ios start capture");
         [self startCapture];
         result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KStartCaptureByType]) {
+        [self startCapture:(NSNumber *)call.arguments];
+        result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KSetVideoTextureView]) {
         [self setVideoTextureView:call result:result];
     } else if ([call.method isEqualToString:KSwitchCamera]) {

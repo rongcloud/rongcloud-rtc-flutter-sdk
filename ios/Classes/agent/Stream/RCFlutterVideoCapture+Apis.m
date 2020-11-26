@@ -6,6 +6,10 @@
     [[RCFlutterRTCManager sharedRTCManager] startCapture];
 }
 
+- (void)startCapture:(NSNumber *)type {
+    [[RCFlutterRTCManager sharedRTCManager] startCapture:type];
+}
+
 - (bool)switchCamera {
     return [[RCFlutterRTCManager sharedRTCManager] switchCamera];
 }

@@ -32,10 +32,10 @@
 #pragma mark - flutter 映射
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    if ([call.method isEqualToString:KInit]){
-        // not implement
+    if ([call.method isEqualToString:KInit]) {
+        result(nil);
     } else if ([call.method isEqualToString:KUnInit]) {
-        // not implement
+        result(nil);
     } else if ([call.method isEqualToString:KJoinRoom]) {
         [self joinRTCRoom:call result:result];
     } else if ([call.method isEqualToString:KLeaveRTCRoom]) {

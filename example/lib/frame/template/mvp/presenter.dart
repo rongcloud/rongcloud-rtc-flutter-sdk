@@ -40,5 +40,5 @@ abstract class AbstractPresenter<V extends IView, M extends IModel> implements I
   IModel createModel();
 
   @protected
-  void init(BuildContext context);
+  Future<dynamic> init(BuildContext context);
 }

@@ -1,17 +1,27 @@
 require 'pathname'
 current_path = Pathname.new(__FILE__).realpath
 
-config = File.expand_path(File.join('..', '..' ,'version.config'), current_path)
+current_version = 'Unknown'
 
-rongcloud_rtc_plugin_version = 'Unknown'
+yaml = File.expand_path(File.join('..', '..' ,'pubspec.yaml'), current_path)
+
+File.foreach(yaml) do |line|
+    matches = line.match(/version\:(.*)/)
+    if matches
+      current_version = matches[1].split("#")[0].strip
+    end
+end
+
+if current_version == 'Unknown'
+    raise "No version info in pubspec.yaml!!"
+end
+
 im_sdk_version = 'Unknown'
 rtc_sdk_version = 'Unknown'
 
+config = File.expand_path(File.join('..', '..' ,'version.config'), current_path)
+
 File.foreach(config) do |line|
-    matches = line.match(/rongcloud_rtc_plugin_version\=(.*)/)
-    if matches
-      rongcloud_rtc_plugin_version = matches[1].split("#")[0].strip
-    end
     matches = line.match(/im_sdk_version\=(.*)/)
     if matches
       im_sdk_version = matches[1].split("#")[0].strip
@@ -22,9 +32,6 @@ File.foreach(config) do |line|
     end
 end
 
-if rongcloud_rtc_plugin_version == 'Unknown'
-    raise "You need to config rongcloud_rtc_plugin_version in version.config!!"
-end
 if im_sdk_version == 'Unknown'
     raise "You need to config im_sdk_version in version.config!!"
 end
@@ -34,7 +41,7 @@ end
 
 Pod::Spec.new do |s|
   s.name             = 'rongcloud_rtc_plugin'
-  s.version          = rongcloud_rtc_plugin_version
+  s.version          = current_version
   s.summary          = 'RongCloud RTC Flutter Plugin.'
   s.homepage         = 'https://www.rongcloud.cn/'
   s.license          = { :file => '../LICENSE' }
@@ -48,6 +55,8 @@ Pod::Spec.new do |s|
   
   s.dependency 'RongCloudIM/IMLib', im_sdk_version
   s.dependency 'RongRTCLib', rtc_sdk_version
+
+  s.static_framework = true
   
   s.ios.deployment_target = '8.0'
   

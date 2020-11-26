@@ -1,4 +1,3 @@
-import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:flutter/widgets.dart';
@@ -13,37 +12,8 @@ class HomePagePresenter extends AbstractPresenter<View, Model> implements Presen
   }
 
   @override
-  void init(BuildContext context) {
-    requestCurrentServerVersion();
-    login();
-    initRCRTCEngine();
+  Future<void> init(BuildContext context) async {
     loadLiveRoomList(true);
-  }
-
-  @override
-  void requestCurrentServerVersion() {
-    model?.requestCurrentServerVersion(
-      (version) {
-        view?.onServerVersionLoaded(version);
-      },
-    );
-  }
-
-  @override
-  void login() {
-    model?.login(
-      () {
-        view?.onLoginSuccess();
-      },
-      (info) {
-        view?.onLoginError(info);
-      },
-    );
-  }
-
-  @override
-  void initRCRTCEngine() {
-    model?.initRCRTCEngine();
   }
 
   @override
@@ -55,21 +25,6 @@ class HomePagePresenter extends AbstractPresenter<View, Model> implements Presen
       },
       (info) {
         view?.onLiveRoomListLoadError(info);
-      },
-    );
-  }
-
-  @override
-  void requestJoinRoom(BuildContext context, String roomId, ChatType type) {
-    model?.requestJoinRoom(
-      context,
-      roomId,
-      type,
-      (context) {
-        view?.onLiveRoomCreated(context);
-      },
-      (context, info) {
-        view?.onLiveRoomCreateError(context, info);
       },
     );
   }

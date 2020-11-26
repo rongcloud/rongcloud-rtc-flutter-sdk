@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import '../../utils/rcrtc_log.dart';
 import 'rcrtc_video_output_stream.dart';
 
+enum RCRTCCameraCaptureCameraType {
+  Front,
+  Back,
+}
+
 enum RCRTCCameraCaptureOrientation {
   Portrait,
   PortraitUpsideDown,
@@ -30,9 +35,22 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
     await channel.invokeMethod("startCamera");
   }
 
+  Future<void> startCameraByType(RCRTCCameraCaptureCameraType type) async {
+    await channel.invokeMethod("startCameraByType", type.index);
+  }
+
   /// 切换摄像头
   Future<bool> switchCamera() async {
     _isFrontCamera = await channel.invokeMethod("switchCamera");
+    return _isFrontCamera;
+  }
+
+  Future<bool> switchCameraByType(RCRTCCameraCaptureCameraType type) async {
+    if (type == RCRTCCameraCaptureCameraType.Front && !_isFrontCamera) {
+      _isFrontCamera = await channel.invokeMethod("switchCamera");
+    } else if (type == RCRTCCameraCaptureCameraType.Back && _isFrontCamera) {
+      _isFrontCamera = await channel.invokeMethod("switchCamera");
+    }
     return _isFrontCamera;
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'presenter.dart';
 
@@ -17,13 +18,27 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
 
   @override
   Widget build(BuildContext context) {
-    if (_first) {
-      _first = false;
-      _presenter = createPresenter();
-      _presenter?.attachView(this, context);
-    }
+    _init(context);
     return buildWidget(context);
   }
+
+  Future<void> _init(BuildContext context) async {
+    if (!_first) return;
+    _first = false;
+
+    Size size = designSize();
+    ScreenUtil.init(context, width: size.width, height: size.height);
+
+    _presenter = createPresenter();
+    _presenter?.attachView(this, context);
+    init(context);
+  }
+
+  Size designSize() {
+    return const Size(640, 960);
+  }
+
+  void init(BuildContext context) {}
 
   Widget buildWidget(BuildContext context);
 

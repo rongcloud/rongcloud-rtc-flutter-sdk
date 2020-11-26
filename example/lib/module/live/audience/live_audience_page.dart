@@ -1,4 +1,3 @@
-import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
@@ -20,8 +19,8 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
   @override
   Widget buildWidget(BuildContext context) {
     return WillPopScope(
-      child: Card(
-        child: Stack(
+      child: Scaffold(
+        body: Stack(
           children: [
             _buildVideoView(context),
             _buildInfoView(context),
@@ -509,7 +508,7 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
   }
 
   @override
-  void onReceiveInviteMessage(User user, LiveType type) async {
+  void onReceiveInviteMessage(User user) async {
     if (_inviting) return;
 
     _inviting = true;
@@ -526,14 +525,14 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
               onPressed: () {
                 Navigator.pop(context);
                 _inviting = false;
-                _refuseInvite(user, type);
+                _refuseInvite(user);
               },
               child: Text("算了吧")),
           FlatButton(
               onPressed: () {
                 Navigator.pop(context);
                 _inviting = false;
-                _agreeInvite(user, type);
+                _agreeInvite(user);
               },
               child: Text("加入！")),
         ],
@@ -542,22 +541,21 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
 
     if (action == null) {
       _inviting = false;
-      _refuseInvite(user, type);
+      _refuseInvite(user);
     }
   }
 
-  void _refuseInvite(User user, LiveType type) {
-    presenter?.refuseInvite(user, type);
+  void _refuseInvite(User user) {
+    presenter?.refuseInvite(user);
   }
 
-  void _agreeInvite(User user, LiveType type) {
+  void _agreeInvite(User user) {
     setState(() {
       _videoView = null;
       _pullState = 0;
     });
     presenter?.agreeInvite(
       user,
-      type,
       (videoView) {
         _setSmallView(DefaultData.user, videoView);
       },

@@ -3,6 +3,7 @@ library rongcloud_rtc_plugin;
 export 'agent/rcrtc_engine.dart';
 export 'agent/rcrtc_audio_effect_manager.dart';
 export 'agent/rcrtc_audio_mixer.dart';
+export 'agent/rcrtc_status_report.dart';
 export 'agent/room/rcrtc_local_user.dart';
 export 'agent/room/rcrtc_remote_user.dart';
 export 'agent/room/rcrtc_room.dart';

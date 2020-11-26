@@ -4,78 +4,16 @@ import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
-import 'package:permission_handler/permission_handler.dart' as PermissionHandler;
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 class VideoChatPageModel extends AbstractModel implements Model {
   @override
-  Future<PermissionStatus> requestPermission() async {
-    bool camera = await PermissionHandler.Permission.camera.request().isGranted;
-    bool mic = await PermissionHandler.Permission.microphone.request().isGranted;
-    int code = 0;
-    if (!camera) code += 1;
-    if (!mic) code += 2;
-    return Future.value(PermissionStatus.values[code]);
-  }
-
-  @override
-  Future<PermissionStatus> requestCameraPermission() async {
-    if (await PermissionHandler.Permission.camera.request().isPermanentlyDenied) {
-      PermissionHandler.openAppSettings();
-      return Future.value(PermissionStatus.camera_denied);
-    }
-    bool camera = await PermissionHandler.Permission.camera.request().isGranted;
-    bool mic = await PermissionHandler.Permission.microphone.isGranted;
-    int code = 0;
-    if (!camera) code += 1;
-    if (!mic) code += 2;
-    return Future.value(PermissionStatus.values[code]);
-  }
-
-  @override
-  Future<PermissionStatus> requestMicPermission() async {
-    if (await PermissionHandler.Permission.microphone.request().isPermanentlyDenied) {
-      PermissionHandler.openAppSettings();
-      return Future.value(PermissionStatus.mic_denied);
-    }
-    bool camera = await PermissionHandler.Permission.camera.isGranted;
-    bool mic = await PermissionHandler.Permission.microphone.request().isGranted;
-    int code = 0;
-    if (!camera) code += 1;
-    if (!mic) code += 2;
-    return Future.value(PermissionStatus.values[code]);
-  }
-
-  @override
-  void createVideoView(void Function(TextureView view) onVideoViewCreated, void Function() readyToPush) {
-    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
-      stream.setVideoConfig(_config);
-      RCRTCTextureView videoView = RCRTCTextureView(
-        (videoView, id) async {
-          stream.setTextureView(id);
-          stream.startCamera().then((value) => readyToPush());
-          onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
-        },
-        viewType: RCRTCViewType.remote,
-        mirror: true,
-      );
-      onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
-    });
-  }
-
-  @override
-  Future<StatusCode> push() async {
-    int code = await RCRTCEngine.getInstance().getRoom().localUser.publishDefaultStreams();
-    if (code != 0) {
-      return StatusCode(Status.error, message: "code = $code", object: code);
-    } else {
-      return StatusCode(Status.ok);
-    }
-  }
-
-  @override
-  void pull(void Function(TextureView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) {
+  void subscribe(
+    void Function(VideoStreamWidget view) onViewCreated,
+    void Function(String userId) onRemoveView,
+    void Function() invalidate,
+  ) {
     RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
     RCRTCLocalUser localUser = room.localUser;
 
@@ -83,36 +21,34 @@ class VideoChatPageModel extends AbstractModel implements Model {
       localUser.subscribeStreams(user.streamList);
       _remoteUsers[user.id] = RemoteUserStatus(user, true, true);
       user.streamList.whereType<RCRTCVideoInputStream>().forEach((stream) {
-        RCRTCTextureView view = RCRTCTextureView(
-          (view, id) async {
-            stream.setTextureView(id);
-          },
-          viewType: RCRTCViewType.local,
-        );
-        onVideoViewCreated(TextureView(User.unknown(user.id), view));
+        onViewCreated(VideoStreamWidget(User.unknown(user.id), stream));
       });
     }
 
-    room.onRemoteUserPublishResource = (user, streams) {
-      localUser.subscribeStreams(streams);
+    room.onRemoteUserJoined = (user) {
       RemoteUserStatus remoteUserStatus = RemoteUserStatus(user, false, false);
+      _remoteUsers[user.id] = remoteUserStatus;
+      invalidate();
+    };
+
+    room.onRemoteUserPublishResource = (user, streams) {
+      RemoteUserStatus remoteUserStatus = _remoteUsers[user.id];
+
+      List<RCRTCInputStream> subscribes = List();
 
       streams.whereType<RCRTCVideoInputStream>().forEach((stream) {
-        RCRTCTextureView view = RCRTCTextureView(
-          (view, id) {
-            stream.setTextureView(id);
-          },
-          viewType: RCRTCViewType.local,
-        );
-        onVideoViewCreated(TextureView(User.unknown(user.id), view));
+        onViewCreated(VideoStreamWidget(User.unknown(user.id), stream));
+
+        subscribes.add(stream);
         remoteUserStatus?.videoStatus = true;
       });
 
-      streams.whereType<RCRTCAudioInputStream>().forEach((stream) {
+      if (_subscribeAudioStreams) {
+        subscribes.addAll(streams.whereType<RCRTCAudioInputStream>().toList());
         remoteUserStatus?.audioStatus = true;
-      });
+      }
 
-      _remoteUsers[user.id] = remoteUserStatus;
+      localUser.subscribeStreams(subscribes);
     };
 
     room.onRemoteUserUnPublishResource = (user, streams) {
@@ -120,7 +56,7 @@ class VideoChatPageModel extends AbstractModel implements Model {
       localUser.unsubscribeStreams(streams);
 
       streams.whereType<RCRTCVideoInputStream>().forEach((stream) {
-        onRemoveVideoView(user.id);
+        onRemoveView(user.id);
         remoteUserStatus?.videoStatus = false;
       });
 
@@ -131,56 +67,97 @@ class VideoChatPageModel extends AbstractModel implements Model {
 
     room.onRemoteUserLeft = (user) {
       _remoteUsers.remove(user.id);
-      onRemoveVideoView(user.id);
+      onRemoveView(user.id);
+      invalidate();
     };
+
+    invalidate();
   }
 
   @override
-  void switchCamera(void onCameraChanged(bool isFront)) {
-    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
-      stream.switchCamera().then((isFront) => {onCameraChanged(isFront)});
-    });
+  Future<StatusCode> publish(
+    Config config,
+    void Function(VideoStreamWidget view) onViewCreated,
+  ) async {
+    List<RCRTCOutputStream> streams = List();
+
+    if (config.camera) {
+      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      stream.setVideoConfig(DefaultData.videoConfig);
+      stream.startCamera();
+      onViewCreated(VideoStreamWidget(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), stream));
+      streams.add(stream);
+    }
+
+    if (config.mic) {
+      RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+      streams.add(stream);
+    }
+
+    int code = await RCRTCEngine.getInstance().getRoom().localUser.publishStreams(streams);
+    if (code != 0)
+      return StatusCode(Status.error, message: "code = $code", object: code);
+    else
+      return StatusCode(Status.ok);
   }
 
   @override
-  Future<bool> changeAudioStreamState() async {
+  Future<bool> switchCamera() async {
+    RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+    return stream.switchCamera();
+  }
+
+  @override
+  Future<bool> changeAudioStreamState(Config config) async {
     RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
     RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-    _audioStreamState = !_audioStreamState;
-    _audioStreamState ? localUser.unPublishStreams([stream]) : localUser.publishStreams([stream]);
-    return Future.value(_audioStreamState);
+    bool enable = config.mic;
+    enable = !enable;
+    enable ? localUser.unPublishStreams([stream]) : localUser.publishStreams([stream]);
+    return Future.value(enable);
   }
 
   @override
-  Future<bool> changeVideoStreamState(void Function(TextureView view) onVideoViewCreated, void Function(String userId) onRemoveVideoView) async {
+  Future<bool> changeVideoStreamState(
+    Config config,
+    void Function(VideoStreamWidget view) onVideoViewCreated,
+    void Function(String userId) onRemoveVideoView,
+  ) async {
     RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
     var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-    _videoStreamState = !_videoStreamState;
-    if (_videoStreamState) {
-      stream.stopCamera();
+    bool enable = config.camera;
+    enable = !enable;
+    if (enable) {
       localUser.unPublishStreams([stream]);
+      stream.stopCamera();
       onRemoveVideoView(localUser.id);
     } else {
-      stream.setVideoConfig(_config);
-
-      RCRTCTextureView view = RCRTCTextureView(
-        (view, id) {
-          stream.setTextureView(id);
-          stream.startCamera().then((value) {
-            localUser.publishStreams([stream]);
-          });
-        },
-        viewType: RCRTCViewType.local,
-        mirror: true,
-      );
-      onVideoViewCreated(TextureView(User.unknown(localUser.id), view));
+      stream.setVideoConfig(DefaultData.videoConfig);
+      stream.startCamera();
+      localUser.publishStreams([stream]);
+      onVideoViewCreated(VideoStreamWidget(User.unknown(localUser.id), stream));
     }
-    return Future.value(_videoStreamState);
+    return Future.value(enable);
+  }
+
+  @override
+  void changeRemoteAudioSubscribeState(bool unsubscribe) {
+    RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
+    List<RCRTCRemoteUser> remoteUsers = RCRTCEngine.getInstance().getRoom().remoteUserList;
+    remoteUsers.forEach((user) {
+      List<RCRTCInputStream> streams = user.streamList.whereType<RCRTCAudioInputStream>().toList();
+      if (unsubscribe)
+        localUser.unsubscribeStreams(streams);
+      else
+        localUser.subscribeStreams(streams);
+    });
   }
 
   @override
   Future<StatusCode> exit() async {
     int code = await RCRTCEngine.getInstance().leaveRoom();
+
+    RCRTCEngine.getInstance().unInit();
     RongIMClient.disconnect(false);
     if (code != 0) {
       return StatusCode(Status.error, message: "code = $code", object: code);
@@ -188,16 +165,6 @@ class VideoChatPageModel extends AbstractModel implements Model {
       return StatusCode(Status.ok);
     }
   }
-
-  RCRTCVideoStreamConfig _config = RCRTCVideoStreamConfig(
-    300,
-    1000,
-    RCRTCFps.fps_30,
-    RCRTCVideoResolution.RESOLUTION_720_1280,
-  );
-
-  bool _audioStreamState = false;
-  bool _videoStreamState = false;
 
   @override
   List<RemoteUserStatus> getUserList() {
@@ -232,56 +199,6 @@ class VideoChatPageModel extends AbstractModel implements Model {
     return Future.value(user.videoStatus);
   }
 
-  Map<String, RemoteUserStatus> _remoteUsers = Map<String, RemoteUserStatus>();
-
-  @override
-  void changeVideoResolution(String level, void onVideoViewCreated(TextureView view), void onRemoveVideoView(String userId)) async {
-    RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
-    var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-
-    if (level == "超清") {
-      _config = RCRTCVideoStreamConfig(
-        300,
-        1000,
-        RCRTCFps.fps_30,
-        RCRTCVideoResolution.RESOLUTION_720_1280,
-      );
-    } else if (level == "高清") {
-      _config = RCRTCVideoStreamConfig(
-        150,
-        500,
-        RCRTCFps.fps_30,
-        RCRTCVideoResolution.RESOLUTION_360_640,
-      );
-    } else if (level == "标清") {
-      _config = RCRTCVideoStreamConfig(
-        70,
-        210,
-        RCRTCFps.fps_30,
-        RCRTCVideoResolution.RESOLUTION_180_320,
-      );
-    }
-
-    if (!_videoStreamState) {
-      stream.stopCamera();
-      localUser.unPublishStreams([stream]);
-      onRemoveVideoView(localUser.id);
-
-      stream.setVideoConfig(_config);
-      RCRTCTextureView videoView = RCRTCTextureView(
-        (videoView, id) {
-          stream.setTextureView(id);
-          stream.startCamera().then((value) {
-            localUser.publishStreams([stream]);
-          });
-        },
-        viewType: RCRTCViewType.local,
-        mirror: true,
-      );
-      onVideoViewCreated(TextureView(User.unknown(RCRTCEngine.getInstance().getRoom().localUser.id), videoView));
-    }
-  }
-
   @override
   void setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation) {
     RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async => {
@@ -290,4 +207,8 @@ class VideoChatPageModel extends AbstractModel implements Model {
           await stream.startCamera(),
         });
   }
+
+  bool _subscribeAudioStreams = true;
+
+  Map<String, RemoteUserStatus> _remoteUsers = Map<String, RemoteUserStatus>();
 }

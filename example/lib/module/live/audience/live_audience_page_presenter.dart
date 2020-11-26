@@ -5,7 +5,7 @@ import 'package:FlutterRTC/data/data.dart' as Data;
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/module/live/audience/live_audience_page_model.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
@@ -18,19 +18,20 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   }
 
   @override
-  void detachView() {
-    RongIMClient.onMessageReceived = null;
-    super.detachView();
-  }
-
-  @override
-  void init(BuildContext context) {
+  Future<void> init(BuildContext context) async {
     Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
     _roomId = arguments['roomId'];
     _url = arguments['url'];
-
+    model?.initEngine();
     pull();
     RongIMClient.onMessageReceived = (message, left) => _onMessageReceived(message, left);
+  }
+
+  @override
+  void detachView() {
+    model?.unInitEngine();
+    RongIMClient.onMessageReceived = null;
+    super.detachView();
   }
 
   @override
@@ -57,9 +58,7 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
         _sendRequestListMessage(msg.user.id);
         break;
       case MessageType.invite:
-        Map<String, dynamic> data = jsonDecode(msg.message);
-        LiveType type = LiveType.values[data['type']];
-        view?.onReceiveInviteMessage(msg.user, type);
+        view?.onReceiveInviteMessage(msg.user);
         break;
       case MessageType.kick: // 被断线
         break;
@@ -84,14 +83,13 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   }
 
   @override
-  void refuseInvite(Data.User user, LiveType type) {
-    model?.refuseInvite(user, type);
+  void refuseInvite(Data.User user) {
+    model?.refuseInvite(user);
   }
 
   @override
   void agreeInvite(
     Data.User user,
-    LiveType type,
     void onVideoViewReady(RCRTCTextureView videoView),
     void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
     void onRemoteVideoViewClose(String uid),
@@ -100,7 +98,6 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
       user,
       _roomId,
       _url,
-      type,
       onVideoViewReady,
       onRemoteVideoViewReady,
       onRemoteVideoViewClose,

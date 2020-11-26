@@ -7,46 +7,23 @@ import 'package:flutter/services.dart';
 
 import '../rcrtc_engine.dart';
 
-enum RCRTCViewType {
-  local,
-  remote,
-}
-
 typedef TextureViewCreatedCallback(RCRTCTextureView view, int id);
 
 class RCRTCTextureView extends StatefulWidget {
   RCRTCTextureView(
     this.callback, {
-    this.boxFit = BoxFit.cover,
-    this.viewType = RCRTCViewType.local,
+    this.fit = BoxFit.cover,
     this.mirror = false,
-  })  : assert(boxFit != null),
+  })  : assert(fit != null),
         assert(mirror != null),
         super(key: Key('RCRTCTextureView[${DateTime.now().microsecondsSinceEpoch}]'));
 
-  bool mirror;
-  final BoxFit boxFit;
-  final RCRTCViewType viewType;
+  final bool mirror;
+  final BoxFit fit;
   final TextureViewCreatedCallback callback;
 
-  _RCRTCTextureViewState _state;
-
   @override
-  State<StatefulWidget> createState() => _createState();
-
-  State<StatefulWidget> _createState() {
-    _state = _RCRTCTextureViewState(this);
-    return _state;
-  }
-
-  bool isMirror() {
-    return mirror;
-  }
-
-  void setMirror(bool isMirror) {
-    this.mirror = isMirror;
-    _state.setMirror();
-  }
+  State<StatefulWidget> createState() => _RCRTCTextureViewState(this);
 }
 
 class _RCRTCTextureViewState extends State<RCRTCTextureView> {
@@ -68,10 +45,17 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
     final Map<dynamic, dynamic> map = event;
     switch (map['event']) {
       case 'didTextureChangeRotation':
-        if (_rotation != map['rotation']) {
+        int rotation = map['rotation'];
+        bool change = false;
+        if (rotation == 90 || rotation == 270) {
+          if (_rotation != 90 && _rotation != 270) change = true;
+        } else {
+          if (_rotation != 0 && _rotation != 180) change = true;
+        }
+        _rotation = rotation;
+        if (change) {
           setState(() {
-            _rotation = map['rotation'];
-            if (_rotation == 270 || _rotation == 90) {
+            if (_rotation == 90 || _rotation == 270) {
               int temp = _height;
               _height = _width;
               _width = temp;
@@ -86,7 +70,7 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
       case 'didTextureChangeVideoSize':
         setState(() {
           _rotation = map['rotation'];
-          if (_rotation == 270 || _rotation == 90) {
+          if (_rotation == 90 || _rotation == 270) {
             _height = map['width'];
             _width = map['height'];
           } else {
@@ -126,37 +110,25 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) => _buildVideoView(constraints));
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) => _buildVideoView(constraints),
+    );
   }
 
   Widget _buildVideoView(BoxConstraints constraints) {
-    // FittedSizes sizes = applyBoxFit(
-    //   BoxFit.contain,
-    //   Size(
-    //     _width,
-    //     _height,
-    //   ),
-    //   Size(
-    //     constraints.maxWidth,
-    //     constraints.maxHeight,
-    //   ),
-    // );
-    return Center(
-      child: Container(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: FittedBox(
-          fit: _view.boxFit,
-          child: SizedBox.fromSize(
-            child: Transform(
-              transform: Matrix4.identity()
-                ..rotateY(
-                  _view.mirror ? -pi : 0.0,
-                ),
-              alignment: FractionalOffset.center,
-              child: Texture(textureId: _textureId),
-            ),
-            size: Size(_width.toDouble(), _height.toDouble()),
+    return Container(
+      width: constraints.maxWidth,
+      height: constraints.maxHeight,
+      child: FittedBox(
+        fit: _view.fit,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: _width.toDouble(),
+          height: _height.toDouble(),
+          child: Transform(
+            transform: Matrix4.rotationY(_view.mirror ? -pi : 0.0),
+            alignment: FractionalOffset.center,
+            child: Texture(textureId: _textureId),
           ),
         ),
       ),

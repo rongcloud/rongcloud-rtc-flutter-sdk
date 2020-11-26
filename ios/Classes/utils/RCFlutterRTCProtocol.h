@@ -346,6 +346,8 @@ switchToNormalStream:(nonnull NSArray<RCRTCInputStream *> *)streams
 /// 开启摄像头
 - (void)startCapture;
 
+- (void)startCapture:(NSNumber *)type;
+
 /// 切换前后摄像头
 - (bool)switchCamera;
 

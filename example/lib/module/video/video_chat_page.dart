@@ -1,22 +1,23 @@
-import 'dart:ui';
+import 'dart:async';
 
 import 'package:FlutterRTC/data/codes.dart';
 import 'package:FlutterRTC/data/constants.dart';
+import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
 import 'package:FlutterRTC/frame/ui/toast.dart';
+import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_presenter.dart';
-import 'package:FlutterRTC/widgets/audio_widget.dart';
-import 'package:FlutterRTC/widgets/overlay_widget.dart';
-import 'package:FlutterRTC/widgets/status_page.dart';
+import 'package:FlutterRTC/widgets/buttons.dart';
+import 'package:FlutterRTC/widgets/status_panel.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
+import 'package:bottom_drawer/bottom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
-
-import '../../colors.dart';
 
 class VideoChatPage extends AbstractView {
   @override
@@ -25,43 +26,46 @@ class VideoChatPage extends AbstractView {
 
 class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> with WidgetsBindingObserver implements View {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused && !_paused) {
-      _paused = true;
-    } else if (state == AppLifecycleState.resumed && _paused) {
-      _paused = false;
-      if (_showPermissionGuide) presenter?.requestPermission();
-    }
-  }
-
-  @override
   Presenter createPresenter() {
     return VideoChatPagePresenter();
   }
 
   @override
+  void init(BuildContext context) {
+    Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
+    _config = Config.fromJSON(arguments);
+    presenter?.publish(_config);
+    RCRTCEngine.getInstance().enableSpeaker(_config.speaker);
+
+    Size size = MediaQuery.of(context).size;
+
+    double quattroWidth = size.width / 2;
+    _quattroCount = (size.height / quattroWidth).floor() * 2;
+
+    double noveWidth = size.width / 3;
+    _noveCount = (size.height / noveWidth).floor() * 3;
+  }
+
+  @override
+  Size designSize() {
+    return const Size(375, 667);
+  }
+
+  @override
+  void dispose() {
+    if (_timer != null) _timer.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget buildWidget(BuildContext context) {
     return WillPopScope(
-      child: Card(
-        child: Stack(
+      child: Scaffold(
+        body: Stack(
           children: [
             _buildMainView(context),
             _buildTopBar(context),
-            _buildBottomViews(context),
-            _buildPermissionGuild(context),
+            _buildBottomDrawer(context),
           ],
         ),
       ),
@@ -70,205 +74,371 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   }
 
   Widget _buildMainView(BuildContext context) {
+    int count = _views.length;
+    if (count < 3) {
+      return _buildSingleMeeting(context);
+    } else if (count <= _quattroCount) {
+      return _buildQuattroMeeting(context);
+    } else if (count <= _noveCount) {
+      return _buildNoveMeeting(context);
+    } else {
+      return _buildMultiMeeting(context);
+    }
+  }
+
+  Widget _buildSingleMeeting(BuildContext context) {
+    var views = viewsWithOutMain();
+    return Stack(
+      alignment: Alignment.topRight,
+      children: [
+        _mainView?.widget ?? Container(),
+        views.isNotEmpty
+            ? GestureDetector(
+                child: Container(
+                  width: 90.0.width,
+                  height: 160.0.height,
+                  padding: EdgeInsets.only(
+                    top: 60.0.height,
+                    right: 15.0.width,
+                  ),
+                  child: views.first.widget,
+                ),
+                onTap: () => _switchMainView(views.first),
+              )
+            : Container(),
+      ],
+    );
+  }
+
+  void _switchMainView(VideoStreamWidget view) {
+    _mainView.invalidate();
+    view.invalidate();
+    _mainView = view;
+    setState(() {});
+  }
+
+  List<VideoStreamWidget> viewsWithOutMain() {
+    if (_mainView == null) return _views;
+    return _views.where((view) => view.user.id != _mainView.user.id).toList();
+  }
+
+  Widget _buildQuattroMeeting(BuildContext context) {
     return Container(
-      // child: RTCVideoView(_mainRenderer, mirror: true)
-      child: _mainView?.view ?? Container(),
+      color: Colors.black,
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        children: _buildViews(context),
+      ),
+    );
+  }
+
+  Widget _buildNoveMeeting(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: EdgeInsets.all(10.0.width),
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        children: _buildViews(context),
+      ),
+    );
+  }
+
+  List<Widget> _buildViews(BuildContext context) {
+    List<Widget> widgets = List();
+    _views.forEach((view) {
+      widgets.add(view.widget);
+    });
+    return widgets;
+  }
+
+  Widget _buildMultiMeeting(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      child: PageView.builder(
+        itemCount: (_views.length / _noveCount).ceil(),
+        itemBuilder: (context, index) {
+          return _buildMultiMeetingPage(context, index);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMultiMeetingPage(BuildContext context, int index) {
+    int start = index * _noveCount;
+    int end = index * _noveCount + _noveCount;
+    if (end > _views.length) end = _views.length;
+    List<VideoStreamWidget> views = _views.sublist(start, end);
+    List<Widget> widgets = List();
+    views.forEach((view) {
+      widgets.add(view.widget);
+    });
+    return Container(
+      color: Colors.black,
+      padding: EdgeInsets.all(10.0.width),
+      child: GridView.count(
+        crossAxisSpacing: 10.0.width,
+        mainAxisSpacing: 10.0.width,
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        children: widgets,
+      ),
     );
   }
 
   Widget _buildTopBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        left: 15.0,
-        right: 15.0,
-        top: 30.0,
+        left: 15.0.width,
+        right: 15.0.width,
+        top: 28.0.height,
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: 15.0,
-            ),
+          Container(
+            alignment: Alignment.topCenter,
             child: GestureDetector(
-              onTap: () => presenter?.switchCamera(),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Icon(
-                  FontAwesomeIcons.camera,
-                  color: Colors.grey,
+              child: Text(
+                _generateRoomInfo(),
+                style: TextStyle(
+                  fontSize: 15.0.sp,
+                  color: Colors.white,
+                  decoration: TextDecoration.none,
                 ),
+              ),
+              onTap: () => _showStatusPanel(context),
+            ),
+          ),
+          Container(
+            alignment: Alignment.topRight,
+            child: GestureDetector(
+              onTap: () => _switchCamera(),
+              child: Icon(
+                Icons.flip_camera_ios_outlined,
+                color: Colors.white,
+                size: 30.0.width,
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(
-              right: 15.0,
-            ),
-            child: SizedBox(
-              width: 30.0,
-              height: 30.0,
-              child: OverlayWidget(
-                RtcStatusPage(),
-                Size(30, 30),
-                icon: Icon(
-                  Icons.info,
-                  size: 30,
-                  color: Colors.grey,
-                ),
-                // text: Text(
-                //   'info',
-                //   style: TextStyle(color: Colors.grey),
-                // ),
-              ),
-            ),
-          ),
-          Spacer(),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 15.0,
-            ),
-            child: GestureDetector(
-              onTap: () => _exit(context),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Image.asset("assets/images/close.png"),
-              ),
-            ),
-          )
         ],
       ),
     );
   }
 
-  Widget _buildBottomViews(BuildContext context) {
+  void _showStatusPanel(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.black12,
+          insetPadding: EdgeInsets.only(
+            top: 45.0.height,
+            bottom: 100.0.height,
+          ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              alignment: Alignment.center,
+              child: StatusPanel(),
+            ),
+            onTap: () => Navigator.pop(context),
+          ),
+        );
+      },
+    );
+  }
+
+  void _switchCamera() async {
+    _config.frontCamera = await presenter?.switchCamera();
+    VideoStreamWidget view = getUserView();
+    view?.mirror = _config.frontCamera;
+    setState(() {});
+  }
+
+  VideoStreamWidget getUserView() {
+    String id = RCRTCEngine.getInstance().getRoom().localUser.id;
+    var views = _views.where((view) => view.user.id == id);
+    if (views.isNotEmpty) return views.first;
+    return null;
+  }
+
+  String _generateRoomInfo() {
+    String id = RCRTCEngine.getInstance().getRoom()?.id ?? "";
+    id = id.replaceAllMapped(RegExp(r'(.{3})'), (match) => '${match[0]} ');
+    String time = _timeFormat.format(DateTime.fromMillisecondsSinceEpoch(_timeCount * 1000));
+    return "会议ID: $id ($time)";
+  }
+
+  Widget _buildBottomDrawer(BuildContext context) {
+    return BottomDrawer(
+      header: _buildBottomDrawerHead(context),
+      body: _buildBottomDrawerBody(context),
+      headerHeight: 90.0.height,
+      drawerHeight: 180.0.height,
+      cornerRadius: 30.0.width,
+      color: Colors.black,
+    );
+  }
+
+  Widget _buildBottomDrawerHead(BuildContext context) {
     return Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.only(
+        top: 10.0.height,
+        left: 25.0.width,
+        right: 25.0.width,
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSubViews(context),
-          _buildBottomBar(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubViews(BuildContext context) {
-    return Container(
-      child: GridView.count(
-        shrinkWrap: true,
-        reverse: true,
-        crossAxisCount: 3,
-        crossAxisSpacing: 10.0,
-        mainAxisSpacing: 10.0,
-        childAspectRatio: 1.0,
-        children: _buildSubView(context),
-      ),
-    );
-  }
-
-  List<Widget> _buildSubView(BuildContext context) {
-    List<Widget> widgets = List();
-    _views.forEach((view) {
-      widgets.add(Container(
-        color: Colors.yellow,
-        alignment: Alignment.center,
-        child: view.view,
-      ));
-    });
-    return widgets;
-  }
-
-  Widget _buildBottomBar(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(15.0),
-      alignment: Alignment.bottomCenter,
-      child: Row(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: 15.0,
-            ),
-            child: GestureDetector(
-              onTap: () => _changeAudioStreamState(),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Icon(
-                  _audioStreamStateIcon,
-                  color: Colors.grey,
-                ),
-              ),
+          Container(
+            width: 40.0.width,
+            height: 4.0.height,
+            decoration: BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.all(Radius.circular(2.0.height)),
             ),
           ),
           Padding(
             padding: EdgeInsets.only(
-              right: 15.0,
+              bottom: 10.0.height,
             ),
-            child: GestureDetector(
-              onTap: () => _changeVideoStreamState(),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Icon(
-                  _videoStreamStateIcon,
-                  color: Colors.grey,
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _config.mic ? FontAwesomeIcons.microphoneSlash.selected : FontAwesomeIcons.microphone.unselected,
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6.0.height,
+                        bottom: 10.0.height,
+                      ),
+                      child: Text(
+                        "音频流",
+                        style: TextStyle(
+                          fontSize: 10.0.sp,
+                          color: Colors.grey,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                onTap: () => _changeAudioStreamState(),
               ),
-            ),
+              Spacer(),
+              GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _config.speaker ? Icons.volume_off.selected : Icons.volume_up.unselected,
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6.0.height,
+                        bottom: 10.0.height,
+                      ),
+                      child: Text(
+                        "扬声器",
+                        style: TextStyle(
+                          fontSize: 10.0.sp,
+                          color: Colors.grey,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => _changeSpeakerState(),
+              ),
+              Spacer(),
+              GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icons.call_end.red,
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6.0.height,
+                        bottom: 10.0.height,
+                      ),
+                      child: Text(
+                        "挂断",
+                        style: TextStyle(
+                          fontSize: 10.0.sp,
+                          color: Colors.grey,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => _exit(context),
+              ),
+              Spacer(),
+              GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _config.camera ? FontAwesomeIcons.videoSlash.selected : FontAwesomeIcons.video.unselected,
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6.0.height,
+                        bottom: 10.0.height,
+                      ),
+                      child: Text(
+                        "视频流",
+                        style: TextStyle(
+                          fontSize: 10.0.sp,
+                          color: Colors.grey,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => _changeVideoStreamState(),
+              ),
+              Spacer(),
+              GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    FontAwesomeIcons.user.withBadge(_getRemoteUserCountBadge()),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6.0.height,
+                        bottom: 10.0.height,
+                      ),
+                      child: Text(
+                        "成员管理",
+                        style: TextStyle(
+                          fontSize: 10.0.sp,
+                          color: Colors.grey,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => _showRemoteUserList(context),
+              ),
+            ],
           ),
           Padding(
             padding: EdgeInsets.only(
-              right: 15.0,
-            ),
-            child: GestureDetector(
-              onTap: () => {
-                setState(() {
-                  _speakerEnable = !_speakerEnable;
-                }),
-                RCRTCEngine.getInstance().enableSpeaker(_speakerEnable),
-              },
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Icon(
-                  _speakerEnable ? Icons.volume_up : Icons.volume_down_outlined,
-                  color: Colors.grey,
-                ),
-              ),
+              bottom: 10.0.height,
             ),
           ),
-          Spacer(),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 15.0,
-            ),
-            child: GestureDetector(
-              onTap: () => _showRemoteUserList(context),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Icon(
-                  FontAwesomeIcons.user,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 20.0,
-            ),
-            child: GestureDetector(
-              onTap: () => _buildOptionsDialog(context),
-              child: SizedBox(
-                width: 32.0,
-                height: 32.0,
-                child: Image.asset("assets/images/options.png"),
-              ),
-            ),
+          Divider(
+            height: 1.0.height,
+            color: Colors.grey,
           ),
         ],
       ),
@@ -276,265 +446,26 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   }
 
   void _changeAudioStreamState() async {
-    bool closed = await presenter?.changeAudioStreamState();
-    setState(() {
-      _audioStreamStateIcon = closed ? FontAwesomeIcons.microphoneSlash : FontAwesomeIcons.microphone;
-    });
+    _config.mic = await presenter?.changeAudioStreamState(_config);
+    setState(() {});
+  }
+
+  void _changeSpeakerState() async {
+    _config.speaker = !_config.speaker;
+    await RCRTCEngine.getInstance().enableSpeaker(_config.speaker);
+    setState(() {});
   }
 
   void _changeVideoStreamState() async {
-    bool closed = await presenter?.changeVideoStreamState();
-    setState(() {
-      _videoStreamStateIcon = closed ? FontAwesomeIcons.videoSlash : FontAwesomeIcons.video;
-    });
+    _config.camera = await presenter?.changeVideoStreamState(_config);
+    setState(() {});
   }
 
-  void _showAudioMixer(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      // backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      // isDismissible: false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setter) {
-          return WillPopScope(
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              padding: EdgeInsets.only(
-                left: 20.0,
-                top: 10.0,
-                right: 20,
-                bottom: 10.0,
-              ),
-              child: AudioTabbedPage(),
-            ),
-            onWillPop: () {
-              Navigator.pop(context);
-              return Future.value(false);
-            },
-          );
-        });
-      },
-    );
-  }
-
-  void _showCameraRotationList(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setter) {
-          return WillPopScope(
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 10,
-                top: 10.0,
-                right: 10,
-                bottom: 10.0,
-              ),
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                // crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: Row(
-                      children: [
-                        Text(
-                          "选择旋转角度",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        Spacer(),
-                        GestureDetector(
-                          child: Icon(Icons.check),
-                          onTap: () => {
-                            presenter.setCameraCaptureOrientation(RCRTCCameraCaptureOrientation.values[_selectedCameraCaptureOrientation]),
-                            Navigator.pop(context),
-                          },
-                        ),
-                        SizedBox(
-                          width: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 7,
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          flex: 5, // 20%
-                          child: ListView.builder(
-                            itemCount: _cameraCaptureOrientationList.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return Container(
-                                  child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      left: 20.0,
-                                    ),
-                                    child: SizedBox(
-                                      height: 50.0,
-                                      child: TextButton(
-                                        child: Text(
-                                          _cameraCaptureOrientationList[index],
-                                        ),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      left: 20.0,
-                                    ),
-                                    child: SizedBox(
-                                      height: 50.0,
-                                      child: Checkbox(
-                                          activeColor: Colors.green,
-                                          tristate: false,
-                                          value: _selectedCameraCaptureOrientation == index,
-                                          onChanged: (bool bol) {
-                                            setter(() {
-                                              _selectedCameraCaptureOrientation = bol ? index : -1;
-                                            });
-                                          }),
-                                    ),
-                                  ),
-                                ],
-                              ));
-                            },
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-            onWillPop: () {
-              Navigator.pop(context);
-              return Future.value(false);
-            },
-          );
-        });
-      },
-    );
-  }
-
-  void _showVideoStreamLevelList(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setter) {
-          return WillPopScope(
-            child: Container(
-              padding: EdgeInsets.only(
-                top: 10.0,
-                bottom: 20.0,
-              ),
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: 10.0,
-                      left: 15.0,
-                      right: 15.0,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "选择分辨率",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        Spacer(),
-                        GestureDetector(
-                          child: Icon(FontAwesomeIcons.solidWindowClose),
-                          onTap: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      // shrinkWrap: true,
-                      itemCount: _videoStreamLevelList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Container(
-                            child: Row(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(
-                                left: 15.0,
-                              ),
-                              child: SizedBox(
-                                width: 300.0,
-                                height: 60.0,
-                                child: TextButton(
-                                  child: Text(
-                                    _videoStreamLevelList[index],
-                                  ),
-                                  onPressed: () {
-                                    presenter.changeVideoResolution(_videoStreamLevelList[index]);
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ));
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onWillPop: () {
-              Navigator.pop(context);
-              return Future.value(false);
-            },
-          );
-        });
-      },
-    );
+  String _getRemoteUserCountBadge() {
+    int count = presenter?.getUserList()?.length ?? 0;
+    if (count < 1) return null;
+    if (count > 99) return '...';
+    return '$count';
   }
 
   void _showRemoteUserList(BuildContext context) async {
@@ -550,174 +481,131 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
       ),
       builder: (context) {
         return StatefulBuilder(builder: (context, setter) {
-          return WillPopScope(
-            child: Container(
-              padding: EdgeInsets.only(
-                top: 10.0,
-                bottom: 20.0,
-              ),
-              constraints: BoxConstraints(
-                maxHeight: 300,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: 10.0,
-                      left: 15.0,
-                      right: 15.0,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "远端用户",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        Spacer(),
-                        GestureDetector(
-                          child: Icon(FontAwesomeIcons.solidWindowClose),
-                          onTap: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      // shrinkWrap: true,
-                      itemCount: userList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Container(
-                            child: Row(
-                          children: [
-                            Padding(
-                                padding: EdgeInsets.only(left: 15.0),
-                                child: Text(
-                                  userList[index].user.id,
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    // fontSize: 10.0,
-                                  ),
-                                )),
-                            Spacer(),
-                            Padding(
-                                padding: EdgeInsets.only(right: 15.0),
-                                child: IconButton(
-                                  // iconSize: 15,
-                                  icon: Icon(
-                                    userList[index].audioStatus ? FontAwesomeIcons.microphone : FontAwesomeIcons.microphoneSlash,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    presenter.changeRemoteAudioStreamState(userList[index]);
-                                    setter(() {});
-                                  },
-                                )),
-                            Padding(
-                                padding: EdgeInsets.only(right: 15.0),
-                                child: IconButton(
-                                  // iconSize: 15,
-                                  icon: Icon(
-                                    userList[index].videoStatus ? FontAwesomeIcons.video : FontAwesomeIcons.videoSlash,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () async {
-                                    bool state = await presenter.changeRemoteVideoStreamState(userList[index]);
-                                    setter(() {});
-                                  },
-                                ))
-                          ],
-                        ));
-                      },
-                    ),
-                  ),
-                ],
-              ),
+          return Container(
+            padding: EdgeInsets.only(
+              top: 10.0,
+              bottom: 20.0,
             ),
-            onWillPop: () {
-              Navigator.pop(context);
-              return Future.value(false);
-            },
+            constraints: BoxConstraints(
+              maxHeight: 300,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    bottom: 10.0,
+                    left: 15.0,
+                    right: 15.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "远端用户",
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        child: Icon(FontAwesomeIcons.solidWindowClose),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    // shrinkWrap: true,
+                    itemCount: userList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(
+                          child: Row(
+                        children: [
+                          Padding(
+                              padding: EdgeInsets.only(left: 15.0),
+                              child: Text(
+                                userList[index].user.id,
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  // fontSize: 10.0,
+                                ),
+                              )),
+                          Spacer(),
+                          Padding(
+                              padding: EdgeInsets.only(right: 15.0),
+                              child: IconButton(
+                                // iconSize: 15,
+                                icon: Icon(
+                                  userList[index].audioStatus ? FontAwesomeIcons.microphone : FontAwesomeIcons.microphoneSlash,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  presenter.changeRemoteAudioStreamState(userList[index]);
+                                  setter(() {});
+                                },
+                              )),
+                          Padding(
+                              padding: EdgeInsets.only(right: 15.0),
+                              child: IconButton(
+                                // iconSize: 15,
+                                icon: Icon(
+                                  userList[index].videoStatus ? FontAwesomeIcons.video : FontAwesomeIcons.videoSlash,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () async {
+                                  await presenter.changeRemoteVideoStreamState(userList[index]);
+                                  setter(() {});
+                                },
+                              ))
+                        ],
+                      ));
+                    },
+                  ),
+                ),
+              ],
+            ),
           );
         });
       },
     );
   }
 
-  Widget _buildPermissionGuild(BuildContext context) {
-    if (_showPermissionGuide)
-      return BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: ColorConfig.blackAlpha66,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildCameraPermissionGuild(context),
-                Container(
-                  height: 30.0,
-                ),
-                _buildMicPermissionGuild(context),
-              ],
+  Widget _buildBottomDrawerBody(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 45.0.width,
+          right: 45.0.width,
+          top: 20.0.height,
+          bottom: 20.0.height,
+        ),
+        child: Column(
+          children: [
+            GestureDetector(
+              child: _unsubscribeRemoteAudio ? "全员解除静音".button : "全员静音".button,
+              onTap: () => _changeRemoteAudioSubscribeState(),
             ),
-          ),
-        ),
-      );
-    return Container();
-  }
-
-  Widget _buildCameraPermissionGuild(BuildContext context) {
-    if (_permissionStatus != PermissionStatus.camera_denied && _permissionStatus != PermissionStatus.both_denied)
-      return Text(
-        "已有摄像机权限",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      );
-    return GestureDetector(
-      onTap: () => presenter.requestCameraPermission(),
-      child: Text(
-        "允许使用摄像机",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+            // "全员静音".button,
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMicPermissionGuild(BuildContext context) {
-    if (_permissionStatus != PermissionStatus.mic_denied && _permissionStatus != PermissionStatus.both_denied)
-      return Text(
-        "已有麦克风权限",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      );
-    return GestureDetector(
-      onTap: () => presenter.requestMicPermission(),
-      child: Text(
-        "允许使用麦克风",
-        style: TextStyle(
-          fontSize: 15.0,
-          color: Colors.white,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
+  void _changeRemoteAudioSubscribeState() {
+    _unsubscribeRemoteAudio = !_unsubscribeRemoteAudio;
+    presenter?.changeRemoteAudioSubscribeState(_unsubscribeRemoteAudio);
   }
 
   Future<bool> _exit(BuildContext context) async {
@@ -735,28 +623,25 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
     Navigator.pop(context);
   }
 
-  @override
-  void onPermissionStatus(PermissionStatus status) {
-    setState(() {
-      _permissionStatus = status;
-      _showPermissionGuide = _permissionStatus != PermissionStatus.granted;
-      if (!_showPermissionGuide) presenter?.createVideoView();
-    });
+  void invalidate() {
+    setState(() {});
   }
 
   @override
-  void onVideoViewCreated(TextureView view) {
+  void onViewCreated(VideoStreamWidget view) {
     String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
-    setState(() {
-      // if (view.view.viewType == RCRTCViewType.local)
-      if (uid == view.user.id)
-        _mainView = view;
-      else
-        _addSubView(view);
+    if (uid == view.user.id) {
+      view.mirror = _config.frontCamera;
+      _mainView = view;
+    }
+    _addSubView(view);
+    _views.forEach((element) {
+      element.invalidate();
     });
+    setState(() {});
   }
 
-  void _addSubView(TextureView view) {
+  void _addSubView(VideoStreamWidget view) {
     _views.removeWhere((element) {
       return element.user.id == view.user.id;
     });
@@ -764,107 +649,45 @@ class _VideoChatPageState extends AbstractViewState<Presenter, VideoChatPage> wi
   }
 
   @override
-  void onPushed() {
-    // TODO: implement onPushed
-  }
+  void onPublished() {
+    if (_timer != null) _timer.cancel();
 
-  @override
-  void onPushError(String info) {
-    // TODO: implement onPushError
-  }
-
-  @override
-  void onRemoveVideoView(String userId) {
-    setState(() {
-      _views.removeWhere((view) {
-        return view.user.id == userId;
+    _timeCount = 0;
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _timeCount++;
       });
-      if (_mainView.user.id == userId) _mainView = null;
     });
   }
 
   @override
-  void onCameraChanged(bool isFront) {
-    _mainView.view.setMirror(isFront);
+  void onPublishError(String info) {
+    // TODO: implement onPublishError
   }
 
-  void _buildOptionsDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
-        ),
-      ),
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.only(
-              top: 10.0,
-              bottom: 20.0,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.add_a_photo),
-                      onPressed: () {
-                        presenter.switchCamera();
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.face),
-                      onPressed: () {
-                        _mainView.view.setMirror(!_mainView.view.isMirror());
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.account_tree_outlined),
-                      onPressed: () {
-                        _showVideoStreamLevelList(context);
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh),
-                      onPressed: () {
-                        _showCameraRotationList(context);
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.audiotrack),
-                      onPressed: () {
-                        _showAudioMixer(context);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  @override
+  void onRemoveView(String userId) {
+    _views.removeWhere((view) {
+      return view.user.id == userId;
+    });
+    if (_mainView.user.id == userId) _mainView = _views.isNotEmpty ? _views.first : null;
+    _views.forEach((element) {
+      element.invalidate();
+    });
+    setState(() {});
   }
 
-  bool _paused = false;
-  bool _speakerEnable = false;
+  Config _config;
 
-  bool _showPermissionGuide = true;
-  PermissionStatus _permissionStatus = PermissionStatus.unknown;
+  Timer _timer;
+  int _timeCount = 0;
+  DateFormat _timeFormat = DateFormat('mm:ss');
 
-  TextureView _mainView;
-  List<TextureView> _views = List();
+  VideoStreamWidget _mainView;
+  List<VideoStreamWidget> _views = List();
 
-  IconData _audioStreamStateIcon = FontAwesomeIcons.microphone;
+  int _quattroCount = 0;
+  int _noveCount = 0;
 
-  IconData _videoStreamStateIcon = FontAwesomeIcons.video;
-
-  int _selectedCameraCaptureOrientation = 0;
-  var _cameraCaptureOrientationList = ["Portrait", "PortraitUpsideDown", "LandscapeRight", "LandscapeLeft"];
-  var _videoStreamLevelList = ["超清", "高清", "标清"];
+  bool _unsubscribeRemoteAudio = false;
 }

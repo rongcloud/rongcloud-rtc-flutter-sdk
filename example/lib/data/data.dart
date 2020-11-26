@@ -1,9 +1,18 @@
 import 'dart:convert';
 
 import 'package:FlutterRTC/frame/utils/local_storage.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import '../global_config.dart';
 import 'constants.dart';
+
+class Login {
+  String token;
+
+  Login(this.token);
+
+  Login.fromJson(Map<String, dynamic> json) : token = json['token'];
+}
 
 class User {
   String id;
@@ -38,6 +47,32 @@ class User {
         avatar = json['avatar'];
 }
 
+class Config {
+  bool mic;
+  bool speaker;
+  bool camera;
+  bool frontCamera;
+
+  Config.config()
+      : mic = true,
+        speaker = false,
+        camera = true,
+        frontCamera = true;
+
+  Map<String, dynamic> toJSON() => {
+        'mic': mic,
+        'speaker': speaker,
+        'camera': camera,
+        'frontCamera': frontCamera,
+      };
+
+  Config.fromJSON(Map<String, dynamic> json)
+      : mic = json['mic'],
+        speaker = json['speaker'],
+        camera = json['camera'],
+        frontCamera = json['frontCamera'];
+}
+
 class Message {
   User user;
   MessageType type;
@@ -62,8 +97,6 @@ class Message {
 }
 
 class DefaultData {
-  static User _user;
-
   static User get user => getUser();
 
   static User getUser() {
@@ -92,4 +125,33 @@ class DefaultData {
       LocalStorage.setString("user", jsonEncode(_user.toJSON()));
     }
   }
+
+  static RCRTCVideoStreamConfig get videoConfig => _videoConfig;
+
+  static set videoMinRate(int rate) {
+    _videoConfig.minRate = rate;
+  }
+
+  static set videoMaxRate(int rate) {
+    _videoConfig.maxRate = rate;
+  }
+
+  static set videoFPS(RCRTCFps fps) {
+    _videoConfig.fps = fps;
+  }
+
+  static set videoResolution(RCRTCVideoResolution resolution) {
+    _videoConfig.resolution = resolution;
+  }
+
+  static RCRTCVideoStreamConfig _videoConfig = RCRTCVideoStreamConfig(
+    300,
+    1000,
+    RCRTCFps.fps_30,
+    RCRTCVideoResolution.RESOLUTION_720_1280,
+  );
+
+  static bool enableTinyStream = true;
+
+  static User _user;
 }

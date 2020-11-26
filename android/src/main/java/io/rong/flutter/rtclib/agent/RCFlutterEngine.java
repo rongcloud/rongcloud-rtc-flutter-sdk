@@ -22,6 +22,7 @@ import cn.rongcloud.rtc.api.callback.IRCRTCStatusReportListener;
 import cn.rongcloud.rtc.api.callback.RCRTCLiveCallback;
 import cn.rongcloud.rtc.api.report.StatusReport;
 import cn.rongcloud.rtc.api.stream.RCRTCAudioInputStream;
+import cn.rongcloud.rtc.api.stream.RCRTCCameraOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCFileVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoOutputStream;
@@ -234,8 +235,16 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private void getDefaultVideoStream(Result result) {
         Log.d(TAG, "getDefaultVideoStream: ");
-        if (cameraOutputStream == null)
-            cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultVideoStream());
+        if (cameraOutputStream == null) {
+            long start = System.currentTimeMillis();
+            long current = System.currentTimeMillis();
+            RCRTCCameraOutputStream stream = RCRTCEngine.getInstance().getDefaultVideoStream();
+            while (stream == null && (current - start) < 1000) { // 1秒超时
+                stream = RCRTCEngine.getInstance().getDefaultVideoStream();
+                current = System.currentTimeMillis();
+            }
+            cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
+        }
         UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
     }
 
@@ -320,10 +329,10 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         boolean replace = call.argument("replace");
         boolean playback = call.argument("playback");
         RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig.Builder.create().
-                        setMinRate(50).
-                        setMaxRate(500).
-                        setVideoFps(RCRTCParamsType.RCRTCVideoFps.Fps_24).
-                        setVideoResolution(RCRTCParamsType.RCRTCVideoResolution.RESOLUTION_480_640).build();
+                setMinRate(50).
+                setMaxRate(500).
+                setVideoFps(RCRTCParamsType.RCRTCVideoFps.Fps_24).
+                setVideoResolution(RCRTCParamsType.RCRTCVideoResolution.RESOLUTION_480_640).build();
         String path = ASSETS_PREFIX + flutterAssets.getAssetFilePathByName(fileName);
         RCRTCFileVideoOutputStream stream = RCRTCEngine.getInstance().createFileVideoOutputStream(path, replace, playback, tag, config);
         RCFlutterFileVideoOutputStream flutterStream = new RCFlutterFileVideoOutputStream(bMsg, stream);

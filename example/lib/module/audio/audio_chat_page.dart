@@ -71,15 +71,21 @@ class _AudioChatPageState extends State<AudioChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          _mic ? _buildNormal() : _buildNoPermission(),
-          _buildEndCallButton(),
-        ],
+    return WillPopScope(
+      child: Container(
+        color: Colors.white,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            _mic ? _buildNormal() : _buildNoPermission(),
+            _buildEndCallButton(),
+          ],
+        ),
       ),
+      onWillPop: () {
+        _exit();
+        return Future.value(false);
+      },
     );
   }
 
@@ -124,7 +130,8 @@ class _AudioChatPageState extends State<AudioChatPage> {
   }
 
   Future<void> _exit() async {
-    RCRTCEngine.getInstance().leaveRoom();
+    await RCRTCEngine.getInstance().leaveRoom();
+    RCRTCEngine.getInstance().unInit();
     RongIMClient.disconnect(false);
     Navigator.pop(context);
   }

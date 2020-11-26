@@ -41,6 +41,9 @@ NSString * const KJoinRoom = @"joinRoom";
 // startCapture
 NSString * const KStartCapture = @"startCamera";
 
+// startCapture
+NSString * const KStartCaptureByType = @"startCameraByType";
+
 // switchCamera
 NSString * const KSwitchCamera = @"switchCamera";
 

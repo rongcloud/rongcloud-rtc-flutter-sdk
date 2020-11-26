@@ -1,5 +1,6 @@
 import 'package:FlutterRTC/data/codes.dart';
 import 'package:FlutterRTC/data/constants.dart';
+import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/module/video/video_chat_page_contract.dart';
@@ -14,85 +15,65 @@ class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements P
   }
 
   @override
-  void init(BuildContext context) {
-    requestPermission();
-    pull();
+  Future<void> init(BuildContext context) async {
+    subscribe();
   }
 
   @override
-  void requestPermission() async {
-    PermissionStatus status = await model?.requestPermission();
-    view?.onPermissionStatus(status);
-  }
-
-  @override
-  void requestCameraPermission() async {
-    PermissionStatus status = await model?.requestCameraPermission();
-    view?.onPermissionStatus(status);
-  }
-
-  @override
-  void requestMicPermission() async {
-    PermissionStatus status = await model?.requestMicPermission();
-    view?.onPermissionStatus(status);
-  }
-
-  @override
-  void createVideoView() {
-    model?.createVideoView(
+  void subscribe() {
+    model?.subscribe(
       (view) {
-        this.view?.onVideoViewCreated(view);
+        this.view?.onViewCreated(view);
+      },
+      (userId) {
+        this.view?.onRemoveView(userId);
       },
       () {
-        push();
+        this.view?.invalidate();
       },
     );
   }
 
-  @override
-  void push() async {
-    StatusCode code = await model?.push();
+  void publish(Config config) async {
+    StatusCode code = await model?.publish(
+      config,
+      (view) {
+        this.view?.onViewCreated(view);
+      },
+    );
     if (code.status == Status.ok) {
-      view?.onPushed();
+      view?.onPublished();
     } else {
-      view?.onPushError(code.message);
+      view?.onPublishError(code.message);
     }
   }
 
   @override
-  void pull() {
-    model?.pull(
-      (view) {
-        this.view?.onVideoViewCreated(view);
-      },
-      (userId) {
-        this.view?.onRemoveVideoView(userId);
-      },
-    );
+  Future<bool> switchCamera() {
+    return model?.switchCamera();
   }
 
   @override
-  void switchCamera() {
-    model?.switchCamera((isFront) => {
-      view?.onCameraChanged(isFront),
-    });
+  Future<bool> changeAudioStreamState(Config config) {
+    return model?.changeAudioStreamState(config);
   }
 
   @override
-  Future<bool> changeAudioStreamState() {
-    return model?.changeAudioStreamState();
-  }
-
-  @override
-  Future<bool> changeVideoStreamState() {
+  Future<bool> changeVideoStreamState(Config config) {
     return model?.changeVideoStreamState(
+      config,
       (view) {
-        this.view?.onVideoViewCreated(view);
+        this.view?.onViewCreated(view);
       },
       (userId) {
-        this.view?.onRemoveVideoView(userId);
+        this.view?.onRemoveView(userId);
       },
     );
+  }
+
+  @override
+  void changeRemoteAudioSubscribeState(bool unsubscribe) {
+    model?.changeRemoteAudioSubscribeState(unsubscribe);
   }
 
   @override
@@ -113,19 +94,6 @@ class VideoChatPagePresenter extends AbstractPresenter<View, Model> implements P
   @override
   Future<bool> changeRemoteVideoStreamState(RemoteUserStatus user) {
     return model?.changeRemoteVideoStreamState(user);
-  }
-
-  @override
-  void changeVideoResolution(String level) {
-    model?.changeVideoResolution(
-      level,
-      (view) {
-        this.view?.onVideoViewCreated(view);
-      },
-      (userId) {
-        this.view?.onRemoveVideoView(userId);
-      },
-    );
   }
 
   @override

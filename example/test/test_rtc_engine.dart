@@ -45,8 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<TextureView> _views = List();
 
   void _incrementCounter() async {
-
-    if (_testCounter <= 0){
+    if (_testCounter <= 0) {
       return;
     }
 
@@ -77,7 +76,6 @@ class _MyHomePageState extends State<MyHomePage> {
         vs.setTextureView(id);
         vs.startCamera();
       },
-      viewType: RCRTCViewType.local,
       mirror: true,
     );
 
@@ -127,7 +125,6 @@ class _MyHomePageState extends State<MyHomePage> {
           (view, id) async {
             stream.setTextureView(id);
           },
-          viewType: RCRTCViewType.local,
         );
         setState(() {
           _subView = view;
@@ -192,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
           --_testCounter;
         });
-        if (_testCounter > 0){
+        if (_testCounter > 0) {
           _incrementCounter();
         }
       });

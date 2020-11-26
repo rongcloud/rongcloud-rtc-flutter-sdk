@@ -11,6 +11,17 @@
     [[RCRTCEngine sharedInstance].defaultVideoStream startCapture];
 }
 
+- (void)startCapture:(NSNumber *)type {
+    if (type == 0) {
+        [RCRTCEngine sharedInstance].defaultVideoStream.cameraPosition = AVCaptureDevicePositionFront;
+        [RCRTCEngine sharedInstance].defaultVideoStream.isPreviewMirror = true;
+    } else {
+        [RCRTCEngine sharedInstance].defaultVideoStream.cameraPosition = AVCaptureDevicePositionBack;
+        [RCRTCEngine sharedInstance].defaultVideoStream.isPreviewMirror = false;
+    }
+    [[RCRTCEngine sharedInstance].defaultVideoStream startCapture];
+}
+
 - (bool)switchCamera {
     [[RCRTCEngine sharedInstance].defaultVideoStream switchCamera];
     return [RCRTCEngine sharedInstance].defaultVideoStream.cameraPosition  == RCRTCCaptureDeviceFront;
