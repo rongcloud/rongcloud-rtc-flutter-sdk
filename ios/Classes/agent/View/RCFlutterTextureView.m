@@ -45,8 +45,10 @@
 
 - (void)dispose {
     CVPixelBufferRef pixelBufferRef = [_nativeView pixelBufferRef];
-    CFIndex count = CFGetRetainCount(pixelBufferRef);
-    if (count < 3) CVBufferRetain(pixelBufferRef);
+    if (pixelBufferRef != nil) {
+        CFIndex count = CFGetRetainCount(pixelBufferRef);
+        if (count < 3) CVBufferRetain(pixelBufferRef);
+    }
     _nativeView.delegate = nil;
     _nativeView = nil;
     [_registry unregisterTexture:_textureId];
