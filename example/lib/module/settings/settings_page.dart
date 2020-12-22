@@ -1,11 +1,12 @@
-import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:FlutterRTC/router/router.dart';
+import 'package:FlutterRTC/widgets/buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/screenutil.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+
+import 'colors.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -21,134 +22,85 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Scaffold(
-      body: Container(
-        color: Colors.grey.shade300,
-        child: Column(
-          children: [
-            AppBar(
-              title: Text(
-                "设置",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20.0.sp,
-                  decoration: TextDecoration.none,
-                ),
-              ),
-              iconTheme: IconThemeData.fallback(),
-              backgroundColor: Colors.white,
-            ),
-            SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    alignment: Alignment.topLeft,
-                    padding: EdgeInsets.only(
-                      left: 20.0.width,
-                      top: 15.0.height,
-                      bottom: 15.0.height,
-                    ),
-                    child: Text(
-                      "视频全局配置",
-                      style: TextStyle(
-                        fontSize: 12.0.sp,
-                        color: Colors.grey.shade500,
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    child: Container(
-                      height: 40.0.height,
-                      color: Colors.white,
-                      padding: EdgeInsets.only(
-                        left: 20.0.width,
-                        right: 20.0.width,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "视频分辨率",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 15.0.sp,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                          Spacer(),
-                          Text(
-                            Resolutions[DefaultData.videoConfig.resolution.index],
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 15.0.sp,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey,
-                          ),
-                        ],
-                      ),
-                    ),
-                    onTap: () => _selectResolution(),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 1.0.height),
-                  ),
-                  GestureDetector(
-                    child: Container(
-                      height: 40.0.height,
-                      color: Colors.white,
-                      padding: EdgeInsets.only(
-                        left: 20.0.width,
-                        right: 20.0.width,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "大小流",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 15.0.sp,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                          Spacer(),
-                          Switch(
-                            value: DefaultData.enableTinyStream,
-                            activeColor: Colors.green,
-                            onChanged: (value) {
-                              setState(() {
-                                DefaultData.enableTinyStream = value;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    onTap: () => _changeTinyStreamState(),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      backgroundColor: ColorConfig.backgroundColor,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: 'navigator_back'.png.image,
+          onPressed: () => Navigator.pop(context),
         ),
+        title: Text(
+          "设置",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+            decoration: TextDecoration.none,
+          ),
+        ),
+        backgroundColor: ColorConfig.backgroundColor,
+        elevation: 0,
+      ),
+      body: ListView(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.dp),
+            child: Text(
+              '当前用户',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14.sp,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 20.dp,
+              right: 20.dp,
+              top: 10.dp,
+            ),
+            child: Text(
+              '用户ID：${DefaultData.user.id}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.dp),
+            child: Text(
+              '用户名：${DefaultData.user.name}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.sp,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 20.dp,
+              right: 20.dp,
+              top: 10.dp,
+            ),
+            child: Wrap(
+              children: [
+                '退出登陆'.toRedLabelButton(
+                  onPressed: () => _logout(),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void _selectResolution() {
-    Navigator.pushNamed(context, RouterManager.SET_RESOLUTION).then((value) {
-      setState(() {
-        DefaultData.videoConfig.resolution = RCRTCVideoResolution.values[value];
-      });
-    });
-  }
-
-  void _changeTinyStreamState() {
-    setState(() {
-      DefaultData.enableTinyStream = !DefaultData.enableTinyStream;
-    });
+  void _logout() {
+    DefaultData.logout();
+    Navigator.pushNamedAndRemoveUntil(context, RouterManager.LOGIN, (route) => false);
   }
 
   bool _first = true;

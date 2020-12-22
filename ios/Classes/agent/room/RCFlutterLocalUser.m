@@ -163,14 +163,22 @@
     }];
 }
 
-
-
 - (RCRTCOutputStream *)getOutputStreamFromJSON:(NSString *)json {
     NSDictionary *dic = [RCFlutterTools decodeToDic:json];
-    NSArray *streams = [RCRTCEngine sharedInstance].currentRoom.localUser.localStreams;
-    for (RCRTCOutputStream *output in streams) {
-        if ([self stream:output isEqualToStreamDic:dic]) {
-            return output;
+    RCRTCCameraOutputStream *videoStream = [RCRTCEngine sharedInstance].defaultVideoStream;
+    RCRTCMicOutputStream *audioStream = [RCRTCEngine sharedInstance].defaultAudioStream;
+    if ([self stream:videoStream isEqualToStreamDic:dic]) {
+        return videoStream;
+    } else if ([self stream:audioStream isEqualToStreamDic:dic]) {
+        return audioStream;
+    } else {
+        NSString *streamId = dic[@"streamId"];
+        int type = [dic[@"type"] intValue];
+        NSString *tag = dic[@"tag"];
+        NSString *key = [NSString stringWithFormat:@"%@_%d_%@", streamId, type, tag];
+        RCFlutterOutputStream *stream = RCFlutterEngine.sharedEngine.createdOutputStreams[key];
+        if (stream != nil) {
+            return stream.rtcOutputStream;
         }
     }
     return nil;

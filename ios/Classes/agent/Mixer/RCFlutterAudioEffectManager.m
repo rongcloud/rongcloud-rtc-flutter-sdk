@@ -95,18 +95,10 @@ SingleInstanceM(AudioEffectManager);
     [dic setObject:@(code) forKey:@"code"];
     NSString *json = [RCFlutterTools dictionaryToJson:dic];
     result(json);
-    [self complete:code];
 }
 
 - (NSString *)getAssetsPath:(NSString *)assets {
     return [[NSBundle mainBundle] pathForResource:[[RCFlutterEngine sharedEngine].pluginRegister lookupKeyForAsset:assets] ofType:nil];
-}
-
-- (void)complete:(RCRTCCode)error {
-    NSMutableDictionary *dic = [NSMutableDictionary new];
-    [dic setObject:@(error) forKey:@"error"];
-    NSString *json = [RCFlutterTools dictionaryToJson:dic];
-    [self.channel invokeMethod:@"complete" arguments:json];
 }
 
 - (void)unloadEffect:(FlutterMethodCall *)call result:(FlutterResult)result {

@@ -1,19 +1,32 @@
+import 'package:FlutterRTC/data/codes.dart';
 import 'package:FlutterRTC/data/data.dart' as Data;
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 abstract class View implements IView {
   void onReceiveMessage(Data.Message message);
 
-  void onReceiveInviteMessage(Data.User user);
+  void onReceiveInviteMessage();
 
-  void onPulled(RCRTCTextureView videoView);
+  void onReceiveKickMessage();
 
-  void onPullError(int code, String message);
+  void onSubscribeUrlError(int code, String message);
+
+  void onJoined();
+
+  void onJoinError();
+
+  void onUserJoined(UserView view);
+
+  void onUserLeaved(String uid);
+
+  void onUserAudioStreamChanged(String uid, dynamic stream);
+
+  void onUserVideoStreamChanged(String uid, dynamic stream);
 
   void onExit(BuildContext context);
 
@@ -31,29 +44,53 @@ abstract class Model implements IModel {
     void onMessageSent(Message message),
   );
 
-  void sendRequestListMessage(String uid);
+  void refuseInvite(Data.Room room);
 
-  void refuseInvite(Data.User user);
+  void agreeInvite(Data.Room room);
 
-  void agreeInvite(
-    Data.User user,
-    String roomId,
-    String url,
-    void onVideoViewReady(RCRTCTextureView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
-    void onRemoteVideoViewClose(String uid),
+  void subscribeUrl(
+    Data.Room room,
+    void onUserJoined(UserView view),
+    void onSubscribeError(int code, String message),
   );
 
-  void pull(
-    String url,
-    void onSuccess(RCRTCTextureView videoView),
-    void onError(int code, String message),
+  Future<bool> requestPermission();
+
+  Future<bool> unsubscribeUrl(Data.Room room);
+
+  Future<StatusCode> joinRoom(Data.Room room);
+
+  void subscribe(
+    void onUserJoined(UserView view),
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+    void onUserLeaved(String uid),
   );
+
+  Future<StatusCode> publish(
+    Data.Config config,
+    void onUserJoined(UserView view),
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  );
+
+  Future<bool> switchCamera();
+
+  void changeAudioStreamState(
+    Data.Config config,
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+  );
+
+  void changeVideoStreamState(
+    Data.Config config,
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  );
+
+  Future<bool> leaveLink();
 
   void exit(
     BuildContext context,
-    String roomId,
-    String url,
+    Data.Room room,
     void onSuccess(BuildContext context),
     void onError(BuildContext context, String info),
   );
@@ -62,16 +99,19 @@ abstract class Model implements IModel {
 abstract class Presenter implements IPresenter {
   void sendMessage(String message);
 
-  void refuseInvite(Data.User user);
+  void refuseInvite();
 
-  void agreeInvite(
-    Data.User user,
-    void onVideoViewReady(RCRTCTextureView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
-    void onRemoteVideoViewClose(String uid),
-  );
+  void agreeInvite(Data.Config config);
 
-  void pull();
+  void subscribe();
+
+  Future<bool> switchCamera();
+
+  void changeAudioStreamState(Data.Config config);
+
+  void changeVideoStreamState(Data.Config config);
+
+  Future<bool> leaveLink();
 
   void exit(BuildContext context);
 }

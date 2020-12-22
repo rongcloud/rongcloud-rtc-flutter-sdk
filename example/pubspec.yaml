@@ -24,13 +24,14 @@ dependencies:
   flutter:
     sdk: flutter
   path_provider: ^1.6.18
-  cached_network_image: ^2.3.2+1
   dio: ^3.0.0
   shared_preferences: ^0.5.8
   permission_handler: ^5.0.1+1
   flutter_screenutil: ^2.3.0
-  font_awesome_flutter: ^8.0.1
   bottom_drawer: ^0.0.2
+  wakelock: ^0.2.1+1
+  handy_toast: ^0.0.3
+  context_holder: ^0.0.4
   rongcloud_rtc_plugin:
     path: ../
 
@@ -53,7 +54,14 @@ flutter:
   assets:
     - assets/audio/
     - assets/images/
-    - assets/images/user_avatar/
+    - assets/images/2.0x/
+    - assets/images/3.0x/
+    - assets/images/avatar/
+    - assets/images/avatar/2.0x/
+    - assets/images/avatar/3.0x/
+    - assets/images/cover/
+    - assets/images/cover/2.0x/
+    - assets/images/cover/3.0x/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

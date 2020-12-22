@@ -108,10 +108,11 @@ public class RCFlutterAudioEffectManager implements IStateObserver, ILoadingStat
         String file = path != null ? path : getAssetsPath(assets);
         Integer effectId = call.argument("effectId");
         assert effectId != null : "Effect id can't be null!";
-        int code = manager.preloadEffect(file, effectId, callback);
-        JSONObject json = new JSONObject();
-        json.put("code", code);
-        UIThreadHandler.success(result, json.toJSONString());
+        manager.preloadEffect(file, effectId, error -> {
+            JSONObject json = new JSONObject();
+            json.put("code", error);
+            UIThreadHandler.success(result, json.toJSONString());
+        });
     }
 
     private String getAssetsPath(String assets) {

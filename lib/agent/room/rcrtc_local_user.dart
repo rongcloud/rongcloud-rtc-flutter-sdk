@@ -56,12 +56,13 @@ class RCRTCLocalUser extends RCRTCUser {
     void onSuccess(RCRTCLiveInfo liveInfo),
     void onError(int code, String message),
   ) async {
-    String jsonStr = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
-    Map<String, dynamic> result = jsonDecode(jsonStr);
-    int code = result["code"];
+    String json = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
+    Map<String, dynamic> result = jsonDecode(json);
+    RCRTCLog.d(_tag, "publishLiveStream $result");
+    int code = result['code'];
     String content = result["content"];
     if (code == 0) {
-      onSuccess(RCRTCLiveInfo.fromJSON(content));
+      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content)));
     } else {
       onError(code, content);
     }

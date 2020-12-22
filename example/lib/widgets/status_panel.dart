@@ -2,27 +2,14 @@ import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:flutter/material.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-class StatusPanel extends StatefulWidget {
-  @override
-  _StatusPanelState createState() => _StatusPanelState();
-}
-
-class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReportListener {
-  @override
-  void initState() {
-    RCRTCEngine.getInstance().registerStatusReportListener(this);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    RCRTCEngine.getInstance().unRegisterStatusReportListener();
-    super.dispose();
-  }
+class StatusPanel extends StatelessWidget {
+  StatusPanel({
+    @required this.report,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (_report == null) return CircularProgressIndicator();
+    if (report == null) return CircularProgressIndicator();
     return ListView(
       children: [
         _buildLocalStatus(context),
@@ -38,13 +25,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
       children: [
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 20.0.width,
+            left: 20.dp,
+            top: 20.dp,
           ),
           child: Text(
-            "网络类型: ${_report.networkType}",
+            "网络类型: ${report.networkType}",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -52,13 +39,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            top: 5.dp,
           ),
           child: Text(
-            "IP: ${_report.ipAddress}",
+            "IP: ${report.ipAddress}",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -66,13 +53,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            top: 5.dp,
           ),
           child: Text(
-            "发送码率: ${_report.bitRateSend}kbps",
+            "发送码率: ${report.bitRateSend}kbps",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -80,13 +67,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            top: 5.dp,
           ),
           child: Text(
-            "接收码率: ${_report.bitRateRcv}kbps",
+            "接收码率: ${report.bitRateRcv}kbps",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -94,13 +81,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            top: 5.dp,
           ),
           child: Text(
-            "往返延迟: ${_report.rtt}ms",
+            "往返延迟: ${report.rtt}ms",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -116,13 +103,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
       children: [
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 20.0.width,
+            left: 20.dp,
+            top: 20.dp,
           ),
           child: Text(
             "视频发布状态: ",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -130,15 +117,15 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            right: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            right: 20.dp,
+            top: 5.dp,
           ),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             border: TableBorder.all(
               color: Colors.grey,
-              width: 1.0.width,
+              width: 1.dp,
               style: BorderStyle.solid,
             ),
             children: _buildVideoSendStatus(context),
@@ -146,13 +133,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 20.0.width,
+            left: 20.dp,
+            top: 20.dp,
           ),
           child: Text(
             "音频发布状态: ",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -160,15 +147,15 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            right: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            right: 20.dp,
+            top: 5.dp,
           ),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             border: TableBorder.all(
               color: Colors.grey,
-              width: 1.0.width,
+              width: 1.dp,
               style: BorderStyle.solid,
             ),
             children: _buildAudioSendStatus(context),
@@ -187,7 +174,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "分辨率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -196,7 +183,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "帧率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -205,7 +192,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "码率(kbps)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -214,7 +201,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "往返延迟(ms)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -223,7 +210,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "丢包率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -231,7 +218,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ],
       ),
     );
-    _report.statusVideoSends.values.forEach((status) {
+    report.statusVideoSends.values.forEach((status) {
       widgets.add(
         TableRow(
           children: [
@@ -239,7 +226,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.frameWidth}x${status.frameHeight}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -248,7 +235,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.frameRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -257,7 +244,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.bitRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -266,7 +253,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.rtt}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -275,7 +262,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.packetLostRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -296,7 +283,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "码率(kbps)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -305,7 +292,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "往返延迟(ms)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -314,7 +301,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "丢包率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -322,7 +309,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ],
       ),
     );
-    _report.statusAudioSends.values.forEach((status) {
+    report.statusAudioSends.values.forEach((status) {
       widgets.add(
         TableRow(
           children: [
@@ -330,7 +317,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.bitRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -339,7 +326,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.rtt}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -348,7 +335,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.packetLostRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -366,13 +353,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
       children: [
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 20.0.width,
+            left: 20.dp,
+            top: 20.dp,
           ),
           child: Text(
             "视频订阅状态: ",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -380,15 +367,15 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            right: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            right: 20.dp,
+            top: 5.dp,
           ),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             border: TableBorder.all(
               color: Colors.grey,
-              width: 1.0.width,
+              width: 1.dp,
               style: BorderStyle.solid,
             ),
             children: _buildVideoReceiveStatus(context),
@@ -396,13 +383,13 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            top: 20.0.width,
+            left: 20.dp,
+            top: 20.dp,
           ),
           child: Text(
             "音频订阅状态: ",
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -410,15 +397,15 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ),
         Padding(
           padding: EdgeInsets.only(
-            left: 20.0.width,
-            right: 20.0.width,
-            top: 5.0.width,
+            left: 20.dp,
+            right: 20.dp,
+            top: 5.dp,
           ),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             border: TableBorder.all(
               color: Colors.grey,
-              width: 1.0.width,
+              width: 1.dp,
               style: BorderStyle.solid,
             ),
             children: _buildAudioReceiveStatus(context),
@@ -437,7 +424,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "分辨率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -446,7 +433,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "帧率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -455,7 +442,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "码率(kbps)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -464,7 +451,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "丢包率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -472,7 +459,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ],
       ),
     );
-    _report.statusVideoRcvs.values.forEach((status) {
+    report.statusVideoRcvs.values.forEach((status) {
       widgets.add(
         TableRow(
           children: [
@@ -480,7 +467,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.frameWidth}x${status.frameHeight}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -489,7 +476,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.frameRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -498,7 +485,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.bitRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -507,7 +494,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.packetLostRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -528,7 +515,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "音量",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -537,7 +524,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "码率(kbps)",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -546,7 +533,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
             "丢包率",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15.0.sp,
+              fontSize: 15.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -554,7 +541,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
         ],
       ),
     );
-    _report.statusAudioRcvs.values.forEach((status) {
+    report.statusAudioRcvs.values.forEach((status) {
       widgets.add(
         TableRow(
           children: [
@@ -562,7 +549,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.audioOutputLevel}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -571,7 +558,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.bitRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -580,7 +567,7 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
               "${status.packetLostRate}",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.0.sp,
+                fontSize: 15.sp,
                 color: Colors.white,
                 decoration: TextDecoration.none,
               ),
@@ -592,12 +579,5 @@ class _StatusPanelState extends State<StatusPanel> implements IRCRTCStatusReport
     return widgets;
   }
 
-  @override
-  onConnectionStats(StatusReport report) {
-    setState(() {
-      _report = report;
-    });
-  }
-
-  StatusReport _report;
+  final StatusReport report;
 }

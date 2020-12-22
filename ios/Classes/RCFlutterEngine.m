@@ -18,12 +18,18 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
+#ifdef USE_REMOTE_SDK
 @interface RCFlutterEngine () <NSCopying, RCRTCActivityMonitorDelegate>
+#else
+@interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
+#endif
 
 /**
  rtc room
  */
 @property (nonatomic, strong) RCFlutterRoom *room;
+
+@property (nonatomic, strong) NSMutableDictionary *createdOutputStreams;
 
 @end
 
@@ -54,7 +60,7 @@
         BOOL enable = ((NSNumber *)(call.arguments)).boolValue;
         [self enableSpeaker:enable];
     } else if ([call.method isEqualToString:KRegisterStatusReportListener]) {
-        [self registerReportStatusListener:result];
+        [self registerStatusReportListener:result];
     } else if ([call.method isEqualToString:KUnRegisterStatusReportListener]) {
         [self unRegisterStatusReportListener:result];
     } else if ([call.method isEqualToString:KCreateVideoOutputStream]) {
@@ -79,14 +85,20 @@
 
 #pragma mark - instance
 SingleInstanceM(Engine);
+
 - (void)allocInstance {
     self.room = [[RCFlutterRoom alloc] init];
+    self.createdOutputStreams = [[NSMutableDictionary alloc] init];
 }
+
 - (void)destroyCache {
     self.room = nil;
+    [self.createdOutputStreams removeAllObjects];
+    self.createdOutputStreams = nil;
     [[RCFlutterAudioEffectManager sharedAudioEffectManager] destroy];
     [[RCFlutterTextureViewFactory sharedViewFactory] destroy];
 }
+
 #pragma mark - 调用原生
 
 - (void)joinRTCRoom:(FlutterMethodCall *)call result:(FlutterResult)result {
@@ -197,6 +209,8 @@ SingleInstanceM(Engine);
     [output registerStreamChannel];
     NSDictionary *desc = [output toDesc];
     NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+    [_createdOutputStreams setObject:output
+                              forKey:[NSString stringWithFormat:@"%@_%d_%@", output.streamId, (int) output.streamType, tag]];
     result(jsonObj);
 }
 
@@ -212,23 +226,28 @@ SingleInstanceM(Engine);
     NSString *url = dic[@"url"];
     RCRTCAVStreamType type = [dic[@"type"] intValue];
     [[RCFlutterRTCManager sharedRTCManager] subscribeLiveStream:url streamType:type completion:^(RCRTCCode code, RCRTCInputStream * _Nullable inputStream) {
-        if (code != RCRTCCodeSuccess) {
+        if (code == RCRTCCodeSuccess) {
+            [_channel invokeMethod:@"onSuccess" arguments:nil];
+        } else {
             NSMutableDictionary *desc = [NSMutableDictionary dictionary];
-            [desc setObject:@"failed" forKey:@"callback"];
             [desc setObject:[NSNumber numberWithInt:(int)code] forKey:@"code"];
             [desc setObject:[RCRTCCodeDefine codeDesc:code] forKey:@"message"];
-            NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
-            result(jsonObj);
+            NSString *json = [RCFlutterTools dictionaryToJson:desc];
+            [_channel invokeMethod:@"onFailed" arguments:json];
         }
-        if ([inputStream mediaType] == RTCMediaTypeVideo) {
-            NSMutableDictionary *desc = [NSMutableDictionary dictionary];
-            [desc setObject:@"success" forKey:@"callback"];
+        
+        if ([inputStream mediaType] == RTCMediaTypeAudio) {
             RCFlutterInputStream *stream = [[RCFlutterInputStream alloc] init];
             stream.rtcInputStream = inputStream;
             [stream registerStreamChannel];
-            [desc setObject:[RCFlutterTools dictionaryToJson:[stream toDesc]] forKey:@"stream"];
-            NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
-            result(jsonObj);
+            NSString *json = [RCFlutterTools dictionaryToJson:[stream toDesc]];
+            [_channel invokeMethod:@"onAudioStreamReceived" arguments:json];
+        } else if ([inputStream mediaType] == RTCMediaTypeVideo) {
+            RCFlutterInputStream *stream = [[RCFlutterInputStream alloc] init];
+            stream.rtcInputStream = inputStream;
+            [stream registerStreamChannel];
+            NSString *json = [RCFlutterTools dictionaryToJson:[stream toDesc]];
+            [_channel invokeMethod:@"onVideoStreamReceived" arguments:json];
         }
     }];
 }
@@ -253,27 +272,40 @@ SingleInstanceM(Engine);
     result(nil);
 }
 
-- (void)registerReportStatusListener:(FlutterResult)result {
+- (void)registerStatusReportListener:(FlutterResult)result {
+#ifdef USE_REMOTE_SDK
     [RCRTCEngine sharedInstance].monitorDelegate = self;
+#else
+    [RCRTCEngine sharedInstance].statusReportDelegate = self;
+#endif
     result(nil);
 }
 
 - (void)unRegisterStatusReportListener:(FlutterResult)result {
+#ifdef USE_REMOTE_SDK
     [RCRTCEngine sharedInstance].monitorDelegate = nil;
+#else
+    [RCRTCEngine sharedInstance].statusReportDelegate = self;
+#endif
     result(nil);
 }
 
-- (void)didReportStatForm:(RCRTCStatisticalForm *)form {
+#ifdef USE_REMOTE_SDK
+- (void)didReportStatForm:(RCRTCStatisticalForm*)form {
+#else
+- (void)didReportStatusForm:(RCRTCStatusForm*)form {
+#endif
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     
     NSMutableDictionary *vss = [NSMutableDictionary dictionary];
     NSMutableDictionary *ass = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.sendStats) {
         NSDictionary *avs = [self toDic:stat];
+        NSString *newTrackId = [self _convertFormartWithStr:stat.trackId];
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
-            [vss setObject:avs forKey:stat.trackId];
+            [vss setObject:avs forKey:newTrackId];
         } else {
-            [ass setObject:avs forKey:stat.trackId];
+            [ass setObject:avs forKey:newTrackId];
         }
     }
     
@@ -281,10 +313,11 @@ SingleInstanceM(Engine);
     NSMutableDictionary *ars = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.recvStats) {
         NSDictionary *avs = [self toDic:stat];
+        NSString *newTrackId = [self _convertFormartWithStr:stat.trackId];
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
-            [vrs setObject:avs forKey:stat.trackId];
+            [vrs setObject:avs forKey:newTrackId];
         } else {
-            [ars setObject:avs forKey:stat.trackId];
+            [ars setObject:avs forKey:newTrackId];
         }
     }
     
@@ -298,7 +331,7 @@ SingleInstanceM(Engine);
     
     [dic setObject:@(form.rtt) forKey:@"rtt"];
     
-    [dic setObject:form.networkType forKey:@"networkType"];
+    [dic setObject:form.networkType.length ? form.networkType : @"Unknown" forKey:@"networkType"];
     NSString *ipAddress = form.ipAddress != nil ? form.ipAddress : @"Unknown";
     [dic setObject:ipAddress forKey:@"ipAddress"];
     [dic setObject:@(form.availableReceiveBandwidth) forKey:@"googAvailableReceiveBandwidth"];
@@ -307,11 +340,29 @@ SingleInstanceM(Engine);
     
     [_channel invokeMethod:@"onConnectionStats" arguments:[RCFlutterTools dictionaryToJson:dic]];
 }
+    
+- (NSString *)_convertFormartWithStr:(NSString *)string {
+    NSError *error = nil;
+    string = [string replacingWithPattern:@"_tiny$"
+                             withTemplate:@""
+                                    error:&error];
+    string = [string replacingWithPattern:@"_audio$"
+                             withTemplate:@""
+                                    error:&error];
+    string = [string replacingWithPattern:@"_video$"
+                             withTemplate:@""
+                                    error:&error];
+    return string;
+}
 
 - (NSDictionary *)toDic:(RCRTCStreamStat *)stat {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     [dic setObject:stat.trackId forKey:@"id"];
+#ifdef USE_REMOTE_SDK
     NSString *uid = [RCRTCStatisticalForm fetchUserIdFromTrackId:stat.trackId];
+#else
+    NSString *uid = [RCRTCStatusForm fetchUserIdFromTrackId:stat.trackId];
+#endif
     [dic setObject:uid != nil ? uid : @"Unknown" forKey:@"uid"];
     [dic setObject:stat.codecName forKey:@"codecName"];
     [dic setObject:stat.mediaType forKey:@"mediaType"];

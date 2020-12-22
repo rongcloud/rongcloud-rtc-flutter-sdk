@@ -30,4 +30,12 @@ void dispatch_to_workQueue(dispatch_block_t block);
 + (NSDictionary *)decodeToDic:(NSString *)json;
 @end
 
+
+@interface NSString(RegularExpression)
+
+- (NSString *)replacingWithPattern:(NSString *)pattern
+                      withTemplate:(NSString *)withTemplate
+                             error:(NSError **)error;
+@end
+
 NS_ASSUME_NONNULL_END

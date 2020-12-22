@@ -110,7 +110,7 @@ class RCRTCRoom {
     List<RCRTCInputStream> targetStreamList = List();
     for (Map<String, dynamic> jsonStream in jsonStreamList) {
       for (RCRTCStream stream in targetUser.streamList) {
-        if (stream.streamId == jsonStream['id'] && stream.type.index == jsonStream['type']) {
+        if (stream.streamId == jsonStream['streamId'] && stream.type.index == jsonStream['type']) {
           targetStreamList.add(stream);
           break;
         }

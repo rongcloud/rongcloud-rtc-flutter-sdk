@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 abstract class View implements IView {
   void onServerVersionLoaded(BuildContext context, String version);
 
-  void onLoginSuccess();
+  void onLoginSuccess(BuildContext context);
 
   void onLoginError(BuildContext context, String info);
 }

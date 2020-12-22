@@ -32,6 +32,11 @@ class RCRTCEngine {
   RCRTCRoom _room;
   IRCRTCStatusReportListener _statusReportListener;
 
+  void Function() _subscribeLiveStreamSuccess;
+  void Function(RCRTCAudioInputStream stream) _subscribeLiveStreamAudioReceived;
+  void Function(RCRTCVideoInputStream stream) _subscribeLiveStreamVideoReceived;
+  void Function(int code, String message) _subscribeLiveStreamFailed;
+
   static RCRTCEngine getInstance() {
     if (_instance == null) _instance = RCRTCEngine();
     return _instance;
@@ -46,6 +51,18 @@ class RCRTCEngine {
       case "onConnectionStats":
         _handlerOnConnectionStats(call);
         break;
+      case "onSuccess":
+        _handlerSubscribeLiveStreamSuccess(call);
+        break;
+      case "onAudioStreamReceived":
+        _handlerSubscribeLiveStreamAudioReceived(call);
+        break;
+      case "onVideoStreamReceived":
+        _handlerSubscribeLiveStreamVideoReceived(call);
+        break;
+      case "onFailed":
+        _handlerSubscribeLiveStreamFailed(call);
+        break;
     }
     return null;
   }
@@ -54,6 +71,33 @@ class RCRTCEngine {
     var jsonObj = jsonDecode(call.arguments);
     StatusReport report = StatusReport.fromJson(jsonObj);
     _statusReportListener.onConnectionStats(report);
+  }
+
+  _handlerSubscribeLiveStreamSuccess(MethodCall call) {
+    _subscribeLiveStreamSuccess?.call();
+  }
+
+  _handlerSubscribeLiveStreamAudioReceived(MethodCall call) {
+    if (_subscribeLiveStreamAudioReceived == null) return;
+    String json = call.arguments;
+    RCRTCAudioInputStream audio = RCRTCAudioInputStream.fromJson(jsonDecode(json));
+    _subscribeLiveStreamAudioReceived.call(audio);
+  }
+
+  _handlerSubscribeLiveStreamVideoReceived(MethodCall call) {
+    if (_subscribeLiveStreamVideoReceived == null) return;
+    String json = call.arguments;
+    RCRTCVideoInputStream video = RCRTCVideoInputStream.fromJson(jsonDecode(json));
+    _subscribeLiveStreamVideoReceived.call(video);
+  }
+
+  _handlerSubscribeLiveStreamFailed(MethodCall call) {
+    if (_subscribeLiveStreamFailed == null) return;
+    String json = call.arguments;
+    Map<String, dynamic> result = jsonDecode(json);
+    int code = result['code'];
+    String message = result['message'];
+    _subscribeLiveStreamFailed.call(code, message);
   }
 
   Future<void> init(Object config) async {
@@ -67,6 +111,10 @@ class RCRTCEngine {
     _audioOutputStream = null;
     if (_audioEffectManager != null) _audioEffectManager.release();
     _audioEffectManager = null;
+    _subscribeLiveStreamSuccess = null;
+    _subscribeLiveStreamAudioReceived = null;
+    _subscribeLiveStreamVideoReceived = null;
+    _subscribeLiveStreamFailed = null;
     return await _channel.invokeMethod('unInit');
   }
 
@@ -133,28 +181,20 @@ class RCRTCEngine {
   //   return RCRTCFileVideoOutputStream.fromJson(jsonDecode(jsonStr));
   // }
 
-  Future<void> subscribeLiveStream(
-    String url,
-    AVStreamType streamType,
-    void onSuccess(RCRTCVideoInputStream stream),
-    void onError(int code, String message),
-  ) async {
+  Future<void> subscribeLiveStream({
+    @required String url,
+    @required AVStreamType streamType,
+    @required void onSuccess(),
+    @required void onAudioStreamReceived(RCRTCAudioInputStream stream),
+    @required void onVideoStreamReceived(RCRTCVideoInputStream stream),
+    @required void onError(int code, String message),
+  }) async {
     var args = {"url": url, "type": streamType.index};
-    String json = await _channel.invokeMethod("subscribeLiveStream", args);
-    Map<String, dynamic> result = jsonDecode(json);
-    RCRTCLog.d("RCRTCEngine", "subscribeLiveStream $result");
-    String callback = result['callback'];
-    switch (callback) {
-      case 'success':
-        RCRTCVideoInputStream video = RCRTCVideoInputStream.fromJson(jsonDecode(result['stream']));
-        onSuccess(video);
-        break;
-      case 'failed':
-        int code = result['code'];
-        String message = result['message'];
-        onError(code, message);
-        break;
-    }
+    _channel.invokeMethod("subscribeLiveStream", args);
+    _subscribeLiveStreamSuccess = onSuccess;
+    _subscribeLiveStreamAudioReceived = onAudioStreamReceived;
+    _subscribeLiveStreamVideoReceived = onVideoStreamReceived;
+    _subscribeLiveStreamFailed = onError;
   }
 
   enableSpeaker(bool enableSpeaker) async {

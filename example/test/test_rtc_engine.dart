@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-String g_appKey = 'z3v5yqkbv8v30';
-String g_userName = "cvnjyte";
-String g_userId = "frtcu1604022940878";
-String g_token = "HE+dGwLwrttpDpSM9aYCFcl0y3dZHpzqVguvQ1awzCHsL1rIG8Gw3A==@emx6.cn.rongnav.com;emx6.cn.rongcfg.com";
-String g_roomId = "ut";
-RCRTCRoomType type = RCRTCRoomType.Normal;
+const String APP_KEY = 'z3v5yqkbv8v30';
+const String USER_NAME = "cvnjyte";
+const String USER_ID = "frtcu1604022940878";
+const String TOKEN = "HE+dGwLwrttpDpSM9aYCFcl0y3dZHpzqVguvQ1awzCHsL1rIG8Gw3A==@emx6.cn.rongnav.com;emx6.cn.rongcfg.com";
+const String ROOM_ID = "ut";
+
+const RCRTCRoomType type = RCRTCRoomType.Normal;
 
 void main() {
   runApp(MyApp());
@@ -42,22 +42,21 @@ class _MyHomePageState extends State<MyHomePage> {
   int _testCounter = 10;
   RCRTCTextureView _mainView;
   RCRTCTextureView _subView;
-  List<TextureView> _views = List();
 
   void _incrementCounter() async {
     if (_testCounter <= 0) {
       return;
     }
 
-    RongIMClient.init(g_appKey);
-    bool ok = await connectIM(g_roomId);
+    RongIMClient.init(APP_KEY);
+    bool ok = await connectIM(ROOM_ID);
     if (!ok) {
       throw 'RongIMClient error';
     }
 
     await RCRTCEngine.getInstance().init(null);
     RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
-      roomId: g_roomId,
+      roomId: ROOM_ID,
       roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
     );
     if (result.code != 0) {
@@ -166,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await RCRTCAudioMixer.getInstance().getPlaybackVolume();
 
     RCRTCAudioEffectManager am = await RCRTCEngine.getInstance().getAudioEffectManager();
-    await am.preloadEffect('assets/audio/effect0.mp3', 0, null);
+    await am.preloadEffect('assets/audio/effect0.mp3', 0);
     await am.getEffectsVolume();
     await am.setEffectsVolume(100);
     await am.playEffect(0, 10, 100);
@@ -273,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<dynamic> connectIM(String roomId) {
     Completer completer = new Completer();
     RongIMClient.connect(
-      g_token,
+      TOKEN,
       (code, userId) {
         if (code == RCRTCErrorCode.OK || code == RCRTCErrorCode.ALREADY_CONNECTED) {
           RongIMClient.joinChatRoom(roomId, -1);

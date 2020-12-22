@@ -1,13 +1,22 @@
+import 'dart:async';
+
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/ui/toast.dart';
+import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:FlutterRTC/module/live/audience/live_audience_page_presenter.dart';
+import 'package:FlutterRTC/widgets/alert.dart';
+import 'package:FlutterRTC/widgets/bottom_audio_effect_mix_settings_sheet.dart';
+import 'package:FlutterRTC/widgets/buttons.dart';
+import 'package:FlutterRTC/widgets/status_panel.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
+import 'package:handy_toast/handy_toast.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+import 'package:wakelock/wakelock.dart';
 
-import '../../../colors.dart';
+import 'colors.dart';
 import 'live_audience_page_contract.dart';
 
 class LiveAudiencePage extends AbstractView {
@@ -15,255 +24,294 @@ class LiveAudiencePage extends AbstractView {
   _LiveAudiencePageState createState() => _LiveAudiencePageState();
 }
 
-class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePage> implements View {
+class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePage> with WidgetsBindingObserver implements View, IRCRTCStatusReportListener {
+  @override
+  Presenter createPresenter() {
+    return LiveAudiencePagePresenter();
+  }
+
+  @override
+  void init(BuildContext context) {
+    super.init(context);
+
+    Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
+    _room = Room.fromJSON(arguments);
+
+    RCRTCEngine.getInstance().enableSpeaker(_config.speaker);
+
+    _maxSubListHeight = MediaQuery.of(context).size.height - 64.dp - 104.dp;
+    _maxSubListShown = ((_maxSubListHeight - 28.dp) / 140.dp).floor();
+
+    _messageViewPadding = defaultMessageViewPadding.dp;
+
+    Wakelock.enable();
+
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    if (_mainViewSetter != null) _mainViewSetter = null;
+    if (_statusPanelSetter != null) _statusPanelSetter = null;
+    if (_messageSetter != null) _messageSetter = null;
+    if (_bottomBarSetter != null) _bottomBarSetter = null;
+    _signalStrengthSetters.clear();
+
+    Wakelock.disable();
+
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_inputMessageVisible && _inputMessageFocusNode.hasFocus) {
+        _inputMessageVisible = false;
+        Navigator.pop(context);
+        return;
+      } else {
+        _inputMessageVisible = _inputMessageFocusNode.hasFocus;
+      }
+    });
+  }
+
   @override
   Widget buildWidget(BuildContext context) {
     return WillPopScope(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: ColorConfig.backgroundColor,
         body: Stack(
           children: [
-            _buildVideoView(context),
-            _buildInfoView(context),
+            _buildMainView(context),
+            _buildTopBar(context),
             _buildBottomView(context),
           ],
         ),
       ),
-      onWillPop: () => _doExit(context),
+      onWillPop: () => _dealPopAction(context),
     );
   }
 
-  Widget _buildVideoView(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.lightGreen,
-      child: Stack(children: [
-        _videoView ?? Container(),
-        Center(
-          child: _buildPullViewByState(context),
-        ),
-      ]),
-    );
-  }
-
-  Widget _buildPullViewByState(BuildContext context) {
-    switch (_pullState) {
-      case 0:
-        return _buildPullWaitInfo(context);
-      case 2:
-        return _buildPullErrorInfo(context);
-    }
-    return Container();
-  }
-
-  Widget _buildPullWaitInfo(BuildContext context) {
-    return Text(
-      "请稍候...",
-      style: TextStyle(
-        color: Colors.lightBlueAccent,
-        fontSize: 30.0,
-        decoration: TextDecoration.none,
-      ),
-    );
-  }
-
-  Widget _buildPullErrorInfo(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _rePull(context),
-      child: Text(
-        "拉流失败，点击重试",
-        style: TextStyle(
-          color: Colors.lightGreen,
-          fontSize: 30.0,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
-  void _rePull(BuildContext context) {
-    presenter?.pull();
-  }
-
-  Widget _buildInfoView(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 15.0,
-        right: 15.0,
-        top: 45.0,
-      ),
-      child: Column(
+  Widget _buildMainView(BuildContext context) {
+    return StatefulBuilder(builder: (context, setter) {
+      _mainViewSetter = setter;
+      List<UserView> views = _viewsWithoutMain();
+      return Stack(
         children: [
-          Stack(
-            children: [
-              Row(
+          _buildUserView(context, _mainView),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              width: 112.dp,
+              margin: EdgeInsets.only(
+                right: 8.dp,
+                bottom: 64.dp,
+              ),
+              constraints: BoxConstraints(
+                maxHeight: _maxSubListHeight,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(2.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15.0),
-                      color: ColorConfig.blackAlpha66,
-                    ),
-                    child: Row(
-                      children: [
-                        ClipOval(
-                          child: SizedBox(
-                            width: 30.0,
-                            height: 30.0,
-                            child: Image.asset("assets/images/default_user_icon.jpg"),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            left: 10.0,
-                            right: 20.0,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "主播名称",
-                                style: TextStyle(
-                                  fontSize: 12.0,
-                                  color: Colors.white,
-                                  decoration: TextDecoration.none,
-                                ),
-                              ),
-                              Text(
-                                "10.2w本场点赞",
-                                style: TextStyle(
-                                  fontSize: 7.0,
-                                  color: Colors.white,
-                                  decoration: TextDecoration.none,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          height: 30.0,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15.0),
-                            color: ColorConfig.defaultRed,
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: 10.0,
-                              right: 10.0,
+                  views.length > _maxSubListShown
+                      ? Padding(
+                          padding: EdgeInsets.only(bottom: 8.dp),
+                          child: Container(
+                            height: 20.dp,
+                            padding: EdgeInsets.symmetric(horizontal: 8.5.dp),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.dp),
+                              color: Colors.black.withOpacity(0.24),
                             ),
                             child: Text(
-                              "关注",
+                              '连麦人数 ${views.length}',
                               style: TextStyle(
-                                fontSize: 13.0,
+                                fontSize: 12.sp,
                                 color: Colors.white,
                                 decoration: TextDecoration.none,
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        )
+                      : Container(),
+                  Flexible(
+                    flex: 1,
+                    fit: FlexFit.loose,
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeTop: true,
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: views.length,
+                        separatorBuilder: (context, index) {
+                          return Divider(
+                            height: 4.dp,
+                            color: Colors.transparent,
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          return SizedBox(
+                            width: 112.dp,
+                            height: 140.dp,
+                            child: _buildUserView(context, views[index]),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 30.0,
-                        height: 30.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 30.0,
-                        height: 30.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 30.0,
-                        height: 30.0,
-                        child: Image.asset("assets/images/default_user_icon.jpg"),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 10.0,
-                    ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      height: 30.0,
-                      constraints: BoxConstraints(
-                        minWidth: 40.0,
-                      ),
-                      padding: EdgeInsets.only(
-                        left: 10.0,
-                        right: 10.0,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: ColorConfig.blackAlpha33,
-                      ),
-                      child: Text(
-                        "0",
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  List<UserView> _viewsWithoutMain() {
+    if (_mainView == null) return _views;
+    return _views.where((view) => view.user.id != _mainView.user.id).toList();
+  }
+
+  Widget _buildUserView(BuildContext context, UserView view) {
+    if (view == null)
+      return Container(
+        color: ColorConfig.viewBackgroundColor,
+      );
+    return Stack(
+      children: [
+        view.widget ??
+            Container(
+              color: ColorConfig.viewBackgroundColor,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 80.dp,
+                height: 80.dp,
+                child: view.user.avatar.fullImage,
+              ),
+            ),
+        view.user.id == _room.user.id
+            ? Container()
+            : Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(8.dp),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        view.user.id,
+                        softWrap: true,
                         style: TextStyle(
-                          fontSize: 12.0,
+                          fontSize: 14.sp,
                           color: Colors.white,
                           decoration: TextDecoration.none,
                         ),
                       ),
-                    ),
+                      StatefulBuilder(builder: (context, setter) {
+                        _signalStrengthSetters[view.user.id] = setter;
+                        return 'signal_strength_level_${_getSignalStrength(view)}'.png.image;
+                      }),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ],
+      ],
+    );
+  }
+
+  int _getSignalStrength(UserView view) {
+    if (_statusReport == null) return 0;
+    String packetLostRate;
+    if (view.self) {
+      if (view.video && _statusReport.statusVideoSends.values.isNotEmpty)
+        packetLostRate = _statusReport.statusVideoSends.values.first.packetLostRate;
+      else if (view.audio && _statusReport.statusAudioSends.values.isNotEmpty)
+        packetLostRate = _statusReport.statusAudioSends.values.first.packetLostRate;
+      else
+        packetLostRate = '0';
+    } else {
+      if (view.video)
+        packetLostRate = _statusReport.statusVideoRcvs[view.videoStream.streamId]?.packetLostRate ?? '0';
+      else if (view.audio)
+        packetLostRate = _statusReport.statusAudioRcvs[view.audioStream.streamId]?.packetLostRate ?? '0';
+      else
+        packetLostRate = '0';
+    }
+    double strength = (packetLostRate ?? '100').toDouble;
+    if (strength < 10)
+      return 2;
+    else if (strength < 50)
+      return 1;
+    else
+      return 0;
+  }
+
+  Widget _buildTopBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 12.dp,
+        right: 12.dp,
+        top: MediaQuery.of(context).padding.top,
+      ),
+      child: Row(
+        children: [
+          _buildRoomInfo(context),
+          Spacer(),
+          'module_close'.png.image.toButton(
+                onPressed: () => _dealPopAction(context),
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomInfo(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.dp),
+        color: Colors.black.withOpacity(0.24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 36.dp,
+            height: 36.dp,
+            child: _room.user.avatar.fullImage,
           ),
           Padding(
             padding: EdgeInsets.only(
-              top: 10.0,
+              left: 5.dp,
+              right: 12.dp,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.only(
-                    top: 2.0,
-                    bottom: 3.0,
-                    left: 6.0,
-                    right: 6.0,
+                Text(
+                  _room.id,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
                   ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12.0),
-                    color: ColorConfig.blackAlpha33,
-                  ),
-                  child: Text(
-                    "更多直播 >",
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      color: Colors.white,
-                      decoration: TextDecoration.none,
-                    ),
+                ),
+                Text(
+                  _room.user.name,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ],
@@ -271,73 +319,91 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
           ),
         ],
       ),
+    ).toButton(
+      onPressed: () => _showStatusPanel(context),
+    );
+  }
+
+  void _showStatusPanel(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setter) {
+          _statusPanelSetter = setter;
+          return WillPopScope(
+              child: Dialog(
+                backgroundColor: Colors.black12,
+                insetPadding: EdgeInsets.only(
+                  top: 50.dp,
+                  bottom: 50.dp,
+                ),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: StatusPanel(
+                      report: _statusReport,
+                    ),
+                  ),
+                  onTap: () {
+                    _statusPanelSetter = null;
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              onWillPop: () {
+                _statusPanelSetter = null;
+                Navigator.pop(context);
+                return Future.value(false);
+              });
+        });
+      },
     );
   }
 
   Widget _buildBottomView(BuildContext context) {
-    return Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildBottomRemoteView(context),
-          _buildMessageView(context),
-          _buildBottomBar(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomRemoteView(BuildContext context) {
-    return Container(
-      child: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 3,
-        crossAxisSpacing: 10.0,
-        mainAxisSpacing: 10.0,
-        childAspectRatio: 1.0,
-        children: _buildRemoteViews(context),
-      ),
-    );
-  }
-
-  List<Widget> _buildRemoteViews(BuildContext context) {
-    List<Widget> widgets = List();
-    _smallVideoViews.forEach((view) {
-      widgets.add(_buildRemoteView(context, view));
-    });
-    return widgets;
-  }
-
-  Widget _buildRemoteView(BuildContext context, TextureView view) {
-    return Container(
-      color: Colors.yellow,
-      alignment: Alignment.center,
-      child: view.view,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        _buildMessageView(context),
+        _buildBottomBar(context),
+      ],
     );
   }
 
   Widget _buildMessageView(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: 5.0,
-        left: 15.0,
-      ),
-      width: MediaQuery.of(context).size.width / 3 * 2,
-      constraints: BoxConstraints(
-        maxHeight: 200,
-      ),
-      child: MediaQuery.removePadding(
-        context: context,
-        removeTop: true,
-        child: ListView.builder(
-            shrinkWrap: true,
-            controller: _messageController,
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              return _buildMessage(context, _messages[index]);
-            }),
-      ),
+    return StatefulBuilder(
+      builder: (context, setter) {
+        _messageSetter = setter;
+        return Container(
+          padding: EdgeInsets.only(
+            left: 12.dp,
+            bottom: 12.dp,
+            right: _messageViewPadding,
+          ),
+          constraints: BoxConstraints(
+            maxHeight: 238.dp,
+          ),
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: ListView.separated(
+              shrinkWrap: true,
+              controller: _messageController,
+              itemCount: _messages.length,
+              separatorBuilder: (context, index) {
+                return Divider(
+                  height: 4.dp,
+                  color: Colors.transparent,
+                );
+              },
+              itemBuilder: (context, index) {
+                return _buildMessage(context, _messages[index]);
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -345,46 +411,48 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
     return Row(
       children: [
         Flexible(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: 10.0,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.5.dp),
+              color: Colors.black.withOpacity(0.3),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0),
-                color: ColorConfig.blackAlpha33,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 12.dp,
+                vertical: 3.dp,
               ),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 10.0,
-                  right: 10.0,
-                  top: 5.0,
-                  bottom: 5.0,
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    style: DefaultTextStyle.of(context).style,
-                    children: [
-                      TextSpan(
-                        text: '${message.user.name}:',
-                        style: TextStyle(
-                          fontSize: 13.0,
-                          color: Colors.lightBlueAccent,
-                          decoration: TextDecoration.none,
-                        ),
+              child: message.type == MessageType.normal
+                  ? RichText(
+                      text: TextSpan(
+                        style: DefaultTextStyle.of(context).style,
+                        children: [
+                          TextSpan(
+                            text: '${message.user.name}${message.user.id == DefaultData.user.id ? '（我）' : ''}：',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: ColorConfig.message_user_color,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                          TextSpan(
+                            text: message.message,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.white,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: message.message,
-                        style: TextStyle(
-                          fontSize: 13.0,
-                          color: Colors.white,
-                          decoration: TextDecoration.none,
-                        ),
+                    )
+                  : Text(
+                      '${message.user.name} ${message.type == MessageType.join ? '进入了直播间' : '离开了直播间'}',
+                      style: TextStyle(
+                        color: ColorConfig.message_user_color,
+                        fontSize: 14.sp,
+                        decoration: TextDecoration.none,
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ),
         ),
@@ -394,244 +462,376 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(
-        bottom: 15.0,
-        left: 15.0,
-        right: 15.0,
+      padding: EdgeInsets.only(
+        bottom: 12.dp,
+        left: 12.dp,
+        right: 12.dp,
       ),
-      width: double.infinity,
-      height: 35.0,
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 10.0,
-                right: 10.0,
-              ),
-              height: 35.0,
-              decoration: BoxDecoration(
-                color: ColorConfig.blackAlpha33,
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: TextField(
-                controller: _inputMessageController,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.send,
-                maxLines: 1,
-                maxLength: 32,
-                maxLengthEnforced: true,
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.white,
-                ),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  counterText: '',
-                  hintText: "说点什么...",
-                  hintStyle: TextStyle(
-                    fontSize: 12.0,
-                    color: Colors.white,
-                  ),
-                ),
-                onEditingComplete: () {
-                  String message = _inputMessageController.text;
-                  _inputMessageController.text = '';
-                  _sendMessage(context, message);
-                  FocusScope.of(context).requestFocus(FocusNode());
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 15.0,
-            ),
-            child: GestureDetector(
-              onTap: () => _doExit(context),
-              child: SizedBox(
-                width: 30.0,
-                height: 30.0,
-                child: Image.asset("assets/images/close.png"),
-              ),
-            ),
-          ),
-        ],
+      child: StatefulBuilder(
+        builder: (context, setter) {
+          _bottomBarSetter = setter;
+          return !_linking
+              ? Row(
+                  children: [
+                    Spacer(),
+                    'message'.png.image.toButton(
+                          onPressed: () => _showInputMessageKeyboard(context),
+                        ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Spacer(),
+                    'message'.png.image.toButton(
+                          onPressed: () => _showInputMessageKeyboard(context),
+                        ),
+                    VerticalDivider(
+                      width: 12.dp,
+                    ),
+                    'live_switch_camera'.png.image.toButton(
+                          onPressed: () => _switchCamera(),
+                        ),
+                    VerticalDivider(
+                      width: 12.dp,
+                    ),
+                    'audio_effect'.png.image.toButton(
+                          onPressed: () => BottomAudioEffectMixSettingsSheet.show(),
+                        ),
+                  ],
+                );
+        },
       ),
     );
   }
 
-  void _sendMessage(BuildContext context, String message) {
-    presenter.sendMessage(message);
+  void _showInputMessageKeyboard(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        enableDrag: false,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return WillPopScope(
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Container(
+                color: Colors.transparent,
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: 50.dp,
+                  color: Colors.white,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: 2.dp),
+                  child: TextField(
+                    autofocus: true,
+                    focusNode: _inputMessageFocusNode,
+                    controller: _inputMessageController,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.send,
+                    maxLines: 1,
+                    maxLength: 32,
+                    maxLengthEnforced: true,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: Colors.black,
+                      decoration: TextDecoration.none,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      counterText: '',
+                      hintText: "说点什么...",
+                      hintStyle: TextStyle(
+                        fontSize: 15.sp,
+                        color: ColorConfig.input_message_hint_color,
+                      ),
+                    ),
+                    onEditingComplete: () {
+                      String message = _inputMessageController.text;
+                      _inputMessageController.text = '';
+                      presenter?.sendMessage(message);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ),
+            ),
+            onWillPop: () {
+              Navigator.pop(context);
+              return Future.value(false);
+            },
+          );
+        });
   }
 
-  Future<bool> _doExit(BuildContext context) {
-    Loading.show(context);
-    presenter.exit(context);
+  void _switchCamera() async {
+    _config.frontCamera = await presenter?.switchCamera();
+    UserView view = _getSelfView();
+    view?.mirror = _config.frontCamera;
+    _mainViewSetter(() {});
+  }
+
+  UserView _getSelfView() {
+    var views = _views.where((view) => view.self);
+    if (views.isNotEmpty) return views.first;
+    return null;
+  }
+
+  Future<bool> _dealPopAction(BuildContext context) {
+    if (_linking)
+      _showLeaveLinkAlert(context);
+    else
+      _exit(context);
     return Future.value(false);
   }
 
-  @override
-  Presenter createPresenter() {
-    return LiveAudiencePagePresenter();
+  Future<bool> _showLeaveLinkAlert(BuildContext context) {
+    Alert.showAlert(
+      title: '提示',
+      message: '当前正在连麦，是否断开？',
+      left: '取消',
+      onPressedLeft: () {
+        Navigator.pop(context);
+      },
+      right: '确定',
+      onPressedRight: () {
+        Navigator.pop(context);
+        _leaveLink();
+      },
+    );
+    return Future.value(false);
+  }
+
+  void _leaveLink() async {
+    bool result = await presenter?.leaveLink();
+    if (!result) '断开失败'.toast();
+    presenter?.subscribe();
+    _removeSubviews();
+    _linking = !result;
+    _inviting = false;
+    _leaving = false;
+
+    RCRTCEngine.getInstance().unRegisterStatusReportListener();
+
+    if (_bottomBarSetter != null) _bottomBarSetter(() {});
+  }
+
+  void _removeSubviews() {
+    _views.removeWhere((view) => view.user.id != _room.user.id);
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+  }
+
+  void _exit(BuildContext context) {
+    Loading.show(context);
+    presenter.exit(context);
   }
 
   @override
-  void onPulled(RCRTCTextureView videoView) {
-    setState(() {
-      _pullState = 1;
-      _videoView = videoView;
-    });
-  }
+  void onConnectionStats(StatusReport report) {
+    _statusReport = report;
 
-  @override
-  void onPullError(int code, String message) {
-    setState(() {
-      _pullState = 2;
+    _signalStrengthSetters.values.forEach((setter) {
+      setter(() {});
     });
+    if (_statusPanelSetter != null) _statusPanelSetter(() {});
   }
 
   @override
   void onReceiveMessage(Message message) {
-    setState(() {
-      _messages.add(message);
-      Future.delayed(Duration(milliseconds: 50)).then((value) {
-        _messageController.jumpTo(_messageController.position.maxScrollExtent);
-
-        // _messageController.animateTo(
-        //   _messageController.position.maxScrollExtent,
-        //   duration: Duration(milliseconds: 100),
-        //   curve: Curves.easeOut,
-        // );
-      });
-    });
+    _messages.add(message);
+    _messageViewScrollToBottom();
   }
 
   @override
-  void onReceiveInviteMessage(User user) async {
+  void onReceiveInviteMessage() async {
     if (_inviting) return;
-
     _inviting = true;
+    _showInviteAlert();
+  }
 
-    var action = await showDialog(
-      context: context,
-      barrierDismissible: false,
-      child: AlertDialog(
-        content: Text(
-          "主播邀请你加入连麦，是否加入？",
-        ),
-        actions: [
-          FlatButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _inviting = false;
-                _refuseInvite(user);
-              },
-              child: Text("算了吧")),
-          FlatButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _inviting = false;
-                _agreeInvite(user);
-              },
-              child: Text("加入！")),
-        ],
-      ),
+  void _showInviteAlert() {
+    Alert.showAlert(
+      title: '提示',
+      message: '主播邀请你连麦，是否加入？',
+      left: '取消',
+      onPressedLeft: () {
+        Navigator.pop(context);
+        _refuseInvite();
+      },
+      right: '加入',
+      onPressedRight: () {
+        Navigator.pop(context);
+        _agreeInvite();
+      },
     );
+  }
 
-    if (action == null) {
-      _inviting = false;
-      _refuseInvite(user);
+  void _refuseInvite() {
+    _inviting = false;
+    presenter?.refuseInvite();
+  }
+
+  void _agreeInvite() {
+    presenter?.agreeInvite(_config);
+  }
+
+  @override
+  void onReceiveKickMessage() {
+    if (_linking && !_leaving) {
+      _leaving = true;
+      '您已被主播强制断开连麦～'.toast(duration: Toast.LONG);
+      _leaveLink();
     }
   }
 
-  void _refuseInvite(User user) {
-    presenter?.refuseInvite(user);
+  @override
+  void onSubscribeUrlError(int code, String message) {
+    // TODO 订阅失败
   }
 
-  void _agreeInvite(User user) {
-    setState(() {
-      _videoView = null;
-      _pullState = 0;
+  @override
+  void onJoined() {
+    _linking = true;
+
+    RCRTCEngine.getInstance().registerStatusReportListener(this);
+
+    if (_bottomBarSetter != null) _bottomBarSetter(() {});
+  }
+
+  @override
+  void onJoinError() {
+    '连麦失败'.toast();
+    _inviting = false;
+  }
+
+  @override
+  void onUserJoined(UserView view) {
+    if (view.self) view.mirror = _config.frontCamera;
+
+    if (_room.user.id == view.user.id) _mainView = view;
+
+    _addSubView(view);
+    _views.forEach((element) {
+      element.invalidate();
     });
-    presenter?.agreeInvite(
-      user,
-      (videoView) {
-        _setSmallView(DefaultData.user, videoView);
-      },
-      (uid, videoView) {
-        if (uid == user.id) {
-          setState(() {
-            _videoView = videoView;
-            _pullState = 1;
-          });
-        } else {
-          _setSmallView(User.unknown(uid), videoView);
-        }
-      },
-      (uid) {
-        _removeSmallView(uid);
-      },
-    );
+
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+
+    _updateMessageView();
   }
 
-  void _removeSmallView(String uid) {
-    TextureView view = getUsersViewById(uid);
-    if (view != null)
-      setState(() {
-        _smallVideoViews.remove(view);
+  void _addSubView(UserView view) {
+    _views.removeWhere((element) {
+      return element.user.id == view.user.id;
+    });
+    _views.add(view);
+  }
+
+  @override
+  void onUserLeaved(String uid) {
+    _views.removeWhere((view) {
+      return view.user.id == uid;
+    });
+    if (_mainView.user.id == uid) _mainView = _views.isNotEmpty ? _views.first : null;
+    _views.forEach((view) {
+      view.invalidate();
+    });
+
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+
+    _updateMessageView();
+  }
+
+  void _updateMessageView() {
+    if (_messageViewPadding == null) _messageViewPadding = defaultMessageViewPadding.dp;
+
+    if (_views.length > 1 && _messageViewPadding < messageViewPaddingWithSubviews.dp) {
+      _messageViewPadding = messageViewPaddingWithSubviews.dp;
+      _messageViewScrollToBottom();
+    } else if (_views.length < 2 && _messageViewPadding > defaultMessageViewPadding.dp) {
+      _messageViewPadding = defaultMessageViewPadding.dp;
+      _messageViewScrollToBottom();
+    }
+  }
+
+  void _messageViewScrollToBottom() {
+    if (_messageSetter != null)
+      _messageSetter(() {
+        Future.delayed(Duration(milliseconds: 50)).then((value) {
+          _messageController.animateTo(
+            _messageController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        });
       });
   }
 
-  TextureView getUsersViewById(String uid) {
-    for (TextureView view in _smallVideoViews) {
-      if (view.user.id == uid) {
-        return view;
-      }
-    }
+  @override
+  void onUserAudioStreamChanged(String uid, stream) {
+    UserView view = _getUserView(uid);
+    view.audioStream = stream;
+    if (view.self) _config.mic = view.audio;
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+  }
+
+  @override
+  void onUserVideoStreamChanged(String uid, stream) {
+    UserView view = _getUserView(uid);
+    view.videoStream = stream;
+    if (view.self) _config.camera = view.video;
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+  }
+
+  UserView _getUserView(String uid) {
+    var views = _views.where((view) => view.user.id == uid);
+    if (views.isNotEmpty) return views.first;
     return null;
-  }
-
-  void _setSmallView(User user, RCRTCTextureView videoView) {
-    TextureView view = getUsersView(user);
-    if (view == null) {
-      setState(() {
-        _smallVideoViews.add(TextureView(user, videoView));
-      });
-    }
-  }
-
-  TextureView getUsersView(User user) {
-    return getUsersViewById(user.id);
   }
 
   @override
   void onExit(BuildContext context) {
     Loading.dismiss(context);
-    _exit();
+    _doExit();
   }
 
-  void _exit() {
+  void _doExit() {
     Navigator.pop(context);
   }
 
   @override
   void onExitWithError(BuildContext context, String info) {
-    Toast.show(context, info);
+    info.toast();
     onExit(context);
   }
 
-  ScrollController _messageController = ScrollController();
+  Room _room;
+  Config _config = Config.config();
 
-  TextEditingController _inputMessageController = TextEditingController();
+  bool _inviting = false;
+  bool _linking = false;
+  bool _leaving = false;
+
+  UserView _mainView;
+  List<UserView> _views = List();
+
+  double _maxSubListHeight;
+  int _maxSubListShown;
+
+  double _messageViewPadding;
+  final int defaultMessageViewPadding = 50;
+  final int messageViewPaddingWithSubviews = 132;
 
   List<Message> _messages = List();
 
-  RCRTCTextureView _videoView;
+  StatusReport _statusReport;
 
-  List<TextureView> _smallVideoViews = List();
+  ScrollController _messageController = ScrollController();
+  bool _inputMessageVisible = false;
+  FocusNode _inputMessageFocusNode = FocusNode();
+  TextEditingController _inputMessageController = TextEditingController();
 
-  int _pullState = 0;
-
-  bool _inviting = false;
+  StateSetter _mainViewSetter;
+  StateSetter _statusPanelSetter;
+  StateSetter _messageSetter;
+  StateSetter _bottomBarSetter;
+  Map<String, StateSetter> _signalStrengthSetters = Map();
 }

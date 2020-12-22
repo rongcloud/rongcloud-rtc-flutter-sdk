@@ -52,6 +52,8 @@ FOUNDATION_EXTERN NSString * const KSetVideoConfig;
 // stopCamera
 FOUNDATION_EXTERN NSString * const KStopCamera;
 
+FOUNDATION_EXTERN NSString * const KEnableTinyStream;
+
 FOUNDATION_EXTERN NSString * const KIsCameraFocusSupported;
 
 FOUNDATION_EXTERN NSString * const KIsCameraExposurePositionSupported;

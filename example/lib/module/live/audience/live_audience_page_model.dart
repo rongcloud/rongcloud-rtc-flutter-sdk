@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:FlutterRTC/data/codes.dart';
 import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart' as Data;
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
+import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
@@ -22,61 +25,6 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   }
 
   @override
-  void pull(
-    String url,
-    void onSuccess(RCRTCTextureView videoView),
-    void onError(int code, String message),
-  ) {
-    RCRTCEngine.getInstance().subscribeLiveStream(
-      url,
-      AVStreamType.audio_video,
-      (stream) {
-        RCRTCTextureView videoView = RCRTCTextureView(
-          (videoView, id) {
-            stream.setTextureView(id);
-          },
-        );
-        onSuccess(videoView);
-      },
-      (code, message) {
-        onError(code, message);
-      },
-    );
-  }
-
-  void initVideoView(
-    void onVideoViewReady(RCRTCTextureView videoView),
-    void readyToPush(),
-  ) {
-    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) async {
-      stream.setVideoConfig(Data.DefaultData.videoConfig);
-
-      RCRTCTextureView videoView = RCRTCTextureView(
-        (videoView, id) {
-          stream.setTextureView(id);
-          stream.startCamera().then((value) => readyToPush());
-        },
-      );
-
-      onVideoViewReady(videoView);
-    });
-  }
-
-  void push(
-    void onPushed(),
-    void onPushError(),
-  ) async {
-    RCRTCEngine.getInstance().getRoom().localUser.publishDefaultLiveStreams(
-      (liveInfo) {
-        onPushed();
-      },
-      (code, message) {
-        onPushError();
-      },
-    );
-  }
-
-  @override
   void sendMessage(
     String roomId,
     String message,
@@ -88,28 +36,13 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   }
 
   @override
-  void sendRequestListMessage(String uid) {
-    TextMessage textMessage = TextMessage();
-    textMessage.content = jsonEncode(Data.Message(Data.DefaultData.user, MessageType.request_list, "").toJSON());
-    RongIMClient.sendMessage(RCConversationType.Private, uid, textMessage);
+  void refuseInvite(Data.Room room) {
+    _sendInviteMessage(false, room.user.id);
   }
 
   @override
-  void refuseInvite(Data.User user) {
-    _sendInviteMessage(false, user.id);
-  }
-
-  @override
-  void agreeInvite(
-    Data.User user,
-    String roomId,
-    String url,
-    void onVideoViewReady(RCRTCTextureView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
-    void onRemoteVideoViewClose(String uid),
-  ) {
-    _sendInviteMessage(true, user.id);
-    _joinRoom(url, roomId, user.id, onVideoViewReady, onRemoteVideoViewReady, onRemoteVideoViewClose);
+  void agreeInvite(Data.Room room) {
+    _sendInviteMessage(true, room.user.id);
   }
 
   void _sendInviteMessage(bool agree, String uid) {
@@ -121,135 +54,216 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     RongIMClient.sendMessage(RCConversationType.Private, uid, textMessage);
   }
 
-  void _joinRoom(
-    String url,
-    String roomId,
-    String uid,
-    void onVideoViewReady(RCRTCTextureView videoView),
-    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
-    void onRemoteVideoViewClose(String uid),
-  ) async {
-    bool hasPermission = await _requestPermission();
-    if (hasPermission) {
-      int unsubscribe = await RCRTCEngine.getInstance().unsubscribeLiveStream(url);
-      if (unsubscribe == 0) {
-        bool joined = await _doJoinRoom(roomId);
-        if (joined) {
-          this.joined = joined;
-
-          _subscribe(uid, onRemoteVideoViewReady, onRemoteVideoViewClose);
-
-          initVideoView(
-            (videoView) {
-              onVideoViewReady(videoView);
-            },
-            () {
-              push(
-                () {
-                  // TODO pushed
-                },
-                () {
-                  // TODO push error
-                },
-              );
-            },
-          );
-        } else {
-          _sendErrorMessage(uid, MessageError.join_error);
-        }
-      } else {
-        _sendErrorMessage(uid, MessageError.unsubscribe_error);
-      }
-    } else {
-      _sendErrorMessage(uid, MessageError.no_permission);
-    }
+  void subscribeUrl(
+    Data.Room room,
+    void onUserJoined(UserView view),
+    void onSubscribeError(int code, String message),
+  ) {
+    RCRTCEngine.getInstance().subscribeLiveStream(
+      url: room.url,
+      streamType: AVStreamType.audio_video,
+      onSuccess: () {},
+      onAudioStreamReceived: (stream) {},
+      onVideoStreamReceived: (stream) {
+        UserView view = UserView(room.user);
+        view.videoStream = stream;
+        onUserJoined(view);
+      },
+      onError: (code, message) {
+        onSubscribeError(code, message);
+      },
+    );
   }
 
-  Future<bool> _requestPermission() async {
+  @override
+  Future<bool> requestPermission() async {
     bool camera = await Permission.camera.request().isGranted;
     bool mic = await Permission.microphone.request().isGranted;
-    if (camera && mic) {
-      return true;
-    } else {
-      return false;
-    }
+    return camera && mic;
   }
 
-  Future<bool> _doJoinRoom(String roomId) async {
+  @override
+  Future<bool> unsubscribeUrl(Data.Room room) async {
+    int code = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
+    return code == 0;
+  }
+
+  @override
+  Future<StatusCode> joinRoom(Data.Room room) async {
     RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
-      roomId: roomId,
+      roomId: room.id,
       roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo),
     );
-    if (result.code == 0) {
-      return true;
+    if (result.code != 0) {
+      joined = false;
+      return StatusCode(Status.error, message: 'code = ${result.code}, reason = ${result.reason}');
     } else {
-      print("join room $roomId error, code = ${result.code}, reason = ${result.reason}");
-      return false;
+      joined = true;
+      return StatusCode(Status.ok);
     }
   }
 
-  void _subscribe(
-    String uid,
-    void onRemoteVideoViewReady(String uid, RCRTCTextureView videoView),
-    void onRemoteVideoViewClose(String uid),
+  @override
+  void subscribe(
+    void Function(UserView view) onUserJoined,
+    void Function(String uid, dynamic stream) onUserAudioStreamChanged,
+    void Function(String uid, dynamic stream) onUserVideoStreamChanged,
+    void Function(String uid) onUserLeaved,
   ) {
-    RCRTCEngine.getInstance().getRoom().remoteUserList.forEach((user) {
-      List<RCRTCInputStream> streams = user.streamList;
-      RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
-      streams.forEach((stream) {
-        if (stream.type == MediaType.video) {
-          RCRTCTextureView videoView = RCRTCTextureView(
-            (view, id) {
-              (stream as RCRTCVideoInputStream).setTextureView(id);
-            },
-          );
-          onRemoteVideoViewReady(user.id, videoView);
-        }
-      });
-    });
+    RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
+    RCRTCLocalUser localUser = room.localUser;
 
-    RCRTCEngine.getInstance().getRoom().onRemoteUserPublishResource = (_user, _streams) {
-      RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(_streams);
-      _streams.forEach((stream) {
-        if (stream.type == MediaType.video) {
-          RCRTCTextureView videoView = RCRTCTextureView(
-            (view, id) {
-              (stream as RCRTCVideoInputStream).setTextureView(id);
-            },
-          );
-          onRemoteVideoViewReady(_user.id, videoView);
-        }
-      });
+    for (RCRTCRemoteUser user in room.remoteUserList) {
+      UserView view = UserView(Data.User.unknown(user.id));
+      List<RCRTCInputStream> subscribes = List();
+
+      var audios = user.streamList.whereType<RCRTCAudioInputStream>();
+      if (audios.isNotEmpty) {
+        var stream = audios.first;
+        subscribes.add(stream);
+        view.audioStream = stream;
+      }
+
+      var videos = user.streamList.whereType<RCRTCVideoInputStream>();
+      if (videos.isNotEmpty) {
+        var stream = videos.first;
+        subscribes.add(stream);
+        view.videoStream = stream;
+      }
+
+      localUser.subscribeStreams(subscribes);
+      onUserJoined(view);
+    }
+
+    room.onRemoteUserJoined = (user) {
+      UserView view = UserView(Data.User.unknown(user.id));
+      onUserJoined(view);
     };
 
-    RCRTCEngine.getInstance().getRoom().onRemoteUserUnPublishResource = (_user, _streams) {
-      onRemoteVideoViewClose(_user.id);
+    room.onRemoteUserPublishResource = (user, streams) {
+      List<RCRTCInputStream> subscribes = List();
+
+      var audios = streams.whereType<RCRTCAudioInputStream>();
+      if (audios.isNotEmpty) {
+        var stream = audios.first;
+        subscribes.add(stream);
+        onUserAudioStreamChanged(user.id, stream);
+      }
+
+      var videos = streams.whereType<RCRTCVideoInputStream>();
+      if (videos.isNotEmpty) {
+        var stream = videos.first;
+        subscribes.add(stream);
+        onUserVideoStreamChanged(user.id, stream);
+      }
+
+      localUser.subscribeStreams(subscribes);
     };
 
-    RCRTCEngine.getInstance().getRoom().onRemoteUserLeft = (_user) {
-      onRemoteVideoViewClose(_user.id);
+    room.onRemoteUserUnPublishResource = (user, streams) {
+      if (streams.whereType<RCRTCAudioInputStream>().isNotEmpty) {
+        onUserAudioStreamChanged(user.id, null);
+      }
+
+      if (streams.whereType<RCRTCVideoInputStream>().isNotEmpty) {
+        onUserVideoStreamChanged(user.id, null);
+      }
+    };
+
+    room.onRemoteUserLeft = (user) {
+      onUserLeaved(user.id);
     };
   }
 
-  void _sendErrorMessage(String uid, MessageError error) {}
+  Future<StatusCode> publish(
+    Data.Config config,
+    void onUserJoined(UserView view),
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  ) {
+    UserView view = UserView(Data.DefaultData.user);
+    onUserJoined(view);
+
+    RCRTCEngine.getInstance().getDefaultAudioStream().then((stream) {
+      stream.mute(!config.mic);
+      onUserAudioStreamChanged(Data.DefaultData.user.id, stream);
+    });
+
+    RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) {
+      stream.setVideoConfig(config.videoConfig);
+      if (config.camera) stream.startCamera();
+      onUserVideoStreamChanged(Data.DefaultData.user.id, stream);
+    });
+
+    Completer<StatusCode> completer = Completer();
+    RCRTCEngine.getInstance().getRoom().localUser.publishDefaultLiveStreams(
+      (info) {
+        completer.complete(StatusCode(Status.ok, object: info));
+      },
+      (code, message) {
+        completer.complete(StatusCode(Status.error, message: message));
+      },
+    );
+    return completer.future;
+  }
+
+  Future<bool> switchCamera() async {
+    RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+    return stream.switchCamera();
+  }
+
+  Future<void> changeAudioStreamState(
+    Data.Config config,
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+  ) async {
+    RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
+    RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+    bool enable = config.mic;
+    enable = !enable;
+    enable ? localUser.publishLiveStream(stream, (liveInfo) {}, (code, message) {}) : localUser.unPublishStream(stream);
+    onUserAudioStreamChanged(localUser.id, enable ? stream : null);
+  }
+
+  Future<void> changeVideoStreamState(
+    Data.Config config,
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  ) async {
+    RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
+    var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+    bool enable = config.camera;
+    enable = !enable;
+    if (enable) {
+      stream.setVideoConfig(config.videoConfig);
+      stream.startCamera();
+      localUser.publishLiveStream(stream, (liveInfo) {}, (code, message) {});
+      onUserVideoStreamChanged(localUser.id, stream);
+    } else {
+      localUser.unPublishStream(stream);
+      stream.stopCamera();
+      onUserVideoStreamChanged(localUser.id, null);
+    }
+  }
+
+  @override
+  Future<bool> leaveLink() async {
+    int result = await RCRTCEngine.getInstance().leaveRoom();
+    joined = result != 0;
+    return !joined;
+  }
 
   @override
   void exit(
     BuildContext context,
-    String roomId,
-    String url,
+    Data.Room room,
     void onSuccess(BuildContext context),
     void onError(BuildContext context, String info),
   ) async {
     int result = 0;
-    if (joined) {
-      RCRTCLocalUser localUser = RCRTCEngine.getInstance().getRoom().localUser;
-      result += await RCRTCEngine.getInstance().getRoom().localUser.unPublishStreams(await localUser.getStreams());
-      result += await RCRTCEngine.getInstance().leaveRoom();
-    } else {
-      result = await RCRTCEngine.getInstance().unsubscribeLiveStream(url);
-    }
-    RongIMClient.quitChatRoom(roomId);
+    if (joined)
+      result = await RCRTCEngine.getInstance().leaveRoom();
+    else
+      result = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
+    RongIMClient.quitChatRoom(room.id);
     RongIMClient.disconnect(false);
     if (result > 0) {
       onError(context, "exit has some error");
