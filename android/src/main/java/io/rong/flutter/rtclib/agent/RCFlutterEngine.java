@@ -24,6 +24,7 @@ import cn.rongcloud.rtc.api.report.StatusReport;
 import cn.rongcloud.rtc.api.stream.RCRTCAudioInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCCameraOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCFileVideoOutputStream;
+import cn.rongcloud.rtc.api.stream.RCRTCMicOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoStreamConfig;
@@ -44,6 +45,7 @@ import io.rong.flutter.rtclib.RCFlutterRequestResult;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRemoteUser;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoom;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoomType;
+import io.rong.flutter.rtclib.agent.stream.RCFlutterAudioInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterCameraOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterFileVideoOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
@@ -55,7 +57,7 @@ import io.rong.flutter.rtclib.agent.view.RCFlutterTextureViewFactory;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
 
-public class RCFlutterEngine extends IRCRTCStatusReportListener implements MethodCallHandler {
+public class RCFlutterEngine extends IRCRTCStatusReportListener implements MethodCallHandler, RCRTCLiveCallback {
 
     private static final String TAG = "RCFlutterEngine";
 
@@ -72,6 +74,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private FlutterPlugin.FlutterAssets flutterAssets;
 
     private TextureRegistry textures;
+
 //    private LongSparseArray<FlutterRTCVideoRenderer> renders = new LongSparseArray<>();
 
     private static class SingletonHolder {
@@ -236,23 +239,41 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private void getDefaultVideoStream(Result result) {
         Log.d(TAG, "getDefaultVideoStream: ");
         if (cameraOutputStream == null) {
-            long start = System.currentTimeMillis();
-            long current = System.currentTimeMillis();
-            RCRTCCameraOutputStream stream = RCRTCEngine.getInstance().getDefaultVideoStream();
-            while (stream == null && (current - start) < 1000) { // 1秒超时
-                stream = RCRTCEngine.getInstance().getDefaultVideoStream();
-                current = System.currentTimeMillis();
+            (new Thread(() -> {
+                RCRTCCameraOutputStream stream = RCRTCEngine.getInstance().getDefaultVideoStream();
+                long start = System.currentTimeMillis();
+                long current = System.currentTimeMillis();
+                while (stream == null && (current - start) < 1000) { // 1秒超时
+                    stream = RCRTCEngine.getInstance().getDefaultVideoStream();
+                    current = System.currentTimeMillis();
+                }
+                cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
+                UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
             }
-            cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
+            )).start();
+        } else {
+            UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
         }
-        UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
     }
 
     private void getDefaultAudioStream(Result result) {
         Log.d(TAG, "getDefaultAudioStream: ");
-        if (micOutputStream == null)
-            micOutputStream = new RCFlutterMicOutputStream(bMsg, RCRTCEngine.getInstance().getDefaultAudioStream());
-        UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
+        if (micOutputStream == null) {
+            (new Thread(() -> {
+                RCRTCMicOutputStream stream = RCRTCEngine.getInstance().getDefaultAudioStream();
+                long start = System.currentTimeMillis();
+                long current = System.currentTimeMillis();
+                while (stream == null && (current - start) < 1000) { // 1秒超时
+                    stream = RCRTCEngine.getInstance().getDefaultAudioStream();
+                    current = System.currentTimeMillis();
+                }
+                micOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
+                UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
+            }
+            )).start();
+        } else {
+            UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
+        }
     }
 
     private void createVideoOutputStream(MethodCall call, Result result) {
@@ -268,34 +289,8 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         String url = call.argument("url");
         int type = call.argument("type");
         RCRTCAVStreamType streamType = Objects.requireNonNull(RCRTCAVStreamType.class.getEnumConstants())[type];
-        RCRTCEngine.getInstance().subscribeLiveStream(url, streamType, new RCRTCLiveCallback() {
-            @Override
-            public void onSuccess() {
-
-            }
-
-            @Override
-            public void onVideoStreamReceived(RCRTCVideoInputStream rcrtcVideoInputStream) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("callback", "success");
-                jsonObject.put("stream", JSON.toJSONString(new RCFlutterVideoInputStream(bMsg, rcrtcVideoInputStream)));
-                UIThreadHandler.success(result, jsonObject.toJSONString());
-            }
-
-            @Override
-            public void onAudioStreamReceived(RCRTCAudioInputStream rcrtcAudioInputStream) {
-
-            }
-
-            @Override
-            public void onFailed(RTCErrorCode rtcErrorCode) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("callback", "failed");
-                jsonObject.put("code", rtcErrorCode.getValue());
-                jsonObject.put("message", rtcErrorCode.getReason());
-                UIThreadHandler.success(result, jsonObject.toJSONString());
-            }
-        });
+        RCRTCEngine.getInstance().subscribeLiveStream(url, streamType, this);
+        UIThreadHandler.success(result, null);
     }
 
     private void unsubscribeLiveStream(MethodCall call, Result result) {
@@ -417,12 +412,38 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     public void onConnectionStats(StatusReport statusReport) {
         String str = JSON.toJSONString(statusReport);
         UIThreadHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        channel.invokeMethod("onConnectionStats", str);
-                    }
-                }
+                () -> channel.invokeMethod("onConnectionStats", str)
+        );
+    }
+
+    @Override
+    public void onSuccess() {
+        UIThreadHandler.post(
+                () -> channel.invokeMethod("onSuccess", null)
+        );
+    }
+
+    @Override
+    public void onAudioStreamReceived(RCRTCAudioInputStream stream) {
+        UIThreadHandler.post(
+                () -> channel.invokeMethod("onAudioStreamReceived", JSON.toJSONString(new RCFlutterAudioInputStream(bMsg, stream)))
+        );
+    }
+
+    @Override
+    public void onVideoStreamReceived(RCRTCVideoInputStream stream) {
+        UIThreadHandler.post(
+                () -> channel.invokeMethod("onVideoStreamReceived", JSON.toJSONString(new RCFlutterVideoInputStream(bMsg, stream)))
+        );
+    }
+
+    @Override
+    public void onFailed(RTCErrorCode errorCode) {
+        JSONObject json = new JSONObject();
+        json.put("code", errorCode.getValue());
+        json.put("message", errorCode.getReason());
+        UIThreadHandler.post(
+                () -> channel.invokeMethod("onFailed", json.toJSONString())
         );
     }
 }

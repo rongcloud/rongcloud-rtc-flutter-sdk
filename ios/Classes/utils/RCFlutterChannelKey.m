@@ -53,6 +53,8 @@ NSString * const KSetVideoConfig = @"setVideoConfig";
 // stopCamera
 NSString * const KStopCamera = @"stopCamera";
 
+NSString * const KEnableTinyStream = @"enableTinyStream";
+
 NSString * const KIsCameraFocusSupported = @"isCameraFocusSupported";
 
 NSString * const KIsCameraExposurePositionSupported = @"isCameraExposurePositionSupported";

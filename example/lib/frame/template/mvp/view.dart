@@ -18,7 +18,11 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
 
   @override
   Widget build(BuildContext context) {
+    Size size = designSize();
+    ScreenUtil.init(context, width: size.width, height: size.height);
+
     _init(context);
+
     return buildWidget(context);
   }
 
@@ -26,16 +30,14 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
     if (!_first) return;
     _first = false;
 
-    Size size = designSize();
-    ScreenUtil.init(context, width: size.width, height: size.height);
-
     _presenter = createPresenter();
     _presenter?.attachView(this, context);
+
     init(context);
   }
 
   Size designSize() {
-    return const Size(640, 960);
+    return const Size(375, 667);
   }
 
   void init(BuildContext context) {}

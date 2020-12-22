@@ -1,10 +1,11 @@
 import 'dart:ui';
 
 class ColorConfig {
-  static const Color defaultGradientStart = const Color(0xFFFBAB66);
-  static const Color defaultGradientEnd = const Color(0xFFF7418C);
-  static const Color blackAlpha33 = const Color(0x33000000);
-  static const Color blackAlpha66 = const Color(0x66000000);
-  static const Color defaultRed = const Color(0xFFFF3333);
-  static const Color defaultBlue = const Color(0xFF3333FF);
+  static const Color alertBackgroundColor = const Color(0xFF102032);
+  static const Color alertDividerColor = const Color(0xFFF9F9F9);
+
+  static const Color bottomSheetBackgroundColor = const Color(0xFF102032);
+  static const Color bottomSheetDividerColor = const Color(0xFF1F2F42);
+
+  static const Color bottomSheetSliderActiveColor = const Color(0xFF007AFF);
 }

@@ -1,182 +1,147 @@
-import 'package:FlutterRTC/frame/template/mvp/view.dart';
-import 'package:FlutterRTC/frame/ui/loading.dart';
+import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:FlutterRTC/router/router.dart';
+import 'package:FlutterRTC/widgets/buttons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/screenutil.dart';
 
-import '../../colors.dart';
-import '../../global_config.dart';
-import 'home_page_contract.dart';
-import 'home_page_model.dart';
-import 'home_page_presenter.dart';
+import 'colors.dart';
 
-class HomePage extends AbstractView {
+class HomePage extends StatelessWidget {
   @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends AbstractViewState<Presenter, HomePage> implements View {
-  @override
-  Widget buildWidget(BuildContext context) {
+  Widget build(BuildContext context) {
+    ScreenUtil.init(context, width: 375, height: 667);
     return Scaffold(
-      body: NotificationListener<ScrollUpdateNotification>(
-        onNotification: (notification) {
-          if (notification.depth == 0 && !_isLoading) {
-            // TODO 暂时没有加载更多
-            // if (notification.metrics.pixels == notification.metrics.maxScrollExtent) {
-            //   _loadLiveRoomList();
-            // }
-          }
-          return true;
-        },
-        child: RefreshIndicator(
-          onRefresh: () => _refreshLiveRoomList(),
-          child: CustomScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                backgroundColor: ColorConfig.defaultGradientEnd,
-                expandedHeight: 256.0,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(GlobalConfig.appTitle),
-                  centerTitle: true,
-                  background: Image(
-                    fit: BoxFit.cover,
-                    image: AssetImage('assets/images/login_logo.png'),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: 'home_page_background'.png.assetImage,
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            GestureDetector(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 36.dp,
+                  right: 20.dp,
+                ),
+                child: 'home_page_setting_icon'.png.image,
+              ),
+              onTap: () {
+                Navigator.pushNamed(context, RouterManager.SETTINGS);
+              },
+            ),
+            Divider(
+              height: 43.5.dp,
+            ),
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20.dp),
+                  child: Text(
+                    "模式选择页",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                 ),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.settings),
-                    onPressed: () {
-                      _gotoSetting();
-                    },
-                  )
-                ],
-              ),
-              SliverGrid(
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: MediaQuery.of(context).size.width / 2,
-                  mainAxisSpacing: 5.0,
-                  crossAxisSpacing: 5.0,
-                  childAspectRatio: 1.0,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    return GestureDetector(
-                      onTap: () => _requestJoinLiveRoom(context, _list.list[index]),
-                      child: Container(
-                        width: double.infinity,
-                        height: double.infinity,
-                        alignment: Alignment.center,
-                        color: ColorConfig.defaultGradientStart,
-                        child: Stack(
-                          children: [
-                            Text('Room\n${_list.list[index].id}'),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  childCount: _list?.list?.length ?? 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: GestureDetector(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30.0),
-            gradient: LinearGradient(
-              colors: [
-                ColorConfig.defaultGradientStart,
-                ColorConfig.defaultGradientEnd,
+                Spacer(),
               ],
-              begin: const FractionalOffset(0.0, 0.0),
-              end: const FractionalOffset(1.0, 1.0),
-              stops: [0.0, 1.0],
-              tileMode: TileMode.clamp,
             ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(15.0),
-            child: Icon(Icons.add),
-          ),
+            Divider(
+              height: 20.dp,
+            ),
+            _buildModeButton(
+              'meeting_mode_icon',
+              '多人视频会议',
+              '适用于多人音视频通话场景',
+              () {
+                Navigator.pushNamed(context, RouterManager.MEETING_CONFIG);
+              },
+            ),
+            Divider(
+              height: 20.dp,
+            ),
+            _buildModeButton(
+              'live_mode_icon',
+              '视频互动直播',
+              '适用于主播连麦及观众场景',
+              () {
+                Navigator.pushNamed(context, RouterManager.LIVE_HOME);
+              },
+            ),
+            Divider(
+              height: 20.dp,
+            ),
+            _buildModeButton(
+              'audio_live_mode_icon',
+              '音频互动直播',
+              '适用于多人语音通话场景',
+              () {
+                Navigator.pushNamed(context, RouterManager.AUDIO_LIVE_LIST);
+              },
+            ),
+          ],
         ),
-        onTap: () => _goToConfig(),
       ),
     );
   }
 
-  @override
-  Presenter createPresenter() {
-    return HomePagePresenter();
-  }
-
-  @override
-  void onLiveRoomListLoaded(RoomList list) {
-    _isLoading = false;
-    setState(() {
-      _list = list;
-    });
-  }
-
-  @override
-  void onLiveRoomListLoadError(String info) {
-    _isLoading = false;
-    // TODO 列表获取失败
-  }
-
-  @override
-  void onLiveRoomJoinError(BuildContext context, String info) {
-    print("onLiveRoomJoinError info = $info");
-    Loading.dismiss(context);
-  }
-
-  @override
-  void onLiveRoomJoined(BuildContext context, Room room) {
-    Loading.dismiss(context);
-    _gotoAudience(room.id, room.url);
-  }
-
-  void _goToConfig() {
-    Navigator.pushNamed(context, RouterManager.CONFIG);
-  }
-
-  void _gotoAudience(String roomId, String url) {
-    Navigator.pushNamed(
-      context,
-      RouterManager.LIVE_AUDIENCE,
-      arguments: {
-        'roomId': roomId,
-        'url': url,
-      },
+  Widget _buildModeButton(String image, String title, String info, void onTap()) {
+    return GestureDetector(
+      child: Container(
+        margin: EdgeInsets.only(
+          left: 20.dp,
+          right: 20.dp,
+        ),
+        padding: EdgeInsets.symmetric(
+          vertical: 13.5.dp,
+          horizontal: 24.dp,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.dp),
+          color: ColorConfig.modeButtonBackgroundColor,
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(right: 24.dp),
+              child: image.png.image,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17.sp,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                Divider(
+                  height: 5.dp,
+                ),
+                Text(
+                  info,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: ColorConfig.modeButtonInfoTextColor,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      onTap: onTap,
     );
   }
-
-  Future<void> _refreshLiveRoomList() async {
-    _isLoading = true;
-    presenter?.loadLiveRoomList(true);
-  }
-
-  Future<void> _loadLiveRoomList() async {
-    _isLoading = true;
-    presenter?.loadLiveRoomList();
-  }
-
-  void _gotoSetting() {
-    Navigator.pushNamed(context, RouterManager.SETTINGS);
-  }
-
-  Future<void> _requestJoinLiveRoom(BuildContext context, Room room) async {
-    Loading.show(context);
-    presenter.requestJoinLiveRoom(context, room);
-  }
-
-  bool _isLoading = false;
-
-  RoomList _list;
 }

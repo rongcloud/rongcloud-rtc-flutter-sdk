@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 String appKey = 'z3v5yqkbv8v30';
 String userName = "cvnjyte";
@@ -14,8 +14,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   int i = 10000;
-  while ((i -= 1) != 0){
-
+  while ((i -= 1) != 0) {
     group("Test RCRTCEngine Interface", () {
       String roomId = "ut";
       test("test IM Client", () async {
@@ -121,11 +120,11 @@ void main() {
       test("test RTC setCameraFocusPositionInPreview", () async {
         var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
         bool val = await stream.isCameraFocusSupported();
-        if (val){
+        if (val) {
           stream.setCameraFocusPositionInPreview(20, 20);
         }
         val = await stream.isCameraExposurePositionSupported();
-        if (val){
+        if (val) {
           stream.setCameraExposurePositionInPreview(20, 20);
         }
       });
@@ -153,7 +152,7 @@ void main() {
 
       test("test RTC AudioEffect", () async {
         RCRTCAudioEffectManager am = await RCRTCEngine.getInstance().getAudioEffectManager();
-        await am.preloadEffect('assets/audio/effect0.mp3', 0, null);
+        await am.preloadEffect('assets/audio/effect0.mp3', 0);
         await am.getEffectsVolume();
         await am.setEffectsVolume(100);
         await am.playEffect(0, 10, 100);
@@ -178,11 +177,8 @@ void main() {
         RCRTCEngine.getInstance().unInit();
         RongIMClient.disconnect(false);
         expect(code, 0);
-
       });
-
     });
-
   }
 }
 

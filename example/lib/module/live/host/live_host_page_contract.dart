@@ -1,27 +1,33 @@
 import 'package:FlutterRTC/data/codes.dart';
-import 'package:FlutterRTC/data/data.dart';
+import 'package:FlutterRTC/data/data.dart' as Data;
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/widgets.dart';
+import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
+import 'package:rongcloud_rtc_plugin/rcrtc_mix_config.dart';
 
 abstract class View implements IView {
-  void onViewCreated(VideoStreamWidget view);
-
-  void onRemoveView(String userId);
-
   void onPublished();
 
   void onPublishError(String info);
 
-  void onReceiveMessage(Message message);
+  void onReceiveMessage(Data.Message message);
 
-  void onReceiveMember(User user);
+  void onAudienceJoined(Data.User user);
 
-  void onMemberInvited(User user, bool agree);
+  void onAudienceLeft(Data.User user);
 
-  void onMemberJoined(String userId);
+  void onMemberInvited(Data.User user, bool agree);
+
+  void onUserJoined(UserView view);
+
+  void onUserLeaved(String uid);
+
+  void onUserAudioStreamChanged(String uid, dynamic stream);
+
+  void onUserVideoStreamChanged(String uid, dynamic stream);
 
   void onExit(BuildContext context);
 
@@ -30,19 +36,52 @@ abstract class View implements IView {
 
 abstract class Model implements IModel {
   void subscribe(
-    void onViewCreated(VideoStreamWidget view),
-    void onRemoveView(String userId),
-    void onMemberJoined(String userId),
+    void onUserJoined(UserView view),
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+    void onUserLeaved(String uid),
   );
 
   Future<StatusCode> publish(
-    Config config,
-    void onViewCreated(VideoStreamWidget view),
+    Data.Config config,
+    void onUserJoined(UserView view),
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+    void onUserVideoStreamChanged(String uid, dynamic stream),
   );
 
-  void requestMemberList();
+  void inviteMember(Data.User user);
 
-  void inviteMember(User user);
+  void kickMember(Data.User user);
+
+  void sendMessage(
+    String roomId,
+    String message,
+    void onMessageSent(Message message),
+  );
+
+  Future<bool> switchCamera();
+
+  void changeAudioStreamState(
+    Data.Config config,
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+  );
+
+  void changeVideoStreamState(
+    Data.Config config,
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  );
+
+  void changeRemoteAudioStreamState(
+    UserView view,
+    void onUserAudioStreamChanged(String uid, dynamic stream),
+  );
+
+  void changeRemoteVideoStreamState(
+    UserView view,
+    void onUserVideoStreamChanged(String uid, dynamic stream),
+  );
+
+  void changeMixConfig(RCRTCMixConfig config);
 
   void exit(
     BuildContext context,
@@ -54,11 +93,25 @@ abstract class Model implements IModel {
 abstract class Presenter implements IPresenter {
   void subscribe();
 
-  void publish(Config config);
+  void publish(Data.Config config);
 
-  void requestMemberList();
+  void inviteMember(Data.User user);
 
-  void inviteMember(User user);
+  void kickMember(Data.User user);
+
+  void sendMessage(String message);
+
+  Future<bool> switchCamera();
+
+  void changeAudioStreamState(Data.Config config);
+
+  void changeVideoStreamState(Data.Config config);
+
+  void changeRemoteAudioStreamState(UserView view);
+
+  void changeRemoteVideoStreamState(UserView view);
+
+  void changeMixConfig(RCRTCMixConfig config);
 
   void exit(BuildContext context);
 }

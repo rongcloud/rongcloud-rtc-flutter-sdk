@@ -45,3 +45,19 @@ void dispatch_to_workQueue(dispatch_block_t block) {
 }
 
 @end
+
+@implementation NSString(RegularExpression)
+
+- (NSString *)replacingWithPattern:(NSString *)pattern
+                      withTemplate:(NSString *)withTemplate
+                             error:(NSError **)error {
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:error];
+    return [regex stringByReplacingMatchesInString:self
+                                           options:0
+                                             range:NSMakeRange(0, self.length)
+                                      withTemplate:withTemplate];
+}
+
+@end

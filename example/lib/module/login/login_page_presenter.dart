@@ -33,7 +33,7 @@ class LoginPagePresenter extends AbstractPresenter<View, Model> implements Prese
     model?.login(
       context,
       () {
-        view?.onLoginSuccess();
+        view?.onLoginSuccess(context);
       },
       (context, info) {
         view?.onLoginError(context, info);

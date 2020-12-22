@@ -28,7 +28,7 @@
 }
 
 - (void)dealloc{
-    NSLog(@"xuhuan-----RCFlutterVideoCapture dealloc");
+    NSLog(@"RCFlutterVideoCapture dealloc");
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
@@ -51,6 +51,10 @@
         NSDictionary *dic = [RCFlutterTools decodeToDic:call.arguments];
         [self setVideoConfigFromFlutter:dic];
         result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KEnableTinyStream]) {
+        bool enable = call.arguments;
+        [self enableTinyStream:enable];
+        result(nil);
     } else if ([call.method isEqualToString:KIsCameraFocusSupported]) {
         [self isCameraFocusSupported:result];
     } else if ([call.method isEqualToString:KIsCameraExposurePositionSupported]) {
@@ -66,6 +70,10 @@
     } else {
         result(FlutterMethodNotImplemented);
     }
+}
+
+- (void)enableTinyStream:(bool)enable {
+    [[RCRTCEngine sharedInstance].defaultVideoStream setEnableTinyStream:enable];
 }
 
 - (void)isCameraFocusSupported:(FlutterResult)result {

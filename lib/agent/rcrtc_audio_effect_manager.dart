@@ -6,8 +6,6 @@ import '../rcrtc_error_code.dart';
 
 typedef EffectFinishedCallback(int effectId);
 
-typedef LoadingCompleteCallback(int error);
-
 class RCRTCAudioEffectManager {
   RCRTCAudioEffectManager.fromJson(Map<String, dynamic> json)
       : _channel = MethodChannel('rong.flutter.rtclib/AudioEffectManager:${json['id']}'),
@@ -24,9 +22,6 @@ class RCRTCAudioEffectManager {
       case 'onEffectFinished':
         _handleOnEffectFinished(call.arguments);
         break;
-      case 'complete':
-        _handleComplete(call.arguments);
-        break;
     }
     return null;
   }
@@ -35,14 +30,6 @@ class RCRTCAudioEffectManager {
     Map<String, dynamic> json = jsonDecode(string);
     int effectId = json['effectId'];
     for (EffectFinishedCallback callback in _callbacks) callback(effectId);
-  }
-
-  void _handleComplete(String string) {
-    if (_callback != null) {
-      Map<String, dynamic> json = jsonDecode(string);
-      int error = json['error'];
-      _callback(error);
-    }
   }
 
   int registerEffectFinishedCallback(EffectFinishedCallback callback) {
@@ -54,8 +41,7 @@ class RCRTCAudioEffectManager {
     return _callbacks.remove(callback) ? RCRTCErrorCode.OK : RCRTCErrorCode.UnknownError;
   }
 
-  Future<int> preloadEffectFromAssets(String assets, int effectId, LoadingCompleteCallback callback) async {
-    _callback = callback;
+  Future<int> preloadEffectFromAssets(String assets, int effectId) async {
     Map<String, dynamic> arguments = {'assets': assets, 'effectId': effectId};
     String result = await _channel.invokeMethod("preloadEffect", arguments);
     Map<String, dynamic> json = jsonDecode(result);
@@ -63,8 +49,7 @@ class RCRTCAudioEffectManager {
     return code;
   }
 
-  Future<int> preloadEffect(String path, int effectId, LoadingCompleteCallback callback) async {
-    _callback = callback;
+  Future<int> preloadEffect(String path, int effectId) async {
     Map<String, dynamic> arguments = {'path': path, 'effectId': effectId};
     String result = await _channel.invokeMethod("preloadEffect", arguments);
     Map<String, dynamic> json = jsonDecode(result);
@@ -167,6 +152,4 @@ class RCRTCAudioEffectManager {
   final MethodChannel _channel;
 
   final List<EffectFinishedCallback> _callbacks;
-
-  LoadingCompleteCallback _callback;
 }

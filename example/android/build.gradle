@@ -15,14 +15,33 @@ allprojects {
         jcenter()
         maven { url 'http://developer.huawei.com/repo/' }
     }
+
+    ext.'target-platform' = 'android-arm,android-arm64'
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(':app')
+}
+
+subprojects {
+    afterEvaluate {
+        if (project.name == "push" && it.hasProperty('android')) {
+            android {
+                packagingOptions {
+                    merge 'res/values/values.xml'
+                    merge 'classes.jar'
+                    merge 'AndroidManifest.xml'
+                    merge 'R.txt'
+                }
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {

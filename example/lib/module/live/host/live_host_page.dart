@@ -1,20 +1,24 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/view.dart';
 import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/ui/toast.dart';
 import 'package:FlutterRTC/frame/utils/extension.dart';
+import 'package:FlutterRTC/widgets/alert.dart';
+import 'package:FlutterRTC/widgets/bottom_audio_effect_mix_settings_sheet.dart';
+import 'package:FlutterRTC/widgets/bottom_mix_config_sheet.dart';
 import 'package:FlutterRTC/widgets/buttons.dart';
 import 'package:FlutterRTC/widgets/status_panel.dart';
 import 'package:FlutterRTC/widgets/texture_view.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:handy_toast/handy_toast.dart';
 import 'package:intl/intl.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
+import 'package:wakelock/wakelock.dart';
 
-import '../../../colors.dart';
+import 'colors.dart';
 import 'live_host_page_contract.dart';
 import 'live_host_page_presenter.dart';
 
@@ -23,7 +27,7 @@ class LiveHostPage extends AbstractView {
   _LiveHostPageState createState() => _LiveHostPageState();
 }
 
-class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with WidgetsBindingObserver implements View {
+class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with WidgetsBindingObserver implements View, IRCRTCStatusReportListener {
   @override
   Presenter createPresenter() {
     return LiveHostPagePresenter();
@@ -35,23 +39,60 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     _config = Config.fromJSON(arguments);
     presenter?.publish(_config);
     RCRTCEngine.getInstance().enableSpeaker(_config.speaker);
-  }
 
-  @override
-  Size designSize() {
-    return const Size(375, 667);
+    RCRTCEngine.getInstance().registerStatusReportListener(this);
+
+    _maxSubListHeight = MediaQuery.of(context).size.height - 64.dp - 104.dp;
+    _maxSubListShown = ((_maxSubListHeight - 28.dp) / 140.dp).floor();
+
+    _messageViewPadding = defaultMessageViewPadding.dp;
+
+    Wakelock.enable();
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    RCRTCEngine.getInstance().unRegisterStatusReportListener();
+
     if (_timer != null) _timer.cancel();
+    if (_mainViewSetter != null) _mainViewSetter = null;
+    if (_audienceInfoSetter != null) _audienceInfoSetter = null;
+    if (_liveTimeInfoSetter != null) _liveTimeInfoSetter = null;
+    if (_audienceListSetter != null) _audienceListSetter = null;
+    if (_messageSetter != null) _messageSetter = null;
+    if (_statusPanelSetter != null) _statusPanelSetter = null;
+    _signalStrengthSetters.clear();
+
+    Wakelock.disable();
+
+    WidgetsBinding.instance.removeObserver(this);
+
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_inputMessageVisible && _inputMessageFocusNode.hasFocus) {
+        _inputMessageVisible = false;
+        Navigator.pop(context);
+        return;
+      } else {
+        _inputMessageVisible = _inputMessageFocusNode.hasFocus;
+      }
+    });
   }
 
   @override
   Widget buildWidget(BuildContext context) {
     return WillPopScope(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: ColorConfig.backgroundColor,
         body: Stack(
           children: [
             _buildMainView(context),
@@ -60,186 +101,399 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
           ],
         ),
       ),
-      onWillPop: () => _showConfirmExit(context),
+      onWillPop: () => _showExitAlert(context),
     );
   }
 
   Widget _buildMainView(BuildContext context) {
-    int count = _views.length;
-    if (count < 3) {
-      return _buildSingleMeeting(context);
-    } else if (count <= _quattroCount) {
-      return _buildQuattroMeeting(context);
-    } else if (count <= _noveCount) {
-      return _buildNoveMeeting(context);
-    } else {
-      return _buildMultiMeeting(context);
-    }
+    return StatefulBuilder(builder: (context, setter) {
+      _mainViewSetter = setter;
+      List<UserView> views = _viewsWithoutMain();
+      return Stack(
+        children: [
+          _buildUserView(context, _mainView),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              width: 112.dp,
+              margin: EdgeInsets.only(
+                right: 8.dp,
+                bottom: 64.dp,
+              ),
+              constraints: BoxConstraints(
+                maxHeight: _maxSubListHeight,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  views.length > _maxSubListShown
+                      ? Padding(
+                          padding: EdgeInsets.only(bottom: 8.dp),
+                          child: Container(
+                            height: 20.dp,
+                            padding: EdgeInsets.symmetric(horizontal: 8.5.dp),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.dp),
+                              color: Colors.black.withOpacity(0.24),
+                            ),
+                            child: Text(
+                              '连麦人数 ${views.length}',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.white,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
+                  Flexible(
+                    flex: 1,
+                    fit: FlexFit.loose,
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeTop: true,
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: views.length,
+                        separatorBuilder: (context, index) {
+                          return Divider(
+                            height: 4.dp,
+                            color: Colors.transparent,
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          return SizedBox(
+                            width: 112.dp,
+                            height: 140.dp,
+                            child: _buildUserView(context, views[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
-  Widget _buildSingleMeeting(BuildContext context) {
-    var views = viewsWithOutMain();
+  Widget _buildUserView(BuildContext context, UserView view) {
+    if (view == null)
+      return Container(
+        color: ColorConfig.viewBackgroundColor,
+      );
     return Stack(
-      alignment: Alignment.topRight,
       children: [
-        _mainView?.widget ?? Container(),
-        views.isNotEmpty
-            ? GestureDetector(
-                child: Container(
-                  width: 90.0.width,
-                  height: 160.0.height,
-                  padding: EdgeInsets.only(
-                    top: 60.0.height,
-                    right: 15.0.width,
+        view.widget ??
+            Container(
+              color: ColorConfig.viewBackgroundColor,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 80.dp,
+                height: 80.dp,
+                child: view.user.avatar.fullImage,
+              ),
+            ),
+        view.self
+            ? Container()
+            : Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(8.dp),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        view.user.name,
+                        softWrap: true,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      StatefulBuilder(builder: (context, setter) {
+                        _signalStrengthSetters[view.user.id] = setter;
+                        return 'signal_strength_level_${_getSignalStrength(view)}'.png.image;
+                      }),
+                    ],
                   ),
-                  child: views.first.widget,
                 ),
-                onTap: () => _switchMainView(views.first),
-              )
-            : Container(),
+              ),
       ],
     );
   }
 
-  void _switchMainView(VideoStreamWidget view) {
-    _mainView.invalidate();
-    view.invalidate();
-    _mainView = view;
-    setState(() {});
-  }
-
-  List<VideoStreamWidget> viewsWithOutMain() {
+  List<UserView> _viewsWithoutMain() {
     if (_mainView == null) return _views;
     return _views.where((view) => view.user.id != _mainView.user.id).toList();
-  }
-
-  Widget _buildQuattroMeeting(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: GridView.count(
-        crossAxisSpacing: 10.0.width,
-        mainAxisSpacing: 10.0.width,
-        crossAxisCount: 2,
-        childAspectRatio: 1.0,
-        children: _buildViews(context),
-      ),
-    );
-  }
-
-  Widget _buildNoveMeeting(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      padding: EdgeInsets.all(10.0.width),
-      child: GridView.count(
-        crossAxisSpacing: 10.0.width,
-        mainAxisSpacing: 10.0.width,
-        crossAxisCount: 3,
-        childAspectRatio: 1.0,
-        children: _buildViews(context),
-      ),
-    );
-  }
-
-  List<Widget> _buildViews(BuildContext context) {
-    List<Widget> widgets = List();
-    _views.forEach((view) {
-      widgets.add(view.widget);
-    });
-    return widgets;
-  }
-
-  Widget _buildMultiMeeting(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: PageView.builder(
-        itemCount: (_views.length / _noveCount).ceil(),
-        itemBuilder: (context, index) {
-          return _buildMultiMeetingPage(context, index);
-        },
-      ),
-    );
-  }
-
-  Widget _buildMultiMeetingPage(BuildContext context, int index) {
-    int start = index * _noveCount;
-    int end = index * _noveCount + _noveCount;
-    if (end > _views.length) end = _views.length;
-    List<VideoStreamWidget> views = _views.sublist(start, end);
-    List<Widget> widgets = List();
-    views.forEach((view) {
-      widgets.add(view.widget);
-    });
-    return Container(
-      color: Colors.black,
-      padding: EdgeInsets.all(10.0.width),
-      child: GridView.count(
-        crossAxisSpacing: 10.0.width,
-        mainAxisSpacing: 10.0.width,
-        crossAxisCount: 3,
-        childAspectRatio: 1.0,
-        children: widgets,
-      ),
-    );
   }
 
   Widget _buildTopBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        left: 15.0.width,
-        right: 15.0.width,
-        top: 28.0.height,
+        left: 12.dp,
+        right: 12.dp,
+        top: MediaQuery.of(context).padding.top,
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
-            child: Text(
-              _generateRoomInfo(),
-              style: TextStyle(
-                fontSize: 15.0.sp,
-                color: Colors.white,
-                decoration: TextDecoration.none,
+          Row(
+            children: [
+              _buildRoomInfo(context),
+              Spacer(),
+              Padding(
+                padding: EdgeInsets.only(right: 8.dp),
+                child: _buildAudienceInfo(context),
               ),
-            ),
-            onTap: () => _showStatusPanel(context),
+              'module_close'.png.image.toButton(
+                    onPressed: () => _showExitAlert(context),
+                  ),
+            ],
           ),
-          Spacer(),
-          GestureDetector(
-            onTap: () => _exit(context),
-            child: Icon(
-              Icons.power_settings_new,
-              color: Colors.white,
-              size: 30.0.width,
-            ),
-          )
+          Divider(
+            height: 8.dp,
+            color: Colors.transparent,
+          ),
+          Row(
+            children: [
+              _buildLiveTimeInfo(context),
+              Spacer(),
+              _buildLiveSignalStrength(context),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  String _generateRoomInfo() {
-    String time = _timeFormat.format(DateTime.fromMillisecondsSinceEpoch(_timeCount * 1000));
-    return "直播中:($time)";
+  Widget _buildRoomInfo(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18.dp),
+        color: Colors.black.withOpacity(0.24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 36.dp,
+            height: 36.dp,
+            child: DefaultData.user.avatar.fullImage,
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 5.dp,
+              right: 12.dp,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  RCRTCEngine.getInstance().getRoom().id,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                Text(
+                  DefaultData.user.name,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).toButton(
+      onPressed: () => _showStatusPanel(context),
+    );
+  }
+
+  Widget _buildAudienceInfo(BuildContext context) {
+    return Container(
+      height: 28.dp,
+      alignment: Alignment.center,
+      padding: EdgeInsets.only(
+        left: 10.dp,
+        right: 10.dp,
+        bottom: 2.dp,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14.dp),
+        color: Colors.black.withOpacity(0.24),
+      ),
+      child: StatefulBuilder(
+        builder: (context, setter) {
+          _audienceInfoSetter = setter;
+          return Text(
+            '在线 ${_audiences.length}',
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.white,
+              decoration: TextDecoration.none,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _showExitAlert(BuildContext context) {
+    Alert.showAlert(
+      title: '提示',
+      message: '当前正在直播，是否退出直播？',
+      left: '取消',
+      onPressedLeft: () {
+        Navigator.pop(context);
+      },
+      right: '确定',
+      onPressedRight: () {
+        Navigator.pop(context);
+        _showLiveInfo(context);
+      },
+    );
+    return Future.value(false);
+  }
+
+  void _showLiveInfo(BuildContext context) {
+    Alert.showAlert(
+      title: '直播结束啦！',
+      message: '直播时长\n${_time ?? '00:00:00'}',
+      left: '返回',
+      onPressedLeft: () {
+        Navigator.pop(context);
+        _exit(context);
+      },
+    );
+  }
+
+  void _exit(BuildContext context) {
+    Loading.show(context);
+    presenter.exit(context);
+  }
+
+  Widget _buildLiveTimeInfo(BuildContext context) {
+    return Container(
+      height: 20.dp,
+      padding: EdgeInsets.symmetric(horizontal: 8.dp),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(11.dp),
+        color: Colors.black.withOpacity(0.24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 5.dp,
+            height: 5.dp,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2.5.dp),
+              color: ColorConfig.live_time_info_red_dot_color,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 3.5.dp),
+            child: StatefulBuilder(builder: (context, setter) {
+              _liveTimeInfoSetter = setter;
+              return Text(
+                _time ?? '00:00:00',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white,
+                  decoration: TextDecoration.none,
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveSignalStrength(BuildContext context) {
+    return StatefulBuilder(builder: (context, setter) {
+      _signalStrengthSetters[_mainView.user.id] = setter;
+      return 'signal_strength_level_${_getSignalStrength(_mainView)}'.png.image;
+    });
+  }
+
+  int _getSignalStrength(UserView view) {
+    if (_statusReport == null) return 0;
+    String packetLostRate;
+    if (view.self) {
+      if (view.video && _statusReport.statusVideoSends.values.isNotEmpty)
+        packetLostRate = _statusReport.statusVideoSends.values.first.packetLostRate;
+      else if (view.audio && _statusReport.statusAudioSends.values.isNotEmpty)
+        packetLostRate = _statusReport.statusAudioSends.values.first.packetLostRate;
+      else
+        packetLostRate = '0';
+    } else {
+      if (view.video)
+        packetLostRate = _statusReport.statusVideoRcvs[view.videoStream.streamId]?.packetLostRate ?? '0';
+      else if (view.audio)
+        packetLostRate = _statusReport.statusAudioRcvs[view.audioStream.streamId]?.packetLostRate ?? '0';
+      else
+        packetLostRate = '0';
+    }
+    double strength = (packetLostRate ?? '100').toDouble;
+    if (strength < 10)
+      return 2;
+    else if (strength < 50)
+      return 1;
+    else
+      return 0;
   }
 
   void _showStatusPanel(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.black12,
-          insetPadding: EdgeInsets.only(
-            top: 45.0.height,
-            bottom: 100.0.height,
-          ),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              alignment: Alignment.center,
-              child: StatusPanel(),
-            ),
-            onTap: () => Navigator.pop(context),
-          ),
-        );
+        return StatefulBuilder(builder: (context, setter) {
+          _statusPanelSetter = setter;
+          return WillPopScope(
+              child: Dialog(
+                backgroundColor: Colors.black12,
+                insetPadding: EdgeInsets.only(
+                  top: 50.dp,
+                  bottom: 50.dp,
+                ),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: StatusPanel(
+                      report: _statusReport,
+                    ),
+                  ),
+                  onTap: () {
+                    _statusPanelSetter = null;
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              onWillPop: () {
+                _statusPanelSetter = null;
+                Navigator.pop(context);
+                return Future.value(false);
+              });
+        });
       },
     );
   }
@@ -255,26 +509,38 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   Widget _buildMessageView(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: 5.0.height,
-        left: 15.0.width,
-        right: 15.0.width,
-      ),
-      constraints: BoxConstraints(
-        maxHeight: 200.height,
-      ),
-      child: MediaQuery.removePadding(
-        context: context,
-        removeTop: true,
-        child: ListView.builder(
-            shrinkWrap: true,
-            controller: _messageController,
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              return _buildMessage(context, _messages[index]);
-            }),
-      ),
+    return StatefulBuilder(
+      builder: (context, setter) {
+        _messageSetter = setter;
+        return Container(
+          padding: EdgeInsets.only(
+            left: 12.dp,
+            bottom: 12.dp,
+            right: _messageViewPadding,
+          ),
+          constraints: BoxConstraints(
+            maxHeight: 238.dp,
+          ),
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: ListView.separated(
+              shrinkWrap: true,
+              controller: _messageController,
+              itemCount: _messages.length,
+              separatorBuilder: (context, index) {
+                return Divider(
+                  height: 4.dp,
+                  color: Colors.transparent,
+                );
+              },
+              itemBuilder: (context, index) {
+                return _buildMessage(context, _messages[index]);
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -282,46 +548,48 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     return Row(
       children: [
         Flexible(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: 10.0.height,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.5.dp),
+              color: Colors.black.withOpacity(0.3),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0.width),
-                color: ColorConfig.blackAlpha33,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 12.dp,
+                vertical: 3.dp,
               ),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 10.0.width,
-                  right: 10.0.width,
-                  top: 5.0.width,
-                  bottom: 5.0.width,
-                ),
-                child: RichText(
-                  text: TextSpan(
-                    style: DefaultTextStyle.of(context).style,
-                    children: [
-                      TextSpan(
-                        text: '${message.user.name}:',
-                        style: TextStyle(
-                          fontSize: 13.0.sp,
-                          color: Colors.lightBlueAccent,
-                          decoration: TextDecoration.none,
-                        ),
+              child: message.type == MessageType.normal
+                  ? RichText(
+                      text: TextSpan(
+                        style: DefaultTextStyle.of(context).style,
+                        children: [
+                          TextSpan(
+                            text: '${message.user.name}${message.user.id == DefaultData.user.id ? '（我）' : ''}：',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: ColorConfig.message_user_color,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                          TextSpan(
+                            text: message.message,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.white,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: message.message,
-                        style: TextStyle(
-                          fontSize: 13.0.sp,
-                          color: Colors.white,
-                          decoration: TextDecoration.none,
-                        ),
+                    )
+                  : Text(
+                      '${message.user.name} ${message.type == MessageType.join ? '进入了直播间' : '离开了直播间'}',
+                      style: TextStyle(
+                        color: ColorConfig.message_user_color,
+                        fontSize: 14.sp,
+                        decoration: TextDecoration.none,
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ),
         ),
@@ -332,117 +600,118 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        bottom: 5.0.height,
-        left: 15.0.width,
-        right: 15.0.width,
+        bottom: 12.dp,
+        left: 12.dp,
+        right: 12.dp,
       ),
       child: Row(
         children: [
-          GestureDetector(
-            child: FontAwesomeIcons.user.black54,
-            onTap: () => _showMemberList(context),
+          'pk'.png.image.toButton(
+                onPressed: () => '敬请期待'.toast(),
+              ),
+          VerticalDivider(
+            width: 12.dp,
           ),
+          'link'.png.image.toButton(
+                onPressed: () => _showAudienceList(context),
+              ),
+          Spacer(),
+          'message'.png.image.toButton(
+                onPressed: () => _showInputMessageKeyboard(context),
+              ),
+          VerticalDivider(
+            width: 12.dp,
+          ),
+          'live_switch_camera'.png.image.toButton(
+                onPressed: () => _switchCamera(),
+              ),
+          VerticalDivider(
+            width: 12.dp,
+          ),
+          'audio_effect'.png.image.toButton(
+                onPressed: () => BottomAudioEffectMixSettingsSheet.show(),
+              ),
+          VerticalDivider(
+            width: 12.dp,
+          ),
+          'live_mix_config'.png.image.toButton(
+                onPressed: () => _changeMixConfig(context),
+              ),
         ],
       ),
     );
   }
 
-  Future<bool> _showConfirmExit(BuildContext context) {
-    showDialog(
-        context: context,
-        child: AlertDialog(
-          content: Text(
-            "确定退出吗？",
-          ),
-          actions: [
-            FlatButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("取消")),
-            FlatButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _exit(context);
-                },
-                child: Text("确定")),
-          ],
-        ));
-    return Future.value(false);
-  }
-
-  void _exit(BuildContext context) {
-    Loading.show(context);
-    presenter.exit(context);
-  }
-
-  void _showMemberList(BuildContext context) {
+  void _showAudienceList(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       isDismissible: false,
+      enableDrag: false,
+      backgroundColor: ColorConfig.backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(15.0),
+          top: Radius.circular(12.dp),
         ),
       ),
       builder: (context) {
         return StatefulBuilder(builder: (context, setter) {
-          if (_memberListSetter == null) {
-            _memberListSetter = setter;
-            _members.clear();
-            presenter?.requestMemberList();
-          }
+          _audienceListSetter = setter;
           return WillPopScope(
             child: Container(
-              padding: EdgeInsets.only(
-                top: 10.0,
-                bottom: 20.0,
-              ),
+              padding: EdgeInsets.all(20.dp),
               constraints: BoxConstraints(
-                maxHeight: 300,
+                maxHeight: 397.dp,
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: 10.0,
-                      left: 15.0,
-                      right: 15.0,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "在线观众",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            decoration: TextDecoration.none,
-                          ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        '邀请连麦',
+                        style: TextStyle(
+                          fontSize: 17.sp,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
                         ),
-                        Spacer(),
-                        GestureDetector(
-                          child: Icon(Icons.close),
-                          onTap: () => _onCloseMemberList(context),
-                        ),
-                      ],
-                    ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: 'pop_page_close'.png.image.toButton(
+                              onPressed: () => _closeAudienceList(context),
+                            ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _members.length,
-                        itemBuilder: (context, index) {
-                          return _buildMember(context, _members[index]);
-                        }),
+                  Divider(
+                    height: 20.dp,
+                    color: Colors.transparent,
+                  ),
+                  Flexible(
+                    flex: 1,
+                    fit: FlexFit.loose,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _audiences.length,
+                      separatorBuilder: (context, index) {
+                        return Divider(
+                          height: 20.dp,
+                          color: Colors.transparent,
+                        );
+                      },
+                      itemBuilder: (context, index) {
+                        return _buildAudience(context, _audiences[index]);
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
             onWillPop: () {
-              _onCloseMemberList(context);
+              _closeAudienceList(context);
               return Future.value(false);
             },
           );
@@ -451,37 +720,32 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     );
   }
 
-  void _onCloseMemberList(BuildContext context) {
+  void _closeAudienceList(BuildContext context) {
     Navigator.pop(context);
-    _memberListSetter = null;
+    _audienceListSetter = null;
   }
 
-  Widget _buildMember(BuildContext context, User user) {
+  Widget _buildAudience(BuildContext context, User user) {
     return Container(
-      padding: EdgeInsets.only(
-        left: 20.0,
-        right: 20.0,
-        bottom: 10.0,
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipOval(
             child: SizedBox(
-              width: 30,
-              height: 30,
-              child: Image.asset("assets/images/default_user_icon.jpg"),
+              width: 48.dp,
+              height: 48.dp,
+              child: user.avatar.fullImage,
             ),
           ),
           Padding(
             padding: EdgeInsets.only(
-              left: 20.0,
+              left: 12.dp,
             ),
             child: Text(
               user.name,
               style: TextStyle(
-                fontSize: 14.0,
-                color: Colors.black,
+                fontSize: 15.sp,
+                color: Colors.white,
                 decoration: TextDecoration.none,
               ),
             ),
@@ -498,20 +762,18 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
     return GestureDetector(
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15.0),
-          color: ColorConfig.defaultBlue,
+          borderRadius: BorderRadius.circular(2.dp),
+          color: ColorConfig.audienceListActionButtonBackgroundColor,
         ),
         child: Padding(
-          padding: EdgeInsets.only(
-            left: 15.0,
-            right: 15.0,
-            top: 4.0,
-            bottom: 4.0,
+          padding: EdgeInsets.symmetric(
+            horizontal: 18.dp,
+            vertical: 5.dp,
           ),
           child: Text(
             inChatting ? "断开" : "邀请",
             style: TextStyle(
-              fontSize: 13.0,
+              fontSize: 13.sp,
               color: Colors.white,
               decoration: TextDecoration.none,
             ),
@@ -523,12 +785,12 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   bool _isMemberInvited(User user) {
-    for (User _user in _invitedMembers) if (_user.id == user.id) return true;
+    for (User _user in _invitedAudiences) if (_user.id == user.id) return true;
     return false;
   }
 
   void _onClickMemberAction(BuildContext context, User user, bool inChatting) {
-    _onCloseMemberList(context);
+    _closeAudienceList(context);
     if (inChatting) {
       _kickMember(context, user);
     } else {
@@ -537,32 +799,102 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   void _kickMember(BuildContext context, User user) {
-    // TODO 断开
+    presenter?.kickMember(user);
   }
 
   void _inviteMember(BuildContext context, User user) {
     presenter?.inviteMember(user);
   }
 
-  @override
-  void onViewCreated(VideoStreamWidget view) {
-    String uid = RCRTCEngine.getInstance().getRoom().localUser.id;
-    if (uid == view.user.id) {
-      view.mirror = _config.frontCamera;
-      _mainView = view;
-    }
-    _addSubView(view);
-    _views.forEach((element) {
-      element.invalidate();
-    });
-    setState(() {});
+  void _showInputMessageKeyboard(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return WillPopScope(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              color: Colors.transparent,
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 50.dp,
+                color: Colors.white,
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 2.dp),
+                child: TextField(
+                  autofocus: true,
+                  focusNode: _inputMessageFocusNode,
+                  controller: _inputMessageController,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.send,
+                  maxLines: 1,
+                  maxLength: 32,
+                  maxLengthEnforced: true,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: Colors.black,
+                    decoration: TextDecoration.none,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    counterText: '',
+                    hintText: "说点什么...",
+                    hintStyle: TextStyle(
+                      fontSize: 15.sp,
+                      color: ColorConfig.input_message_hint_color,
+                    ),
+                  ),
+                  onEditingComplete: () {
+                    String message = _inputMessageController.text;
+                    _inputMessageController.text = '';
+                    presenter?.sendMessage(message);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ),
+          ),
+          onWillPop: () {
+            Navigator.pop(context);
+            return Future.value(false);
+          },
+        );
+      },
+    );
   }
 
-  void _addSubView(VideoStreamWidget view) {
-    _views.removeWhere((element) {
-      return element.user.id == view.user.id;
+  void _switchCamera() async {
+    _config.frontCamera = await presenter?.switchCamera();
+    UserView view = _getSelfView();
+    view?.mirror = _config.frontCamera;
+    _mainViewSetter(() {});
+  }
+
+  UserView _getSelfView() {
+    var views = _views.where((view) => view.self);
+    if (views.isNotEmpty) return views.first;
+    return null;
+  }
+
+  void _changeMixConfig(BuildContext context) {
+    BottomMixConfigSheet.show(
+      context,
+      selected: (config) {
+        presenter?.changeMixConfig(config);
+      },
+    );
+  }
+
+  @override
+  void onConnectionStats(StatusReport report) {
+    _statusReport = report;
+
+    _signalStrengthSetters.values.forEach((setter) {
+      setter(() {});
     });
-    _views.add(view);
+    if (_statusPanelSetter != null) _statusPanelSetter(() {});
   }
 
   @override
@@ -571,9 +903,12 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
     _timeCount = 0;
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _timeCount++;
-      });
+      _timeCount++;
+      _time = _timeFormat.format(DateTime.fromMillisecondsSinceEpoch(
+        _timeCount * 1000,
+        isUtc: true,
+      ));
+      if (_liveTimeInfoSetter != null) _liveTimeInfoSetter(() {});
     });
   }
 
@@ -583,51 +918,133 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
   }
 
   @override
-  void onRemoveView(String userId) {
-    _views.removeWhere((view) {
-      return view.user.id == userId;
-    });
-    if (_mainView.user.id == userId) _mainView = _views.isNotEmpty ? _views.first : null;
-    _views.forEach((element) {
-      element.invalidate();
-    });
-    setState(() {});
-  }
-
-  @override
   void onReceiveMessage(Message message) {
-    setState(() {
-      _messages.add(message);
-      Future.delayed(Duration(milliseconds: 50)).then((value) {
-        _messageController.jumpTo(_messageController.position.maxScrollExtent);
-
-        // _messageController.animateTo(
-        //   _messageController.position.maxScrollExtent,
-        //   duration: Duration(milliseconds: 100),
-        //   curve: Curves.easeOut,
-        // );
-      });
-    });
+    _messages.add(message);
+    _messageViewScrollToBottom();
   }
 
   @override
-  void onReceiveMember(User user) {
-    if (_memberListSetter != null)
-      _memberListSetter(() {
-        _members.add(user);
-      });
+  void onAudienceJoined(User user) {
+    _audiences.add(user);
+    if (_audienceInfoSetter != null) _audienceInfoSetter(() {});
+    if (_audienceListSetter != null) _audienceListSetter(() {});
+  }
+
+  @override
+  void onAudienceLeft(User user) {
+    _audiences.removeWhere((element) => element.id == user.id);
+    if (_audienceInfoSetter != null) _audienceInfoSetter(() {});
+    if (_audienceListSetter != null) _audienceListSetter(() {});
   }
 
   @override
   void onMemberInvited(User user, bool agree) {
     if (!agree) return;
-    _invitedMembers.add(user);
-    if (_memberListSetter != null) _memberListSetter(() {});
+    _invitedAudiences.add(user);
+    if (_audienceListSetter != null) _audienceListSetter(() {});
   }
 
   @override
-  void onMemberJoined(String userId) {
-    // TODO: implement onMemberJoined
+  void onUserJoined(UserView view) {
+    if (view.self) {
+      view.mirror = _config.frontCamera;
+      _mainView = view;
+    } else {
+      view.user.name = view.user.name = _getAudienceName(view.user.id) ?? _getAudienceNameDeep(view.user.id) ?? view.user.name;
+    }
+    _addSubView(view);
+    _views.forEach((element) {
+      element.invalidate();
+    });
+
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+    if (_audienceListSetter != null) _audienceListSetter(() {});
+
+    _updateMessageView();
+  }
+
+  String _getAudienceName(String uid) {
+    var users = _invitedAudiences.where((user) => user.id == uid);
+    if (users.isNotEmpty) return users.first.name;
+    return null;
+  }
+
+  String _getAudienceNameDeep(String uid) {
+    var users = _audiences.where((user) => user.id == uid);
+    if (users.isNotEmpty) return users.first.name;
+    return null;
+  }
+
+  void _addSubView(UserView view) {
+    _views.removeWhere((element) {
+      return element.user.id == view.user.id;
+    });
+    _views.add(view);
+  }
+
+  @override
+  void onUserLeaved(String uid) {
+    _views.removeWhere((view) {
+      return view.user.id == uid;
+    });
+    if (_mainView.user.id == uid) _mainView = _views.isNotEmpty ? _views.first : null;
+    _views.forEach((view) {
+      view.invalidate();
+    });
+
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+    if (_audienceListSetter != null) _audienceListSetter(() {});
+
+    _updateMessageView();
+
+    _invitedAudiences.removeWhere((user) => user.id == uid);
+  }
+
+  void _updateMessageView() {
+    if (_messageViewPadding == null) _messageViewPadding = defaultMessageViewPadding.dp;
+
+    if (_views.length > 1 && _messageViewPadding < messageViewPaddingWithSubviews.dp) {
+      _messageViewPadding = messageViewPaddingWithSubviews.dp;
+      _messageViewScrollToBottom();
+    } else if (_views.length < 2 && _messageViewPadding > defaultMessageViewPadding.dp) {
+      _messageViewPadding = defaultMessageViewPadding.dp;
+      _messageViewScrollToBottom();
+    }
+  }
+
+  void _messageViewScrollToBottom() {
+    if (_messageSetter != null)
+      _messageSetter(() {
+        Future.delayed(Duration(milliseconds: 50)).then((value) {
+          _messageController.animateTo(
+            _messageController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        });
+      });
+  }
+
+  @override
+  void onUserAudioStreamChanged(String uid, stream) {
+    UserView view = _getUserView(uid);
+    view.audioStream = stream;
+    if (view.self) _config.mic = view.audio;
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+  }
+
+  @override
+  void onUserVideoStreamChanged(String uid, stream) {
+    UserView view = _getUserView(uid);
+    view.videoStream = stream;
+    if (view.self) _config.camera = view.video;
+    if (_mainViewSetter != null) _mainViewSetter(() {});
+  }
+
+  UserView _getUserView(String uid) {
+    var views = _views.where((view) => view.user.id == uid);
+    if (views.isNotEmpty) return views.first;
+    return null;
   }
 
   @override
@@ -638,7 +1055,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
   @override
   void onExitWithError(BuildContext context, String info) {
-    Toast.show(context, info);
+    info.toast();
     onExit(context);
   }
 
@@ -648,21 +1065,38 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
   Config _config;
 
-  VideoStreamWidget _mainView;
-  List<VideoStreamWidget> _views = List();
-
   Timer _timer;
   int _timeCount = 0;
-  DateFormat _timeFormat = DateFormat('mm:ss');
+  String _time;
+  DateFormat _timeFormat = DateFormat('HH:mm:ss');
+
+  UserView _mainView;
+  List<UserView> _views = List();
+
+  double _maxSubListHeight;
+  int _maxSubListShown;
+
+  double _messageViewPadding;
+  final int defaultMessageViewPadding = 50;
+  final int messageViewPaddingWithSubviews = 132;
 
   List<Message> _messages = List();
+
+  List<User> _audiences = List();
+  List<User> _invitedAudiences = List();
+
+  StatusReport _statusReport;
+
   ScrollController _messageController = ScrollController();
+  bool _inputMessageVisible = false;
+  FocusNode _inputMessageFocusNode = FocusNode();
+  TextEditingController _inputMessageController = TextEditingController();
 
-  List<User> _members = List();
-  StateSetter _memberListSetter;
-
-  List<User> _invitedMembers = List();
-
-  int _quattroCount = 0;
-  int _noveCount = 0;
+  StateSetter _mainViewSetter;
+  StateSetter _audienceInfoSetter;
+  StateSetter _liveTimeInfoSetter;
+  StateSetter _messageSetter;
+  StateSetter _audienceListSetter;
+  StateSetter _statusPanelSetter;
+  Map<String, StateSetter> _signalStrengthSetters = Map();
 }

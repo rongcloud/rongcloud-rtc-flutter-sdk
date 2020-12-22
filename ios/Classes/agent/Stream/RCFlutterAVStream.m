@@ -32,7 +32,7 @@
 }
 
 - (void)dealloc{
-    NSLog(@"xuhuan----RCFlutterAVStream dealloc");
+    NSLog(@"RCFlutterAVStream dealloc");
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
