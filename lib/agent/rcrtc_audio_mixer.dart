@@ -26,8 +26,7 @@ class RCRTCAudioMixer {
   }
 
   void _handleOnMixEnd() {
-    if (_callback != null)
-      _callback();
+    if (_callback != null) _callback();
   }
 
   void setAudioMixEndCallback(AudioMixEndCallback callback) {

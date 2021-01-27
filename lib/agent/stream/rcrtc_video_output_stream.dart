@@ -12,7 +12,7 @@ class RCRTCVideoOutputStream extends RCRTCOutputStream {
     return await channel.invokeMethod('setTextureView', id);
   }
 
-  setVideoConfig(RCRTCVideoStreamConfig config) async {
+  Future<void> setVideoConfig(RCRTCVideoStreamConfig config) async {
     var json = jsonEncode(config);
     await channel.invokeMethod("setVideoConfig", json);
   }

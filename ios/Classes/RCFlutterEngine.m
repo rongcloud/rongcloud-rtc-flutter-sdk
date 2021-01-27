@@ -18,11 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-#ifdef USE_REMOTE_SDK
-@interface RCFlutterEngine () <NSCopying, RCRTCActivityMonitorDelegate>
-#else
 @interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
-#endif
 
 /**
  rtc room
@@ -273,28 +269,16 @@ SingleInstanceM(Engine);
 }
 
 - (void)registerStatusReportListener:(FlutterResult)result {
-#ifdef USE_REMOTE_SDK
-    [RCRTCEngine sharedInstance].monitorDelegate = self;
-#else
     [RCRTCEngine sharedInstance].statusReportDelegate = self;
-#endif
     result(nil);
 }
 
 - (void)unRegisterStatusReportListener:(FlutterResult)result {
-#ifdef USE_REMOTE_SDK
-    [RCRTCEngine sharedInstance].monitorDelegate = nil;
-#else
     [RCRTCEngine sharedInstance].statusReportDelegate = self;
-#endif
     result(nil);
 }
 
-#ifdef USE_REMOTE_SDK
-- (void)didReportStatForm:(RCRTCStatisticalForm*)form {
-#else
 - (void)didReportStatusForm:(RCRTCStatusForm*)form {
-#endif
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     
     NSMutableDictionary *vss = [NSMutableDictionary dictionary];
@@ -358,11 +342,7 @@ SingleInstanceM(Engine);
 - (NSDictionary *)toDic:(RCRTCStreamStat *)stat {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     [dic setObject:stat.trackId forKey:@"id"];
-#ifdef USE_REMOTE_SDK
-    NSString *uid = [RCRTCStatisticalForm fetchUserIdFromTrackId:stat.trackId];
-#else
     NSString *uid = [RCRTCStatusForm fetchUserIdFromTrackId:stat.trackId];
-#endif
     [dic setObject:uid != nil ? uid : @"Unknown" forKey:@"uid"];
     [dic setObject:stat.codecName forKey:@"codecName"];
     [dic setObject:stat.mediaType forKey:@"mediaType"];

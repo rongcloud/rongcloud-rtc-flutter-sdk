@@ -18,6 +18,7 @@ class RCRTCRoom {
   final List<RCRTCRemoteUser> remoteUserList = List<RCRTCRemoteUser>();
 
   Function(RCRTCRemoteUser remoteUser) onRemoteUserJoined;
+  Function(RCRTCRemoteUser remoteUser) onRemoteUserOffline;
   Function(RCRTCRemoteUser remoteUser) onRemoteUserLeft;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserPublishResource;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnPublishResource;
@@ -27,7 +28,9 @@ class RCRTCRoom {
         id = jsonObj['id'],
         localUser = RCRTCLocalUser.fromJson(jsonObj['localUser']) {
     List<dynamic> jsonRemoteUserList = jsonObj['remoteUserList'];
-    for (var jsonRemoteUser in jsonRemoteUserList) remoteUserList.add(RCRTCRemoteUser.fromJson(jsonRemoteUser));
+    jsonRemoteUserList.forEach((user) {
+      remoteUserList.add(RCRTCRemoteUser.fromJson(user));
+    });
     _channel.setMethodCallHandler(methodCallHandler);
   }
 
@@ -35,6 +38,9 @@ class RCRTCRoom {
     switch (call.method) {
       case 'onUserJoined':
         _handleOnUserJoined(call.arguments);
+        break;
+      case 'onUserOffline':
+        _handleOnUserOffline(call.arguments);
         break;
       case 'onUserLeft':
         _handleOnUserLeft(call.arguments);
@@ -55,6 +61,21 @@ class RCRTCRoom {
     for (RCRTCRemoteUser user in remoteUserList) assert(user.id != targetUser.id);
     remoteUserList.add(targetUser);
     if (onRemoteUserJoined != null) onRemoteUserJoined(targetUser);
+  }
+
+  void _handleOnUserOffline(String jsonStr) {
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    String userId = jsonObj['remoteUser']['id'];
+    RCRTCRemoteUser targetUser;
+    for (RCRTCRemoteUser user in remoteUserList) {
+      if (user.id == userId) {
+        targetUser = user;
+        remoteUserList.remove(user);
+        break;
+      }
+    }
+    RCRTCDebugChecker.notNull(targetUser);
+    if (onRemoteUserOffline != null) onRemoteUserOffline(targetUser);
   }
 
   void _handleOnUserLeft(String jsonStr) {

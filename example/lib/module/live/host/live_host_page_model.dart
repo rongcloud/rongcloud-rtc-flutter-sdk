@@ -82,6 +82,10 @@ class LiveHostPageModel extends AbstractModel implements Model {
       }
     };
 
+    room.onRemoteUserOffline = (user) {
+      onUserLeaved(user.id);
+    };
+
     room.onRemoteUserLeft = (user) {
       onUserLeaved(user.id);
     };
@@ -149,7 +153,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
   void _requestCreateLiveRoom(Data.User user, String rid, String url) {
     Http.post(
       GlobalConfig.host + '/live_room/$rid',
-      {'user_id': user.id, 'user_name': user.name, 'mcu_url': url},
+      {'user_id': user.id, 'user_name': user.name, 'mcu_url': url, 'key': GlobalConfig.appKey},
       (error, data) {
         print("_requestCreateLiveRoom success, error = $error, data = $data");
       },
@@ -288,7 +292,7 @@ class LiveHostPageModel extends AbstractModel implements Model {
     print("_requestLeaveLiveRoom roomId = $roomId");
     Http.delete(
       GlobalConfig.host + '/live_room/$roomId',
-      null,
+      {'key': GlobalConfig.appKey},
       (error, data) {
         print("_requestLeaveLiveRoom success, error = $error, data = $data");
       },

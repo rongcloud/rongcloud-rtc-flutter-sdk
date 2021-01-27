@@ -1,6 +1,7 @@
 package io.flutter.plugins;
 
 import io.flutter.plugin.common.PluginRegistry;
+import io.rong.flutter.imlib.RongcloudImPlugin;
 import io.rong.flutter.rtclib.RongcloudRTCPlugin;
 
 /**
@@ -11,6 +12,7 @@ public final class GeneratedPluginRegistrant {
     if (alreadyRegisteredWith(registry)) {
       return;
     }
+    RongcloudImPlugin.registerWith(registry.registrarFor("io.rong.flutter.imlib.RongcloudImPlugin"));
     RongcloudRTCPlugin.registerWith(registry.registrarFor("io.rong.flutter.rtclib.RongcloudRTCPlugin"));
   }
 

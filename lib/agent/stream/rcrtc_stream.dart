@@ -59,8 +59,8 @@ class RCRTCStream {
 
   Future<int> mute(bool value) async {
     RCRTCLog.d(tag, "set mute $value");
-    _mute = value;
     int code = await channel.invokeMethod("mute", value);
+    if (code == 0) _mute = value;
     RCRTCLog.d(tag, "after mute success is 0 : $code}");
     return code;
   }

@@ -20,7 +20,7 @@ class LiveHomePageModel extends AbstractModel implements Model {
     if (reset) page = 0;
     Http.get(
       GlobalConfig.host + '/live_room',
-      null,
+      {'key': GlobalConfig.appKey},
       (error, data) {
         List<Room> list = List();
         Map<String, dynamic> rooms = jsonDecode(data);

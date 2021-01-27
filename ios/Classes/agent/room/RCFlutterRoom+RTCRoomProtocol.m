@@ -20,6 +20,15 @@
     [self.methodChannel invokeMethod:KOnUserJoin arguments:json];
 }
 
+- (void)didOfflineUser:(RCRTCRemoteUser *)user {
+    RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:user.userId];
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    NSDictionary *userDic = [remoteUser toDesc];
+    [dic setValue:userDic forKey:@"remoteUser"];
+    NSString *json = [RCFlutterTools dictionaryToJson:dic];
+    [self.methodChannel invokeMethod:KOnUserOffline arguments:json];
+}
+
 - (void)didLeaveUser:(RCRTCRemoteUser *)user {
     RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:user.userId];
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];

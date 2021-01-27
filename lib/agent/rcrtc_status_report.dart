@@ -132,7 +132,11 @@ class StatusBean {
   StatusBean.fromJson(Map<String, dynamic> map)
       : this.rtt = "${map['rtt']}",
         this.id = map['id'],
-        this.audioOutputLevel = map.containsKey('audioOutputLevel') ? '${map['audioOutputLevel']}' : map.containsKey('audioLevel') ? '${map['audioLevel']}' : '0',
+        this.audioOutputLevel = map.containsKey('audioOutputLevel')
+            ? '${map['audioOutputLevel']}'
+            : map.containsKey('audioLevel')
+                ? '${map['audioLevel']}'
+                : '0',
         this.bitRate = "${map['bitRate']}",
         this.codecImplementationName = map['codecImplementationName'],
         this.codecName = map['codecName'],

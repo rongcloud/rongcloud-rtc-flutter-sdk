@@ -170,6 +170,10 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
       }
     };
 
+    room.onRemoteUserOffline = (user) {
+      onUserLeaved(user.id);
+    };
+
     room.onRemoteUserLeft = (user) {
       onUserLeaved(user.id);
     };

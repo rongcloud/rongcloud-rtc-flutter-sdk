@@ -51,6 +51,7 @@
     }
     _nativeView.delegate = nil;
     _nativeView = nil;
+    _eventSink = nil;
     [_registry unregisterTexture:_textureId];
 }
 
@@ -136,10 +137,11 @@
 }
 
 - (void)firstFrameRendered {
-    _eventSink(@{
-        @"event" : @"didFirstFrameRendered",
-        @"id": @(_textureId),
-               });
+    if (_eventSink)
+        _eventSink(@{
+            @"event" : @"didFirstFrameRendered",
+            @"id": @(_textureId),
+                   });
 }
 
 - (void)frameRendered {

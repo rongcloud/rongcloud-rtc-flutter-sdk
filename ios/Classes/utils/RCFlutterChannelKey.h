@@ -135,6 +135,9 @@ FOUNDATION_EXTERN NSString * const KSwitchToTinyStream;
 // on user join
 FOUNDATION_EXTERN NSString * const KOnUserJoin;
 
+// on user offline
+FOUNDATION_EXTERN NSString * const KOnUserOffline;
+
 // on user left
 FOUNDATION_EXTERN NSString * const KOnUserLeft;
 

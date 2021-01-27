@@ -52,7 +52,7 @@ public class RCFlutterMicOutputStream extends RCFlutterAudioOutputStream {
     private void setMicrophoneDisable(MethodCall call, Result result) {
         boolean disable = (boolean) call.arguments;
         rtcMicOutputStream.setMicrophoneDisable(disable);
-        UIThreadHandler.success(result, null);
+        UIThreadHandler.success(result, 0);
     }
 
     private void setAudioConfig(MethodCall call, Result result) {

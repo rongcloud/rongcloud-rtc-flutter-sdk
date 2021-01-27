@@ -6,9 +6,9 @@
 
 [Flutter 官网](https://flutter.dev/)
 
-[融云 iOS RTC 文档](https://www.rongcloud.cn/docs/ios_RTClib.html)
+[融云 iOS RTC 文档](https://www.rongcloud.cn/docs/ios_rtclib.html)
 
-[融云 Android RTC 文档](https://www.rongcloud.cn/docs/android_RTClib.html)
+[融云 Android RTC 文档](https://www.rongcloud.cn/docs/android_rtclib.html)
 
 源码地址 [Github](https://github.com/rongcloud/rongcloud-rtc-flutter-sdk)，任何问题可以通过 Github Issues 提问
 
@@ -34,7 +34,7 @@
 dependencies:
   flutter:
     sdk: flutter
-  rongcloud_rtc_plugin: ^4.0.4+4
+  rongcloud_rtc_plugin: ^4.1.0
 ```
 
 iOS 需要在 Info.plist 中需要加入对相机和麦克风的权限申请

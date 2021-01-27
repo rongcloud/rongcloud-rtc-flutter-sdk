@@ -1,3 +1,52 @@
+current_version = 'Unknown'
+
+yaml = File.expand_path(File.join('..', '..', '..' ,'pubspec.yaml'), __FILE__)
+
+File.foreach(yaml) do |line|
+    matches = line.match(/version\:(.*)/)
+    if matches
+      current_version = matches[1].split("#")[0].strip
+    end
+end
+
+if current_version == 'Unknown'
+    raise "No version info in pubspec.yaml!!"
+end
+
+im_sdk_version = 'Unknown'
+rtc_sdk_version = 'Unknown'
+
+config = File.expand_path(File.join('..', '..', '..' ,'version.config'), __FILE__)
+
+File.foreach(config) do |line|
+    matches = line.match(/im_sdk_version\=(.*)/)
+    if matches
+      im_sdk_version = matches[1].split("#")[0].strip
+    end
+    matches = line.match(/rtc_sdk_version\=(.*)/)
+    if matches
+      rtc_sdk_version = matches[1].split("#")[0].strip
+    end
+end
+
+if im_sdk_version == 'Unknown'
+    raise "You need to config im_sdk_version in version.config!!"
+end
+if rtc_sdk_version == 'Unknown'
+    raise "You need to config rtc_sdk_version in version.config!!"
+end
+
+ENV['CURRENT_VERSION'] = current_version
+ENV['IM_SDK_VERSION'] = im_sdk_version
+ENV['RTC_SDK_VERSION'] = rtc_sdk_version
+
+pre_build_path = File.expand_path(File.join('..', '..' ,'pre_build'), __FILE__)
+pre_build_able = File.exist?("#{pre_build_path}.rb")
+if pre_build_able
+  require pre_build_path
+  setup_rtc_environment
+end
+
 # Uncomment this line to define a global platform for your project
 platform :ios, '9.0'
 
@@ -29,12 +78,6 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-end
-
-pre_build_path = File.expand_path(File.join('..', '..' ,'pre_build'), __FILE__)
-pre_build_able = File.exist?("#{pre_build_path}.rb")
-if pre_build_able
-  require pre_build_path
 end
 
 post_install do |installer|

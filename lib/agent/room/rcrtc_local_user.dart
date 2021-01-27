@@ -14,22 +14,7 @@ class RCRTCLocalUser extends RCRTCUser {
 
   final List<RCRTCOutputStream> _streamList = List<RCRTCOutputStream>();
 
-  RCRTCLocalUser.fromJson(Map<String, dynamic> jsonObj) : super.fromJson(jsonObj) {
-    // List<dynamic> jsonStreams = jsonObj['streams'];
-    // for (var stream in jsonStreams) {
-    //   if (stream['tag'] == 'RongCloudRTC') {
-    //     if (stream['type'] == 0) {
-    //       _streamList.add(RCRTCMicOutputStream.fromJson(stream));
-    //       continue;
-    //     } else if (stream['type'] == 1) {
-    //       _streamList.add(RCRTCCameraOutputStream.fromJson(stream));
-    //       continue;
-    //     }
-    //   }
-    //   RCRTCDebugChecker.throwError('Unknown stream type!');
-    // }
-    // print('streams = $_streamList');
-  }
+  RCRTCLocalUser.fromJson(Map<String, dynamic> jsonObj) : super.fromJson(jsonObj);
 
   Future<int> publishDefaultStreams() async {
     return await methodChannel.invokeMethod('publishDefaultStreams');
@@ -94,9 +79,6 @@ class RCRTCLocalUser extends RCRTCUser {
     String streamListJson = jsonEncode(streams);
     RCRTCLog.d(_tag, "subscribeStreams $streamListJson");
     int code = await methodChannel.invokeMethod('subscribeStreams', streamListJson);
-    if (code == RCRTCErrorCode.OK) {
-//      for (RCRTCInputStream stream in streamList) stream.subscribed = true;
-    }
     return code;
   }
 
@@ -108,9 +90,6 @@ class RCRTCLocalUser extends RCRTCUser {
     String streamListJson = jsonEncode(streamList);
     RCRTCLog.d(_tag, "unsubscribeStreams $streamListJson");
     int code = await methodChannel.invokeMethod('unsubscribeStreams', streamListJson);
-    if (code == RCRTCErrorCode.OK) {
-//      for (RCRTCInputStream stream in streamList) stream.subscribed = false;
-    }
     return code;
   }
 

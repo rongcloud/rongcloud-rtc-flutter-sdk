@@ -25,6 +25,7 @@
     if ([call.method  isEqualToString:KSetMicrophoneDisable]) {
         NSNumber *disable = (NSNumber *)call.arguments;
         [self setMicrophoneDisable:disable.boolValue];
+        result(@(0));
     } else if ([call.method isEqualToString:KAdjustRecordingVolume]) {
         [self adjustRecordingVolume:call result:result];
     } else if ([call.method isEqualToString:KGetRecordingVolume]) {

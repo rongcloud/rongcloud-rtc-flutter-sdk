@@ -1,43 +1,6 @@
-require 'pathname'
-current_path = Pathname.new(__FILE__).realpath
-
-current_version = 'Unknown'
-
-yaml = File.expand_path(File.join('..', '..' ,'pubspec.yaml'), current_path)
-
-File.foreach(yaml) do |line|
-    matches = line.match(/version\:(.*)/)
-    if matches
-      current_version = matches[1].split("#")[0].strip
-    end
-end
-
-if current_version == 'Unknown'
-    raise "No version info in pubspec.yaml!!"
-end
-
-im_sdk_version = 'Unknown'
-rtc_sdk_version = 'Unknown'
-
-config = File.expand_path(File.join('..', '..' ,'version.config'), current_path)
-
-File.foreach(config) do |line|
-    matches = line.match(/im_sdk_version\=(.*)/)
-    if matches
-      im_sdk_version = matches[1].split("#")[0].strip
-    end
-    matches = line.match(/rtc_sdk_version\=(.*)/)
-    if matches
-      rtc_sdk_version = matches[1].split("#")[0].strip
-    end
-end
-
-if im_sdk_version == 'Unknown'
-    raise "You need to config im_sdk_version in version.config!!"
-end
-if rtc_sdk_version == 'Unknown'
-    raise "You need to config rtc_sdk_version in version.config!!"
-end
+current_version = ENV['CURRENT_VERSION']
+im_sdk_version = ENV['IM_SDK_VERSION']
+rtc_sdk_version = ENV['RTC_SDK_VERSION']
 
 Pod::Spec.new do |s|
   s.name             = 'rongcloud_rtc_plugin'
@@ -53,8 +16,17 @@ Pod::Spec.new do |s|
   
   s.dependency 'Libyuv', '1703'
   
-  s.dependency 'RongCloudIM/IMLib', im_sdk_version
-  s.dependency 'RongRTCLib', rtc_sdk_version
+#  local = ENV['USE_LOCAL_SDK']
+#  if local and local == 'true'
+#    im_framework = '../../ios-imsdk/imlib/bin/RongIMLib.framework'
+#    rtc_framework = '../../ios-rtcsdk/RongRTCLib/bin/RongRTCLib.framework'
+#    s.vendored_frameworks = im_framework, rtc_framework
+#    s.frameworks = "AssetsLibrary","VideoToolbox", "GLKit", "MapKit", "ImageIO", "CoreLocation", "SystemConfiguration", "QuartzCore", "OpenGLES", "CoreVideo", "CoreTelephony", "CoreMedia", "CoreAudio", "CFNetwork", "AudioToolbox", "AVFoundation", "UIKit", "CoreGraphics"
+#    s.libraries = "c++","z","sqlite3","bz2"
+#  else
+    s.dependency 'RongCloudIM/IMLib', im_sdk_version
+    s.dependency 'RongRTCLib', rtc_sdk_version
+#  end
 
   s.static_framework = true
   

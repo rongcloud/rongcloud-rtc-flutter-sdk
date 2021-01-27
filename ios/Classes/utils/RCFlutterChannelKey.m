@@ -136,6 +136,9 @@ NSString * const KSwitchToTinyStream = @"switchToTinyStream";
 // on user join
 NSString * const KOnUserJoin = @"onUserJoined";
 
+// on user offline
+NSString * const KOnUserOffline = @"onUserOffline";
+
 // on user left
 NSString * const KOnUserLeft = @"onUserLeft";
 

@@ -33,7 +33,7 @@ class LoginPageModel extends AbstractModel implements Model {
   ) {
     Http.post(
       GlobalConfig.host + '/token/${DefaultData.user.id}',
-      null,
+      {'key': GlobalConfig.appKey},
       (error, data) {
         Login login = Login.fromJson(data);
         DefaultData.user.token = login.token;
