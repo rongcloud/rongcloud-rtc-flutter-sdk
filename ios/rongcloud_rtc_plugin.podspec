@@ -1,6 +1,40 @@
-current_version = ENV['CURRENT_VERSION']
-im_sdk_version = ENV['IM_SDK_VERSION']
-rtc_sdk_version = ENV['RTC_SDK_VERSION']
+current_version = 'Unknown'
+
+yaml = File.expand_path(File.join('..', '..' ,'pubspec.yaml'), __FILE__)
+
+File.foreach(yaml) do |line|
+    matches = line.match(/version\:(.*)/)
+    if matches
+      current_version = matches[1].split("#")[0].strip
+    end
+end
+
+if current_version == 'Unknown'
+    raise "No version info in pubspec.yaml!!"
+end
+
+im_sdk_version = 'Unknown'
+rtc_sdk_version = 'Unknown'
+
+config = File.expand_path(File.join('..', '..', 'version.config'), __FILE__)
+
+File.foreach(config) do |line|
+    matches = line.match(/im_sdk_version\=(.*)/)
+    if matches
+      im_sdk_version = matches[1].split("#")[0].strip
+    end
+    matches = line.match(/rtc_sdk_version\=(.*)/)
+    if matches
+      rtc_sdk_version = matches[1].split("#")[0].strip
+    end
+end
+
+if im_sdk_version == 'Unknown'
+    raise "You need to config im_sdk_version in version.config!!"
+end
+if rtc_sdk_version == 'Unknown'
+    raise "You need to config rtc_sdk_version in version.config!!"
+end
 
 Pod::Spec.new do |s|
   s.name             = 'rongcloud_rtc_plugin'
