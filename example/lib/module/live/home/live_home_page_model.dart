@@ -50,7 +50,17 @@ class LiveHomePageModel extends AbstractModel implements Model {
         if (code == RCRTCErrorCode.OK || code == RCRTCErrorCode.ALREADY_CONNECTED) {
           RongIMClient.joinChatRoom(roomId, -1);
 
-          onJoined(context);
+          await RCRTCEngine.getInstance().init(null);
+
+          RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
+            roomId: roomId,
+            roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo, RCRTCLiveRoleType.Audience),
+          );
+          if (result.code == 0) {
+            onJoined(context);
+          } else {
+            onJoinError(context, 'joinRoom error, code = ${result.code}');
+          }
         } else {
           onJoinError(context, 'requestJoinLiveRoom connect error, code = $code');
         }

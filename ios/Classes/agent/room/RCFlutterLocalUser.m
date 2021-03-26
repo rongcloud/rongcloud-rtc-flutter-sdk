@@ -108,8 +108,7 @@
         }
         [self unpublishStreams:arr result:result];
     } else if ([call.method isEqualToString:KSubscribeStream]) {
-        NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
-        [self subscribeStreams:streams result:result];
+        [self subscribeStreams:call result:result];
     } else if ([call.method isEqualToString:KUnSubscribeStream]) {
         NSArray *streams = [RCFlutterTools decodeToArray:call.arguments];
         [self unsubscribeStreams:streams result:result];
@@ -149,9 +148,15 @@
     }];
 }
 
-- (void)subscribeStreams:(NSArray<NSDictionary *> *)streams result:(FlutterResult)result {
+- (void)subscribeStreams:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSDictionary *data = (NSDictionary *)call.arguments;
+    NSArray *streams = [RCFlutterTools decodeToArray:data[@"streams"]];
+    BOOL tiny = [data[@"tiny"] boolValue];
+    
     NSArray<RCRTCInputStream *> *inputStreams = [self getAllStreamsWithArr:streams];
-    [self subscribeStreams:nil tinyStreams:inputStreams completion:^(BOOL isSuccess, RCRTCCode desc) {
+    NSArray *ordinaryStream = tiny ? @[] : inputStreams;
+    NSArray *tinyStream = tiny ? inputStreams : @[];
+    [self subscribeStreams:ordinaryStream tinyStreams:tinyStream completion:^(BOOL isSuccess, RCRTCCode desc) {
         result(@(desc));
     }];
 }
@@ -187,7 +192,7 @@
 - (NSArray<RCRTCOutputStream *> *)getUnPublishStreamsFromLocalUserWithArr:(NSArray<NSDictionary *> *)streams {
     NSMutableArray *arr = [NSMutableArray array];
     for (NSDictionary *dic in streams) {
-        NSArray *streams = [RCRTCEngine sharedInstance].currentRoom.localUser.localStreams;
+        NSArray *streams = [RCRTCEngine sharedInstance].room.localUser.streams;
         for (RCRTCOutputStream *output in streams) {
             if ([self stream:output isEqualToStreamDic:dic]) {
                 [arr addObject:output];

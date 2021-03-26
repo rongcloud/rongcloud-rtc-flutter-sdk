@@ -35,9 +35,14 @@ abstract class View implements IView {
 }
 
 abstract class Model implements IModel {
-  void initEngine();
+//  void initEngine();
 
   void unInitEngine();
+
+  void subscribeLiveStreams(
+    Data.Room room,
+    void onUserJoined(AudioStreamView view),
+  );
 
   void sendMessage(
     String roomId,
@@ -51,15 +56,15 @@ abstract class Model implements IModel {
 
   void requestLink(Data.Room room);
 
-  void subscribeUrl(
-    Data.Room room,
-    void onUserJoined(AudioStreamView view),
-    void onSubscribeError(int code, String message),
-  );
+//  void subscribeUrl(
+//    Data.Room room,
+//    void onUserJoined(AudioStreamView view),
+//    void onSubscribeError(int code, String message),
+//  );
 
   Future<bool> requestPermission();
 
-  Future<bool> unsubscribeUrl(Data.Room room);
+//  Future<bool> unsubscribeUrl(Data.Room room);
 
   Future<StatusCode> joinRoom(Data.Room room);
 
@@ -77,6 +82,9 @@ abstract class Model implements IModel {
 
   Future<bool> leaveLink();
 
+  //添加初衷为了适配连麦场景，断开连麦再次加入room
+  Future<bool> autoJoinRoom(String roomId);
+
   void exit(
     BuildContext context,
     Data.Room room,
@@ -86,6 +94,8 @@ abstract class Model implements IModel {
 }
 
 abstract class Presenter implements IPresenter {
+  void subscribeLiveStreams();
+
   void sendMessage(String message);
 
   void refuseInvite();
@@ -94,9 +104,12 @@ abstract class Presenter implements IPresenter {
 
   void requestLink();
 
-  void subscribe();
+//  void subscribe();
 
   Future<bool> leaveLink();
+
+  //添加初衷为了适配连麦场景，断开连麦再次加入room
+  Future<bool> autoJoinRoom(String roomId);
 
   void exit(BuildContext context);
 }

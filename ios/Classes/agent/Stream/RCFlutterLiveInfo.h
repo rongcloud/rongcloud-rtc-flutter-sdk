@@ -15,8 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, copy, readonly) NSString *roomId;
 
-@property(nonatomic, copy, readonly) NSString *liveUrl;
-
 @property(nonatomic, copy, readonly) NSString *userId;
 
 + (RCFlutterLiveInfo *)flutterLiveInfoWithLiveInfo:(RCRTCLiveInfo *)liveInfo roomId:(NSString *)roomId userId:(NSString *)userId;

@@ -46,6 +46,7 @@ class AudioLiveCreateModel extends AbstractModel implements Model {
       roomConfig: RCRTCRoomConfig(
         RCRTCRoomType.Live,
         RCRTCLiveType.Audio,
+        RCRTCLiveRoleType.Broadcaster,
       ),
     );
     if (result.code == 0) {

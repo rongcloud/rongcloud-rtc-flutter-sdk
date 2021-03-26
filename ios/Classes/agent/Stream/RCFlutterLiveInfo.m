@@ -13,8 +13,6 @@
 
 @interface RCFlutterLiveInfo ()
 
-@property(nonatomic, copy) NSString *liveUrl;
-
 @property(nonatomic, copy) NSString *roomId;
 
 @property(nonatomic, copy) NSString *userId;
@@ -29,7 +27,6 @@
 
 @implementation RCFlutterLiveInfo
 
-@synthesize liveUrl = _liveUrl;
 @synthesize roomId = _roomId;
 @synthesize userId = _userId;
 
@@ -39,7 +36,6 @@
 + (RCFlutterLiveInfo *) flutterLiveInfoWithLiveInfo:(RCRTCLiveInfo *)liveInfo roomId:(NSString *)roomId userId:(NSString *)userId {
     RCFlutterLiveInfo *info = [[RCFlutterLiveInfo alloc] init];
     info.liveInfo = liveInfo;
-    info.liveUrl = liveInfo.liveUrl;
     info.roomId = roomId;
     info.userId = userId;
     [info registerChannel];
@@ -47,7 +43,7 @@
 }
 
 - (void)registerChannel {
-    NSString *channelId = [NSString stringWithFormat:@"rong.flutter.rtclib/LiveInfo:%@", _liveInfo.liveUrl];
+    NSString *channelId = [NSString stringWithFormat:@"rong.flutter.rtclib/LiveInfo:%@", self.roomId];
     FlutterMethodChannel *streamChannel = [FlutterMethodChannel methodChannelWithName:channelId binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
     [[RCFlutterEngine sharedEngine].pluginRegister addMethodCallDelegate:self channel:streamChannel];
 }
@@ -55,7 +51,6 @@
 - (NSDictionary *)toDesc {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     if (self.liveInfo) {
-        dic[@"liveUrl"] = self.liveUrl;
         dic[@"roomId"] = self.roomId;
         dic[@"userId"] = self.userId;
     }
@@ -124,7 +119,10 @@
     // 设置合流视频参数：宽 ,高 ,帧率 ,码率
     NSDictionary *vConfigDic = rawDic[@"output"][@"video"];
     RCRTCVideoConfig *vConfig = [[RCRTCVideoConfig alloc] init];
-    [vConfig.videoLayout setValuesForKeysWithDictionary:vConfigDic[@"normal"]];
+    
+    if ([vConfigDic.allKeys containsObject:@"normal"] && vConfigDic[@"normal"] != [NSNull null]) {
+        [vConfig.videoLayout setValuesForKeysWithDictionary:vConfigDic[@"normal"]];
+    }
     
     if ([vConfigDic.allKeys containsObject:@"tiny"] && vConfigDic[@"tiny"] != [NSNull null]) {
         [vConfig.tinyVideoLayout setValuesForKeysWithDictionary:vConfigDic[@"tiny"]];
@@ -141,8 +139,7 @@
 
     NSMutableArray *streamArr = [NSMutableArray array];
     // 添加本地输出流
-    NSArray<RCRTCOutputStream *> *localStreams
-    = RCRTCEngine.sharedInstance.currentRoom.localUser.localStreams;
+    NSArray<RCRTCOutputStream *> *localStreams = RCRTCEngine.sharedInstance.currentRoom.localUser.localStreams;
     for (RCRTCOutputStream *vStream in localStreams) {
         if (vStream.mediaType == RTCMediaTypeVideo) {
             [streamArr addObject:vStream];

@@ -1,12 +1,12 @@
 package io.rong.flutter.rtclib.utils;
 
+import io.rong.imlib.chatroom.message.ChatRoomKVNotiMessage;
+import io.rong.imlib.location.message.LocationMessage;
 import io.rong.imlib.model.MessageContent;
-import io.rong.message.ChatRoomKVNotiMessage;
 import io.rong.message.FileMessage;
 import io.rong.message.GIFMessage;
 import io.rong.message.HQVoiceMessage;
 import io.rong.message.ImageMessage;
-import io.rong.message.LocationMessage;
 import io.rong.message.RecallNotificationMessage;
 import io.rong.message.ReferenceMessage;
 import io.rong.message.RichContentMessage;

@@ -22,6 +22,8 @@ class RCRTCRoom {
   Function(RCRTCRemoteUser remoteUser) onRemoteUserLeft;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserPublishResource;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnPublishResource;
+  Function(List<RCRTCInputStream> streamList) onPublishLiveStreams;
+  Function(List<RCRTCInputStream> streamList) onUnPublishLiveStreams;
 
   RCRTCRoom.fromJson(Map<String, dynamic> jsonObj)
       : _channel = MethodChannel('rong.flutter.rtclib/Room:${jsonObj['id']}'),
@@ -50,6 +52,12 @@ class RCRTCRoom {
         break;
       case 'onRemoteUserUnPublishResource':
         _handleOnRemoteUserUnPublishResource(call.arguments);
+        break;
+      case 'onRemoteUserPublishLiveResource':
+        _handleOnPublishLiveStreams(call.arguments);
+        break;
+      case 'onRemoteUserUnPublishLiveResource':
+        _handleOnUnPublishLiveStreams(call.arguments);
         break;
     }
     return null;
@@ -142,6 +150,32 @@ class RCRTCRoom {
     if (onRemoteUserUnPublishResource != null) onRemoteUserUnPublishResource(targetUser, targetStreamList);
   }
 
+  void _handleOnPublishLiveStreams(String jsonStr) {
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    List<dynamic> list = jsonObj['streamList'];
+    List<RCRTCInputStream> streams = list.map((stream) {
+      if (stream['type'] == 0) {
+        return RCRTCAudioInputStream.fromJson(stream);
+      } else {
+        return RCRTCVideoInputStream.fromJson(stream);
+      }
+    }).toList();
+    if (onPublishLiveStreams != null) onPublishLiveStreams(streams);
+  }
+
+  void _handleOnUnPublishLiveStreams(String jsonStr) {
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    List<dynamic> jsonStreamList = jsonObj['streamList'];
+    List<RCRTCInputStream> streams = jsonStreamList.map((stream) {
+      if (stream['type'] == 0) {
+        return RCRTCAudioInputStream.fromJson(stream);
+      } else {
+        return RCRTCVideoInputStream.fromJson(stream);
+      }
+    }).toList();
+    if (onUnPublishLiveStreams != null) onUnPublishLiveStreams(streams);
+  }
+
   Future<int> setRoomAttributeValue(String key, String value, MessageContent message) async {
     Map<String, dynamic> arguments = {
       "key": key,
@@ -187,5 +221,19 @@ class RCRTCRoom {
       onError(id, code);
     else
       onSuccess(id);
+  }
+
+  Future<List<RCRTCInputStream>> getLiveStreams() async {
+    List<dynamic> list = await _channel.invokeListMethod('getLiveStreams');
+    List<RCRTCInputStream> streams = List();
+    list.forEach((element) {
+      var stream = jsonDecode(element);
+      if (stream['type'] == 0) {
+        streams.add(RCRTCAudioInputStream.fromJson(stream));
+      } else {
+        streams.add(RCRTCVideoInputStream.fromJson(stream));
+      }
+    });
+    return streams;
   }
 }

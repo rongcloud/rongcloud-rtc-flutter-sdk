@@ -17,8 +17,8 @@ SingleInstanceM(RTCManager);
     [[RCRTCEngine sharedInstance] joinRoom:roomId config:config completion:completion];
 }
 
-- (void)leaveRTCRoom:(NSString *)roomId completion:(void (^)(BOOL, RCRTCCode code))completion {
-    [[RCRTCEngine sharedInstance] leaveRoom:roomId completion:^(BOOL isSuccess, RCRTCCode code) {
+- (void)leaveRTCRoom:(void (^)(BOOL, RCRTCCode code))completion {
+    [[RCRTCEngine sharedInstance] leaveRoom:^(BOOL isSuccess, RCRTCCode code) {
         if (completion) {
             completion(isSuccess, code);
         }

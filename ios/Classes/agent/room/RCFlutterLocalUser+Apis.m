@@ -64,14 +64,14 @@
 
 - (void)publishStreams:(NSArray<RCRTCOutputStream *> *)streams completion:(RongFlutterOperationCallback)completion {
     [[RCFlutterRTCManager sharedRTCManager] publishStreams:streams completion:^(BOOL isSuccess, RCRTCCode desc) {
-        self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
+        self.rtcUser = [RCRTCEngine sharedInstance].room.localUser;
         completion(isSuccess,desc);
     }];
 }
 
 - (void)unpublishStreams:(NSArray<RCRTCOutputStream *> *)streams completion:(RongFlutterOperationCallback)completion {
     [[RCFlutterRTCManager sharedRTCManager] unpublishStreams:streams completion:^(BOOL isSuccess, RCRTCCode desc) {
-        self.rtcUser = [RCRTCEngine sharedInstance].currentRoom.localUser;
+        self.rtcUser = [RCRTCEngine sharedInstance].room.localUser;
         completion(isSuccess,desc);
     }];
 }

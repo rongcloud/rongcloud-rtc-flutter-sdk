@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 
-import '../../rcrtc_error_code.dart';
 import '../../rcrtc_live_info.dart';
 import '../../utils/rcrtc_log.dart';
 import '../stream/rcrtc_input_stream.dart';
@@ -75,10 +74,18 @@ class RCRTCLocalUser extends RCRTCUser {
     return unPublishStreams([stream]);
   }
 
-  Future<int> subscribeStreams(List<RCRTCInputStream> streams) async {
+  Future<int> subscribeStreams(
+    List<RCRTCInputStream> streams, {
+    bool tiny = false,
+  }) async {
+    Map<String, dynamic> arguments = {
+      "streams": jsonEncode(streams),
+      "tiny": tiny,
+    };
+
     String streamListJson = jsonEncode(streams);
     RCRTCLog.d(_tag, "subscribeStreams $streamListJson");
-    int code = await methodChannel.invokeMethod('subscribeStreams', streamListJson);
+    int code = await methodChannel.invokeMethod('subscribeStreams', arguments);
     return code;
   }
 

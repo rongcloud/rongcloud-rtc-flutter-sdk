@@ -89,6 +89,7 @@ class MeetingConfigPageModel extends AbstractModel implements Model {
       roomConfig: RCRTCRoomConfig(
         RCRTCRoomType.Normal,
         RCRTCLiveType.AudioVideo,
+        RCRTCLiveRoleType.Broadcaster,
       ),
     );
     if (result.code == 0) {

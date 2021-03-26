@@ -101,7 +101,7 @@ public class RCFlutterMicOutputStream extends RCFlutterAudioOutputStream {
                 config = builder.buildDefaultMode();
                 break;
             case 2:
-                config = builder.buildMusicMode();
+                config = builder.buildMusicChatRoomMode();
                 break;
         }
         assert config != null : "setAudioConfig config should not be null!!!! type = " + type;

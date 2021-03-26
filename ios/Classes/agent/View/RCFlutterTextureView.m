@@ -118,6 +118,10 @@
 }
 
 - (void)changeSize:(int)width height:(int)height {
+    CVPixelBufferRef pixelBufferRef = [_nativeView pixelBufferRef];
+    if (pixelBufferRef != nil) {
+        CVBufferRetain(pixelBufferRef);
+    }
     if (_eventSink)
         _eventSink(@{
             @"event" : @"didTextureChangeVideoSize",

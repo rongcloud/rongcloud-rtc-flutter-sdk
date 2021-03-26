@@ -52,8 +52,8 @@
         [self setVideoConfigFromFlutter:dic];
         result([NSNumber numberWithInt:0]);
     } else if ([call.method isEqualToString:KEnableTinyStream]) {
-        bool enable = call.arguments;
-        [self enableTinyStream:enable];
+        NSNumber *enable = (NSNumber *)call.arguments;
+        [self enableTinyStream:[enable boolValue]];
         result(nil);
     } else if ([call.method isEqualToString:KIsCameraFocusSupported]) {
         [self isCameraFocusSupported:result];

@@ -40,7 +40,7 @@
 
 - (void)didPublishStreams:(NSArray<RCRTCInputStream *> *)streams {
     dispatch_to_workQueue(^{
-        self.rtcRoom = [RCRTCEngine sharedInstance].currentRoom;
+        self.rtcRoom = [RCRTCEngine sharedInstance].room;
         NSString *userId = @"";
         // 增量
         NSMutableArray *streamList = [NSMutableArray array];
@@ -65,7 +65,7 @@
 
 - (void)didUnpublishStreams:(NSArray<RCRTCInputStream *> *)streams{
     dispatch_to_workQueue(^{
-        self.rtcRoom = [RCRTCEngine sharedInstance].currentRoom;
+        self.rtcRoom = [RCRTCEngine sharedInstance].room;
         NSString *userId = @"";
         // 增量
         NSMutableArray *streamList = [NSMutableArray array];
@@ -85,6 +85,44 @@
         [allDic setValue:streamList forKey:@"streamList"];
         NSString *json = [RCFlutterTools dictionaryToJson:allDic];
         [self.methodChannel invokeMethod:KOnRemoteUserUnPublishStream arguments:json];
+    });
+}
+
+-(void)didPublishLiveStreams:(NSArray<RCRTCInputStream *> *)streams {
+    dispatch_to_workQueue(^{
+        self.rtcRoom = [RCRTCEngine sharedInstance].room;
+        // 增量
+        NSMutableArray *streamList = [NSMutableArray array];
+        for (RCRTCInputStream *stream in streams) {
+            RCFlutterInputStream *inputStream = [[RCFlutterInputStream alloc] init];
+            inputStream.rtcInputStream = stream;
+            [inputStream registerStreamChannel];
+            NSDictionary *dic = [inputStream toDesc];
+            [streamList addObject:dic];
+        }
+        NSMutableDictionary *allDic = [NSMutableDictionary dictionary];
+        [allDic setValue:streamList forKey:@"streamList"];
+        NSString *json = [RCFlutterTools dictionaryToJson:allDic];
+        [self.methodChannel invokeMethod:kOnRemoteUserPublishLiveStream arguments:json];
+    });
+}
+
+-(void)didUnpublishLiveStreams:(NSArray<RCRTCInputStream *> *)streams {
+    dispatch_to_workQueue(^{
+        self.rtcRoom = [RCRTCEngine sharedInstance].room;
+        // 增量
+        NSMutableArray *streamList = [NSMutableArray array];
+        for (RCRTCInputStream *stream in streams) {
+            RCFlutterInputStream *inputStream = [[RCFlutterInputStream alloc] init];
+            inputStream.rtcInputStream = stream;
+            NSDictionary *dic = [inputStream toDesc];
+            [streamList addObject:dic];
+        }
+        
+        NSMutableDictionary *allDic = [NSMutableDictionary dictionary];
+        [allDic setValue:streamList forKey:@"streamList"];
+        NSString *json = [RCFlutterTools dictionaryToJson:allDic];
+        [self.methodChannel invokeMethod:KOnRemoteUserUnPublishLiveStream arguments:json];
     });
 }
 @end

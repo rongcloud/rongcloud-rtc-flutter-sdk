@@ -57,7 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await RCRTCEngine.getInstance().init(null);
     RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
       roomId: ROOM_ID,
-      roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo),
+      roomConfig: RCRTCRoomConfig(type, RCRTCLiveType.AudioVideo, RCRTCLiveRoleType.Broadcaster),
     );
     if (result.code != 0) {
       throw 'joinRoom failed ' + result.code.toString();

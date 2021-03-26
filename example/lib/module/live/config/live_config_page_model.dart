@@ -126,6 +126,7 @@ class LiveConfigPageModel extends AbstractModel implements Model {
       roomConfig: RCRTCRoomConfig(
         mode != Mode.Live ? RCRTCRoomType.Normal : RCRTCRoomType.Live,
         mode != Mode.Audio ? RCRTCLiveType.AudioVideo : RCRTCLiveType.Audio,
+        RCRTCLiveRoleType.Broadcaster,
       ),
     );
     if (result.code == 0) {

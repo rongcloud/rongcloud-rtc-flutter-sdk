@@ -34,8 +34,8 @@ import io.rong.flutter.rtclib.utils.RCFlutterDebugChecker;
 import io.rong.flutter.rtclib.utils.RCFlutterLog;
 import io.rong.flutter.rtclib.utils.ThisClassShouldNotBelongHere;
 import io.rong.flutter.rtclib.utils.UIThreadHandler;
-import io.rong.imlib.IRongCallback;
-import io.rong.imlib.RongIMClient;
+import io.rong.imlib.IRongCoreCallback;
+import io.rong.imlib.IRongCoreEnum;
 import io.rong.imlib.model.Message;
 import io.rong.imlib.model.MessageContent;
 
@@ -49,6 +49,7 @@ public class RCFlutterRoom implements MethodCallHandler {
   private final RCRTCRoom rtcRoom;
   private final RCFlutterLocalUser localUser;
   private final List<RCFlutterRemoteUser> remoteUserList = new ArrayList<>();
+  private final List<RCFlutterInputStream> streamList = new ArrayList<>();
 
   public RCFlutterRoom(BinaryMessenger msg, RCRTCRoom room) {
     bMsg = msg;
@@ -59,22 +60,21 @@ public class RCFlutterRoom implements MethodCallHandler {
     for (RCRTCRemoteUser remoteUser : rtcRoom.getRemoteUsers()) {
       remoteUserList.add(new RCFlutterRemoteUser(bMsg, remoteUser));
     }
-    rtcRoom.registerRoomListener(
-        new IRCRTCRoomEventsListener() {
-          @Override
-          public void onRemoteUserPublishResource(RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
-            RCFlutterLog.d(TAG, "onRemoteUserPublishResource userId = " + rtcRemoteUser.getUserId());
-            RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
+    rtcRoom.registerRoomListener(new IRCRTCRoomEventsListener() {
+        @Override
+        public void onRemoteUserPublishResource(RCRTCRemoteUser user, List<RCRTCInputStream> streams) {
+            RCFlutterLog.d(TAG, "onRemoteUserPublishResource userId = " + user.getUserId());
+            RCFlutterRemoteUser remoteUser = toRemoteUser(user);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
-              return;
+                return;
             }
             List<RCFlutterInputStream> streamList = new ArrayList<>();
-            for (RCRTCInputStream stream : rtcStreamList) {
-              if (stream.getMediaType() == RCRTCMediaType.VIDEO) {
-                streamList.add(new RCFlutterVideoInputStream(bMsg, (RCRTCVideoInputStream) stream));
-              } else if (stream.getMediaType() == RCRTCMediaType.AUDIO) {
-                streamList.add(new RCFlutterAudioInputStream(bMsg, (RCRTCAudioInputStream) stream));
-              }
+            for (RCRTCInputStream stream : streams) {
+                if (stream.getMediaType() == RCRTCMediaType.VIDEO) {
+                    streamList.add(new RCFlutterVideoInputStream(bMsg, (RCRTCVideoInputStream) stream));
+                } else if (stream.getMediaType() == RCRTCMediaType.AUDIO) {
+                    streamList.add(new RCFlutterAudioInputStream(bMsg, (RCRTCAudioInputStream) stream));
+                }
             }
             remoteUser.getStreamList().addAll(streamList);
             JSONObject jsonObj = new JSONObject();
@@ -82,81 +82,24 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("streamList", streamList);
             String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onRemoteUserPublishResource", jsonStr);
-                  }
-                });
-          }
+                    () -> channel.invokeMethod("onRemoteUserPublishResource", jsonStr)
+            );
+        }
 
-          @Override
-          public void onRemoteUserMuteAudio(
-            RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
-            RCFlutterLog.d(TAG, "onRemoteUserMuteAudio userId = " + rtcRemoteUser.getUserId());
-            RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
+        @Override
+        public void onRemoteUserUnpublishResource(RCRTCRemoteUser user, List<RCRTCInputStream> streams) {
+            RCFlutterLog.d(TAG, "onRemoteUserUnpublishResource userId = " + user.getUserId());
+            RCFlutterRemoteUser remoteUser = toRemoteUser(user);
             if (!RCFlutterDebugChecker.notNull(remoteUser)) {
-              return;
-            }
-            RCFlutterInputStream inputStream = toInputStream(remoteUser, rtcStream);
-            if (!RCFlutterDebugChecker.notNull(inputStream)) {
-              return;
-            }
-            JSONObject jsonObj = new JSONObject();
-            jsonObj.put("remoteUser", remoteUser);
-            jsonObj.put("inputStream", inputStream);
-            jsonObj.put("enable", enable);
-            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onRemoteUserMuteAudio", jsonStr);
-                  }
-                });
-          }
-
-          @Override
-          public void onRemoteUserMuteVideo(
-            RCRTCRemoteUser rtcRemoteUser, RCRTCInputStream rtcStream, boolean enable) {
-            RCFlutterLog.d(TAG, "onRemoteUserMuteVideo userId = " + rtcRemoteUser.getUserId());
-            RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
-            if (!RCFlutterDebugChecker.notNull(remoteUser)) {
-              return;
-            }
-            RCFlutterInputStream inputStream = toInputStream(remoteUser, rtcStream);
-            if (!RCFlutterDebugChecker.notNull(inputStream)) {
-              return;
-            }
-            JSONObject jsonObj = new JSONObject();
-            jsonObj.put("remoteUser", remoteUser);
-            jsonObj.put("inputStream", inputStream);
-            jsonObj.put("enable", enable);
-            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
-            UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onRemoteUserMuteVideo", jsonStr);
-                  }
-                });
-          }
-
-          @Override
-          public void onRemoteUserUnpublishResource(
-            RCRTCRemoteUser rtcRemoteUser, List<RCRTCInputStream> rtcStreamList) {
-            RCFlutterLog.d(TAG, "onRemoteUserUnpublishResource userId = " + rtcRemoteUser.getUserId());
-            RCFlutterRemoteUser remoteUser = toRemoteUser(rtcRemoteUser);
-            if (!RCFlutterDebugChecker.notNull(remoteUser)) {
-              return;
+                return;
             }
             List<RCFlutterInputStream> streamList = new ArrayList<>();
-            for (RCRTCInputStream rtcStream : rtcStreamList) {
-              RCFlutterInputStream inputStream = toInputStream(remoteUser, rtcStream);
-              if (!RCFlutterDebugChecker.notNull(inputStream)) {
-                return;
-              }
-              streamList.add(inputStream);
+            for (RCRTCInputStream rtcStream : streams) {
+                RCFlutterInputStream inputStream = toInputStream(remoteUser, rtcStream);
+                if (!RCFlutterDebugChecker.notNull(inputStream)) {
+                    return;
+                }
+                streamList.add(inputStream);
             }
             remoteUser.getStreamList().removeAll(streamList);
             JSONObject jsonObj = new JSONObject();
@@ -164,85 +107,135 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("streamList", streamList);
             String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onRemoteUserUnPublishResource", jsonStr);
-                  }
-                });
-          }
+                    () -> channel.invokeMethod("onRemoteUserUnPublishResource", jsonStr)
+            );
+        }
 
-          @Override
-          public void onUserJoined(RCRTCRemoteUser rtcRemoteUser) {
-            RCFlutterLog.d(TAG, "onUserJoined userId = " + rtcRemoteUser.getUserId());
-            RCFlutterRemoteUser remoteUser = new RCFlutterRemoteUser(bMsg, rtcRemoteUser);
+        @Override
+        public void onPublishLiveStreams(List<RCRTCInputStream> streams) {
+            RCFlutterLog.d(TAG, "onPublishLiveStreams");
+            List<RCFlutterInputStream> streamList = new ArrayList<>();
+            for (RCRTCInputStream stream : streams) {
+                RCFlutterInputStream inputStream = addStream(stream);
+                streamList.add(inputStream);
+            }
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("streamList", streamList);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onRemoteUserPublishLiveResource", jsonStr)
+            );
+        }
+
+        @Override
+        public void onUnpublishLiveStreams(List<RCRTCInputStream> streams) {
+            RCFlutterLog.d(TAG, "onUnpublishLiveStreams");
+            List<RCFlutterInputStream> streamList = getStreams(streams);
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("streamList", streamList);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onRemoteUserUnPublishLiveResource", jsonStr)
+            );
+        }
+
+        @Override
+        public void onRemoteUserMuteAudio(RCRTCRemoteUser user, RCRTCInputStream stream, boolean mute) {
+            RCFlutterLog.d(TAG, "onRemoteUserMuteAudio userId = " + user.getUserId());
+            RCFlutterRemoteUser remoteUser = toRemoteUser(user);
+            if (!RCFlutterDebugChecker.notNull(remoteUser)) {
+                return;
+            }
+            RCFlutterInputStream inputStream = toInputStream(remoteUser, stream);
+            if (!RCFlutterDebugChecker.notNull(inputStream)) {
+                return;
+            }
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("remoteUser", remoteUser);
+            jsonObj.put("inputStream", inputStream);
+            jsonObj.put("enable", !mute);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onRemoteUserMuteAudio", jsonStr)
+            );
+        }
+
+        @Override
+        public void onRemoteUserMuteVideo(RCRTCRemoteUser user, RCRTCInputStream stream, boolean mute) {
+            RCFlutterLog.d(TAG, "onRemoteUserMuteVideo userId = " + user.getUserId());
+            RCFlutterRemoteUser remoteUser = toRemoteUser(user);
+            if (!RCFlutterDebugChecker.notNull(remoteUser)) {
+                return;
+            }
+            RCFlutterInputStream inputStream = toInputStream(remoteUser, stream);
+            if (!RCFlutterDebugChecker.notNull(inputStream)) {
+                return;
+            }
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("remoteUser", remoteUser);
+            jsonObj.put("inputStream", inputStream);
+            jsonObj.put("enable", !mute);
+            String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onRemoteUserMuteVideo", jsonStr)
+            );
+        }
+
+        @Override
+        public void onUserJoined(RCRTCRemoteUser user) {
+            RCFlutterLog.d(TAG, "onUserJoined userId = " + user.getUserId());
+            RCFlutterRemoteUser remoteUser = new RCFlutterRemoteUser(bMsg, user);
             remoteUserList.add(remoteUser);
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
             UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onUserJoined", jsonObj.toJSONString());
-                  }
-                });
-          }
+                    () -> channel.invokeMethod("onUserJoined", jsonObj.toJSONString())
+            );
+        }
 
-          @Override
-          public void onUserLeft(RCRTCRemoteUser rtcRemoteUser) {
-            RCFlutterLog.d(TAG, "onUserLeft userId = " + rtcRemoteUser.getUserId());
+        @Override
+        public void onUserLeft(RCRTCRemoteUser user) {
+            RCFlutterLog.d(TAG, "onUserLeft userId = " + user.getUserId());
             for (RCFlutterRemoteUser remoteUser : remoteUserList) {
-              if (remoteUser.getId().equals(rtcRemoteUser.getUserId())) {
-                remoteUserList.remove(remoteUser);
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put("remoteUser", remoteUser);
-                UIThreadHandler.post(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        channel.invokeMethod("onUserLeft", jsonObj.toJSONString());
-                      }
-                    });
-                return;
-              }
+                if (remoteUser.getId().equals(user.getUserId())) {
+                    remoteUserList.remove(remoteUser);
+                    JSONObject jsonObj = new JSONObject();
+                    jsonObj.put("remoteUser", remoteUser);
+                    UIThreadHandler.post(
+                            () -> channel.invokeMethod("onUserLeft", jsonObj.toJSONString())
+                    );
+                    return;
+                }
             }
             RCFlutterDebugChecker.throwError("targetUser not found!");
-          }
+        }
 
-          @Override
-          public void onUserOffline(RCRTCRemoteUser rtcRemoteUser) {
-            RCFlutterLog.d(TAG, "onUserOffline userId = " + rtcRemoteUser.getUserId());
+        @Override
+        public void onUserOffline(RCRTCRemoteUser user) {
+            RCFlutterLog.d(TAG, "onUserOffline userId = " + user.getUserId());
             for (RCFlutterRemoteUser RCFlutterRemoteUser : remoteUserList) {
-              if (RCFlutterRemoteUser.getId().equals(rtcRemoteUser.getUserId())) {
-                remoteUserList.remove(RCFlutterRemoteUser);
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put("remoteUser", RCFlutterRemoteUser);
-                UIThreadHandler.post(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        channel.invokeMethod("onUserOffline", jsonObj.toJSONString());
-                      }
-                    });
-                return;
-              }
+                if (RCFlutterRemoteUser.getId().equals(user.getUserId())) {
+                    remoteUserList.remove(RCFlutterRemoteUser);
+                    JSONObject jsonObj = new JSONObject();
+                    jsonObj.put("remoteUser", RCFlutterRemoteUser);
+                    UIThreadHandler.post(
+                            () -> channel.invokeMethod("onUserOffline", jsonObj.toJSONString())
+                    );
+                    return;
+                }
             }
             RCFlutterDebugChecker.throwError("targetUser not found!");
-          }
+        }
 
-          @Override
-          public void onLeaveRoom(int code) {
+        @Override
+        public void onLeaveRoom(int code) {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("code", code);
             UIThreadHandler.post(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    channel.invokeMethod("onLeaveRoom", jsonObj.toJSONString());
-                  }
-                });
-          }
-        });
+                    () -> channel.invokeMethod("onLeaveRoom", jsonObj.toJSONString())
+            );
+        }
+    });
   }
 
   @Override
@@ -260,6 +253,9 @@ public class RCFlutterRoom implements MethodCallHandler {
               break;
           case "sendMessage":
               sendMessage(call, result);
+              break;
+          case "getLiveStreams":
+              getLiveStreams(result);
               break;
       }
   }
@@ -328,9 +324,10 @@ public class RCFlutterRoom implements MethodCallHandler {
       String content = call.argument("content");
       assert object != null : "sendMessage object should not be null!!!";
       MessageContent message = ThisClassShouldNotBelongHere.getInstance().string2MessageContent(object, content);
-      rtcRoom.sendMessage(message, new IRongCallback.ISendMessageCallback() {
+      rtcRoom.sendMessage(message, new IRongCoreCallback.ISendMessageCallback() {
           @Override
           public void onAttached(Message message) {
+
           }
 
           @Override
@@ -342,13 +339,23 @@ public class RCFlutterRoom implements MethodCallHandler {
           }
 
           @Override
-          public void onError(Message message, RongIMClient.ErrorCode errorCode) {
+          public void onError(Message message, IRongCoreEnum.CoreErrorCode code) {
               Map<String, Integer> data = new HashMap<>();
               data.put("id", message.getMessageId());
-              data.put("code", errorCode.getValue());
+              data.put("code", code.getValue());
               UIThreadHandler.success(result, data);
           }
       });
+  }
+
+  private void getLiveStreams(Result result) {
+      List<RCRTCInputStream> streams = rtcRoom.getLiveStreams();
+      List<String> jsonStreams = new ArrayList<>(streams.size());
+      for (RCRTCInputStream stream : streams) {
+          RCFlutterInputStream inputStream = addStream(stream);
+          jsonStreams.add(JSON.toJSONString(inputStream));
+      }
+      UIThreadHandler.success(result, jsonStreams);
   }
 
   public String getId() {
@@ -385,16 +392,49 @@ public class RCFlutterRoom implements MethodCallHandler {
     return targetUser;
   }
 
-  private RCFlutterInputStream toInputStream(
-      RCFlutterRemoteUser remoteUser, RCRTCInputStream rtcInputStream) {
+  private RCFlutterInputStream toInputStream(RCFlutterRemoteUser remoteUser, RCRTCInputStream rtcInputStream) {
     RCFlutterInputStream targetInputStream = null;
     for (RCFlutterInputStream inputStream : remoteUser.getStreamList()) {
-      if (inputStream.getStreamId().equals(rtcInputStream.getStreamId())
-          && inputStream.getType() == rtcInputStream.getMediaType().getValue()) {
+      if (inputStream.getStreamId().equals(rtcInputStream.getStreamId()) &&
+              inputStream.getType() == rtcInputStream.getMediaType().getValue()) {
         targetInputStream = inputStream;
         break;
       }
     }
     return targetInputStream;
+  }
+
+  private RCFlutterInputStream addStream(RCRTCInputStream is) {
+      List<RCFlutterInputStream> temp = new ArrayList<>();
+      for (RCFlutterInputStream stream : streamList) {
+          if (stream.getStreamId().equals(is.getStreamId()) && stream.getType() == is.getMediaType().getValue())
+              temp.add(stream);
+      }
+      streamList.removeAll(temp);
+      RCFlutterInputStream stream = null;
+      if (is.getMediaType() == RCRTCMediaType.VIDEO) {
+          stream = new RCFlutterVideoInputStream(bMsg, (RCRTCVideoInputStream) is);
+      } else if (is.getMediaType() == RCRTCMediaType.AUDIO) {
+          stream = new RCFlutterAudioInputStream(bMsg, (RCRTCAudioInputStream) is);
+      }
+      if (stream != null) streamList.add(stream);
+      return stream;
+  }
+
+  private List<RCFlutterInputStream> getStreams(List<RCRTCInputStream> streams) {
+      List<RCFlutterInputStream> result = new ArrayList<>();
+      for (RCFlutterInputStream stream : streamList) {
+          for (RCRTCInputStream is : streams) {
+              if (stream.getStreamId().equals(is.getStreamId()) && stream.getType() == is.getMediaType().getValue()) {
+                  result.add(stream);
+                  break;
+              }
+          }
+      }
+      return result;
+  }
+
+  public List<RCFlutterInputStream> getStreamList() {
+      return streamList;
   }
 }

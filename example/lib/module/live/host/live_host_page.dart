@@ -925,6 +925,7 @@ class _LiveHostPageState extends AbstractViewState<Presenter, LiveHostPage> with
 
   @override
   void onAudienceJoined(User user) {
+    _audiences.removeWhere((element) => element.id == user.id);
     _audiences.add(user);
     if (_audienceInfoSetter != null) _audienceInfoSetter(() {});
     if (_audienceListSetter != null) _audienceListSetter(() {});

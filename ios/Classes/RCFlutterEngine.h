@@ -23,6 +23,8 @@ SingleInstanceH(Engine);
 
 @property(nonatomic , strong , readonly) RCFlutterAudioEffectManager *audioEffectManager;
 
++ (NSString *) getVersion;
+
 @end
 
 NS_ASSUME_NONNULL_END

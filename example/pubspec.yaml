@@ -26,18 +26,20 @@ dependencies:
   path_provider: ^1.6.18
   dio: ^3.0.0
   shared_preferences: ^0.5.8
-  permission_handler: ^5.0.1+1
+  permission_handler: 5.0.1+1
   flutter_screenutil: ^2.3.0
   bottom_drawer: ^0.0.2
   wakelock: ^0.2.1+1
   handy_toast: ^0.0.3
+  intl: ^0.16.1
   context_holder: ^0.0.4
   rongcloud_rtc_plugin:
     path: ../
 
 dev_dependencies:
-  flutter_test:
+  flutter_driver:
     sdk: flutter
+  test: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

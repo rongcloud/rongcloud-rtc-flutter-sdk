@@ -116,16 +116,16 @@ NSString * const KCreateVideoTextureView = @"createVideoRenderer";
 NSString * const KReleaseVideoTextureView = @"disposeVideoRenderer";
 
 // subscribe live stream
-NSString * const KSubscribeLiveStream = @"subscribeLiveStream";
+//NSString * const KSubscribeLiveStream = @"subscribeLiveStream";
 
 // unsubscribe live stream
-NSString * const KUnsubscribeLiveStream = @"unsubscribeLiveStream";
+//NSString * const KUnsubscribeLiveStream = @"unsubscribeLiveStream";
 
 // subscribe stream
 NSString * const KSubscribeStream = @"subscribeStreams";
 
 // subscribe stream
-NSString * const KUnSubscribeStream = @"unsubscribeAVStream";
+NSString * const KUnSubscribeStream = @"unsubscribeStreams";
 
 // switchToNormalStream
 NSString * const KSwitchToNormalStream = @"switchToNormalStream";
@@ -147,6 +147,12 @@ NSString * const kOnRemoteUserPublishStream = @"onRemoteUserPublishResource";
 
 // on remote user unpublish stream
 NSString * const KOnRemoteUserUnPublishStream = @"onRemoteUserUnPublishResource";
+
+// on remote user publish Live stream
+NSString * const kOnRemoteUserPublishLiveStream = @"onRemoteUserPublishLiveResource";
+
+// on remote user unpublish Live stream
+NSString * const KOnRemoteUserUnPublishLiveStream = @"onRemoteUserUnPublishLiveResource";
 
 NSString * const KPreloadEffect = @"preloadEffect";
 
@@ -191,6 +197,8 @@ NSString * const KSendMessage = @"sendMessage";
 NSString * const KAddPublishStreamUrl = @"addPublishStreamUrl";
 
 NSString * const KRemovePublishStreamUrl = @"removePublishStreamUrl";
+
+NSString * const KGetLiveStreams = @"getLiveStreams";
 
 NSString * const KSetMixConfig = @"setMixConfig";
 

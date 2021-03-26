@@ -16,14 +16,25 @@ enum RCRTCLiveType {
   Audio
 }
 
+//直播类型下的角色区分
+enum RCRTCLiveRoleType {
+  ///当前直播角色为主播
+  Broadcaster,
+
+  ///当前直播角色为观众
+  Audience
+}
+
 class RCRTCRoomConfig {
   RCRTCRoomType roomType;
   RCRTCLiveType liveType;
+  RCRTCLiveRoleType roleType;
 
-  RCRTCRoomConfig(this.roomType, this.liveType);
+  RCRTCRoomConfig(this.roomType, this.liveType, this.roleType);
 
   Map<String, dynamic> toJson() => {
         'roomType': this.roomType.index,
         'liveType': this.liveType.index,
+        'roleType': this.roleType.index,
       };
 }

@@ -18,6 +18,8 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
+static NSString * const VER = @"5.1.0";
+
 @interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
 
 /**
@@ -30,6 +32,10 @@
 @end
 
 @implementation RCFlutterEngine
+
++ (NSString *) getVersion {
+    return VER;
+}
 
 #pragma mark - flutter 映射
 
@@ -46,15 +52,16 @@
         [self getDefaultVideoStream:result];
     } else if ([call.method isEqualToString:KGetDefaultAudioStream]) {
         [self getDefaultAudioStream:result];
-    } else if ([call.method isEqualToString:KSubscribeLiveStream]) {
+    }/*else if ([call.method isEqualToString:KSubscribeLiveStream]) {
         [self subscribeLiveStream:call result:result];
     } else if ([call.method isEqualToString:KUnsubscribeLiveStream]) {
         [self unsubscribeLiveStream:call result:result];
-    } else if ([call.method isEqualToString:KSetMediaServerUrl]) {
+    }*/else if ([call.method isEqualToString:KSetMediaServerUrl]) {
         [self setMediaServerUrl:call result:result];
     } else if ([call.method isEqualToString:KEnableSpeaker]) {
         BOOL enable = ((NSNumber *)(call.arguments)).boolValue;
         [self enableSpeaker:enable];
+        result(nil);
     } else if ([call.method isEqualToString:KRegisterStatusReportListener]) {
         [self registerStatusReportListener:result];
     } else if ([call.method isEqualToString:KUnRegisterStatusReportListener]) {
@@ -105,6 +112,7 @@ SingleInstanceM(Engine);
     RCRTCRoomConfig *config = [[RCRTCRoomConfig alloc] init];
     config.roomType = ((NSNumber *)roomConfig[@"roomType"]).integerValue == 0 ? RCRTCRoomTypeNormal : RCRTCRoomTypeLive;
     config.liveType = ((NSNumber *)roomConfig[@"liveType"]).integerValue;
+    config.roleType = ((NSNumber *)roomConfig[@"roleType"]).integerValue;
     
     RLogV(@"ios live joinRTCRoom id = %@", roomId);
     
@@ -140,11 +148,9 @@ SingleInstanceM(Engine);
 }
 
 - (void)leaveRTCRoom:(FlutterMethodCall *)call result:(FlutterResult)result {
-    NSString *roomId = call.arguments;
-    RLogV(@"ios leave room id = %@", roomId);
+
     Weak(self);
-    [[RCFlutterRTCManager sharedRTCManager] leaveRTCRoom:roomId?:self.room.roomId
-                                              completion:^(BOOL isSuccess, RCRTCCode code) {
+    [[RCFlutterRTCManager sharedRTCManager] leaveRTCRoom:^(BOOL isSuccess, RCRTCCode code) {
         RLogV(@"ios leave room code:%@", @(code));
         Strong(self);
         [selfStrong destroyCache];
@@ -216,7 +222,7 @@ SingleInstanceM(Engine);
     NSString *json = [RCFlutterTools dictionaryToJson:dic];
     result(json);
 }
-
+/*
 - (void)subscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSDictionary *dic = (NSDictionary *)call.arguments;
     NSString *url = dic[@"url"];
@@ -246,8 +252,8 @@ SingleInstanceM(Engine);
             [_channel invokeMethod:@"onVideoStreamReceived" arguments:json];
         }
     }];
-}
-
+}*/
+/*
 - (void)unsubscribeLiveStream:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSString *url = (NSString *)call.arguments;
     [[RCFlutterRTCManager sharedRTCManager] unsubscribeLiveStream:url completion:^(BOOL isSuccess, RCRTCCode code) {
@@ -260,7 +266,7 @@ SingleInstanceM(Engine);
         NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
         result(jsonObj);
     }];
-}
+}*/
 
 - (void)setMediaServerUrl:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSString *url = (NSString *)call.arguments;
@@ -285,11 +291,11 @@ SingleInstanceM(Engine);
     NSMutableDictionary *ass = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.sendStats) {
         NSDictionary *avs = [self toDic:stat];
-        NSString *newTrackId = [self _convertFormartWithStr:stat.trackId];
+        NSString *streamId = [self _convertFormartWithStr:stat.trackId];
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
-            [vss setObject:avs forKey:newTrackId];
+            [vss setObject:avs forKey:streamId];
         } else {
-            [ass setObject:avs forKey:newTrackId];
+            [ass setObject:avs forKey:streamId];
         }
     }
     
@@ -297,11 +303,11 @@ SingleInstanceM(Engine);
     NSMutableDictionary *ars = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.recvStats) {
         NSDictionary *avs = [self toDic:stat];
-        NSString *newTrackId = [self _convertFormartWithStr:stat.trackId];
+        NSString *streamId = [self _convertFormartWithStr:stat.trackId];
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
-            [vrs setObject:avs forKey:newTrackId];
+            [vrs setObject:avs forKey:streamId];
         } else {
-            [ars setObject:avs forKey:newTrackId];
+            [ars setObject:avs forKey:streamId];
         }
     }
     

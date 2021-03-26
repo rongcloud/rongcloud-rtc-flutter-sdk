@@ -8,6 +8,9 @@ import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:FlutterRTC/module/live/audience/live_audience_page_model.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
+import 'package:rongcloud_rtc_plugin/agent/rcrtc_engine.dart';
+import 'package:rongcloud_rtc_plugin/agent/room/rcrtc_room.dart';
+import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'live_audience_page_contract.dart';
 
@@ -21,9 +24,22 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   Future<void> init(BuildContext context) async {
     Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
     _room = Data.Room.fromJSON(arguments);
-    model?.initEngine();
+    // model?.initEngine();
 
-    subscribe();
+    // subscribe();
+
+    RCRTCRoom liveRoom = RCRTCEngine.getInstance().getRoom();
+    //单独订阅主播流
+    liveRoom.onPublishLiveStreams = (streams) {
+      liveRoom.localUser.subscribeStreams(streams);
+      subscribeLiveStreams();
+      _sendJoinMessage();
+    };
+
+    liveRoom.onUnPublishLiveStreams = (streams) {
+      liveRoom.localUser.unsubscribeStreams(streams);
+      this.view?.onUserLeaved(_room.user.id);
+    };
 
     RongIMClient.onMessageReceived = (message, left) => _onMessageReceived(message, left);
 
@@ -64,6 +80,13 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   }
 
   @override
+  void subscribeLiveStreams() async {
+    model?.subscribeLiveStreams(_room, (view) {
+      this.view?.onUserJoined(view);
+    });
+  }
+
+  @override
   void sendMessage(String message) {
     model?.sendMessage(
       _room.id,
@@ -86,8 +109,8 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
     bool hasPermission = await model?.requestPermission();
     if (!hasPermission) return _joinError(MessageError.no_permission);
 
-    bool unsubscribed = await model?.unsubscribeUrl(_room);
-    if (!unsubscribed) return _joinError(MessageError.unsubscribe_error);
+    int code = await RCRTCEngine.getInstance().leaveRoom();
+    if (code != 0) return _joinError(MessageError.unsubscribe_error);
 
     StatusCode joinCode = await model?.joinRoom(_room);
     if (joinCode.status != Status.ok) return _joinError(MessageError.join_error);
@@ -130,18 +153,18 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
 
   void _sendErrorMessage(String uid, MessageError error) {}
 
-  @override
-  void subscribe() {
-    model?.subscribeUrl(
-      _room,
-      (view) {
-        this.view?.onUserJoined(view);
-      },
-      (code, message) {
-        this.view?.onSubscribeUrlError(code, message);
-      },
-    );
-  }
+//  @override
+//  void subscribe() {
+//    model?.subscribeUrl(
+//      _room,
+//      (view) {
+//        this.view?.onUserJoined(view);
+//      },
+//      (code, message) {
+//        this.view?.onSubscribeUrlError(code, message);
+//      },
+//    );
+//  }
 
   @override
   Future<bool> switchCamera() {
@@ -165,6 +188,11 @@ class LiveAudiencePagePresenter extends AbstractPresenter<View, Model> implement
   @override
   Future<bool> leaveLink() {
     return model?.leaveLink();
+  }
+
+  @override
+  Future<bool> autoJoinRoom(String roomId) {
+    return model?.autoJoinRoom(roomId);
   }
 
   @override

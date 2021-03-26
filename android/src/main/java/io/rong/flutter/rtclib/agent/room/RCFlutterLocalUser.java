@@ -22,7 +22,10 @@ import cn.rongcloud.rtc.api.stream.RCRTCInputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCLiveInfo;
 import cn.rongcloud.rtc.api.stream.RCRTCMicOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCOutputStream;
+import cn.rongcloud.rtc.api.stream.RCRTCVideoInputStream;
 import cn.rongcloud.rtc.base.RCRTCMediaType;
+import cn.rongcloud.rtc.base.RCRTCStream;
+import cn.rongcloud.rtc.base.RCRTCStreamType;
 import cn.rongcloud.rtc.base.RTCErrorCode;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
@@ -260,16 +263,23 @@ public class RCFlutterLocalUser extends RCFlutterUser {
     }
 
     private void subscribeStreams(MethodCall call, Result result) {
-        String streamListJson = (String) call.arguments;
+        String streamListJson = call.argument("streams");
+        boolean tiny = call.argument("tiny");
         List<RCFlutterTempStream> tempStreams = JSONArray.parseArray(streamListJson, RCFlutterTempStream.class);
-
         ArrayList<RCFlutterInputStream> inputStreamList = RCFlutterEngine.getInstance().getAllInputStreamList();
-
         ArrayList<RCRTCInputStream> targetStreamList = new ArrayList<>();
         for (RCFlutterTempStream tempStream : tempStreams) {
             for (RCFlutterInputStream inputStream : inputStreamList) {
                 if (tempStream.getStreamId().equals(inputStream.getStreamId()) && tempStream.getType() == inputStream.getType()) {
-                    targetStreamList.add((RCRTCInputStream) inputStream.getRtcStream());
+                    RCRTCStream stream = inputStream.getRtcStream();
+                    if (stream instanceof RCRTCVideoInputStream) {
+                        if (tiny) {
+                            ((RCRTCVideoInputStream) stream).setStreamType(RCRTCStreamType.TINY);
+                        } else {
+                            ((RCRTCVideoInputStream) stream).setStreamType(RCRTCStreamType.NORMAL);
+                        }
+                    }
+                    targetStreamList.add((RCRTCInputStream) stream);
                     break;
                 }
             }

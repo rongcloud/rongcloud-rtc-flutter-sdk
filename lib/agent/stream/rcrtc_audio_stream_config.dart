@@ -83,6 +83,20 @@ class RCRTCAudioStreamConfig {
         enableAGCControl = false,
         enableAGCLimiter = true;
 
+  RCRTCAudioStreamConfig.buildMusicChatRoomMode()
+      : _type = 3,
+        agcCompression = 0,
+        agcTargetDBOV = 0,
+        enableHighPassFilters = true,
+        noiseSuppression = RCRTCNSMode.NS_MODE0,
+        noiseSuppressionLevel = RCRTCNSLevel.NS_MODERATE,
+        echoCancel = RCRTCAECMode.AEC_MODE2,
+        enableEchoFilter = false,
+        enablePreAmplifier = true,
+        preAmplifierLevel = 1.0,
+        enableAGCControl = true,
+        enableAGCLimiter = true;
+
   Map<String, dynamic> toJSON() => {
         'type': _type,
         'agcCompression': agcCompression,

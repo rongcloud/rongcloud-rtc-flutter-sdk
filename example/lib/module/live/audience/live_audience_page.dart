@@ -47,6 +47,8 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
     Wakelock.enable();
 
     WidgetsBinding.instance.addObserver(this);
+
+    presenter?.subscribeLiveStreams();
   }
 
   @override
@@ -601,9 +603,12 @@ class _LiveAudiencePageState extends AbstractViewState<Presenter, LiveAudiencePa
   }
 
   void _leaveLink() async {
+    String roomId = _room.id;
     bool result = await presenter?.leaveLink();
     if (!result) '断开失败'.toast();
-    presenter?.subscribe();
+    bool result2 = await presenter?.autoJoinRoom(roomId);
+    if (!result2) '自动加入房间失败'.toast();
+    presenter?.subscribeLiveStreams();
     _removeSubviews();
     _linking = !result;
     _inviting = false;

@@ -30,7 +30,6 @@ import cn.rongcloud.rtc.api.stream.RCRTCVideoOutputStream;
 import cn.rongcloud.rtc.api.stream.RCRTCVideoStreamConfig;
 import cn.rongcloud.rtc.base.RCRTCAVStreamType;
 import cn.rongcloud.rtc.base.RCRTCParamsType;
-import cn.rongcloud.rtc.base.RCRTCRoomType;
 import cn.rongcloud.rtc.base.RTCErrorCode;
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -44,7 +43,7 @@ import io.flutter.view.TextureRegistry;
 import io.rong.flutter.rtclib.RCFlutterRequestResult;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRemoteUser;
 import io.rong.flutter.rtclib.agent.room.RCFlutterRoom;
-import io.rong.flutter.rtclib.agent.room.RCFlutterRoomType;
+import io.rong.flutter.rtclib.agent.room.RCFlutterRoomConfig;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterAudioInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterCameraOutputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterFileVideoOutputStream;
@@ -61,6 +60,8 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
+    private static final String VER = "5.1.0";
+
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
     private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
@@ -76,6 +77,10 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private TextureRegistry textures;
 
 //    private LongSparseArray<FlutterRTCVideoRenderer> renders = new LongSparseArray<>();
+
+    public static String getVersion() {
+        return VER;
+    }
 
     private static class SingletonHolder {
         private static final RCFlutterEngine instance = new RCFlutterEngine();
@@ -185,28 +190,25 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private void joinRoom(MethodCall call, Result result) {
         String roomId = call.argument("roomId");
-        HashMap<String, Integer> roomConfigMap = call.argument("roomConfig");
-        RCRTCRoomType roomType = RCFlutterRoomType.from(roomConfigMap).nativeRoomType();
-        RCRTCEngine.getInstance().joinRoom(
-                roomId,
-                roomType,
-                new IRCRTCResultDataCallback<RCRTCRoom>() {
-                    @Override
-                    public void onSuccess(RCRTCRoom rtcRoom) {
-                        RCFlutterLog.v(TAG, "joinRoom onSuccess");
-                        RCFlutterRoom room = new RCFlutterRoom(bMsg, rtcRoom);
-                        roomMap.put(room.getId(), room);
-                        RCFlutterRequestResult<RCFlutterRoom> requestResult = new RCFlutterRequestResult<>(room, 0);
-                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
-                    }
+        HashMap<String, Integer> map = call.argument("roomConfig");
+        RCFlutterRoomConfig config = RCFlutterRoomConfig.from(map);
+        RCRTCEngine.getInstance().joinRoom(roomId, config.nativeConfig(), new IRCRTCResultDataCallback<RCRTCRoom>() {
+            @Override
+            public void onSuccess(RCRTCRoom data) {
+                RCFlutterLog.v(TAG, "joinRoom onSuccess");
+                RCFlutterRoom room = new RCFlutterRoom(bMsg, data);
+                roomMap.put(room.getId(), room);
+                RCFlutterRequestResult<RCFlutterRoom> requestResult = new RCFlutterRequestResult<>(room, 0);
+                UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
+            }
 
-                    @Override
-                    public void onFailed(RTCErrorCode code) {
-                        RCFlutterLog.v(TAG, "joinRoom onFailed code = " + code);
-                        RCFlutterRequestResult<String> requestResult = new RCFlutterRequestResult<>(code.getReason(), code.getValue());
-                        UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
-                    }
-                });
+            @Override
+            public void onFailed(RTCErrorCode code) {
+                RCFlutterLog.v(TAG, "joinRoom onFailed code = " + code);
+                RCFlutterRequestResult<String> requestResult = new RCFlutterRequestResult<>(code.getReason(), code.getValue());
+                UIThreadHandler.success(result, JSONObject.toJSON(requestResult).toString());
+            }
+        });
     }
 
     private void leaveRoom(Result result) {
@@ -388,6 +390,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             for (RCFlutterRemoteUser remoteUser : room.getRemoteUserList()) {
                 streamList.addAll(remoteUser.getStreamList());
             }
+            streamList.addAll(room.getStreamList());
         }
         return streamList;
     }

@@ -14,14 +14,30 @@ import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 import 'live_audience_page_contract.dart';
 
 class LiveAudiencePageModel extends AbstractModel implements Model {
-  @override
-  void initEngine() {
-    RCRTCEngine.getInstance().init(null);
-  }
+  // @override
+  // void initEngine() {
+  //   RCRTCEngine.getInstance().init(null);
+  // }
 
   @override
   void unInitEngine() {
     RCRTCEngine.getInstance().unInit();
+  }
+
+  @override
+  void subscribeLiveStreams(
+    Data.Room room,
+    void Function(UserView view) onUserJoined,
+  ) async {
+    List<RCRTCInputStream> streams = await RCRTCEngine.getInstance().getRoom().getLiveStreams();
+    RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(streams);
+
+    UserView view = UserView(room.user);
+    var audioStreams = streams.whereType<RCRTCAudioInputStream>();
+    if (audioStreams.isNotEmpty) view.audioStream = audioStreams.first;
+    var videoStreams = streams.whereType<RCRTCVideoInputStream>();
+    if (videoStreams.isNotEmpty) view.videoStream = videoStreams.first;
+    onUserJoined(view);
   }
 
   @override
@@ -54,26 +70,26 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     RongIMClient.sendMessage(RCConversationType.Private, uid, textMessage);
   }
 
-  void subscribeUrl(
-    Data.Room room,
-    void onUserJoined(UserView view),
-    void onSubscribeError(int code, String message),
-  ) {
-    RCRTCEngine.getInstance().subscribeLiveStream(
-      url: room.url,
-      streamType: AVStreamType.audio_video,
-      onSuccess: () {},
-      onAudioStreamReceived: (stream) {},
-      onVideoStreamReceived: (stream) {
-        UserView view = UserView(room.user);
-        view.videoStream = stream;
-        onUserJoined(view);
-      },
-      onError: (code, message) {
-        onSubscribeError(code, message);
-      },
-    );
-  }
+  // void subscribeUrl(
+  //   Data.Room room,
+  //   void onUserJoined(UserView view),
+  //   void onSubscribeError(int code, String message),
+  // ) {
+  //   RCRTCEngine.getInstance().subscribeLiveStream(
+  //     url: room.url,
+  //     streamType: AVStreamType.audio_video,
+  //     onSuccess: () {},
+  //     onAudioStreamReceived: (stream) {},
+  //     onVideoStreamReceived: (stream) {
+  //       UserView view = UserView(room.user);
+  //       view.videoStream = stream;
+  //       onUserJoined(view);
+  //     },
+  //     onError: (code, message) {
+  //       onSubscribeError(code, message);
+  //     },
+  //   );
+  // }
 
   @override
   Future<bool> requestPermission() async {
@@ -82,17 +98,17 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     return camera && mic;
   }
 
-  @override
-  Future<bool> unsubscribeUrl(Data.Room room) async {
-    int code = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
-    return code == 0;
-  }
+  // @override
+  // Future<bool> unsubscribeUrl(Data.Room room) async {
+  //   int code = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
+  //   return code == 0;
+  // }
 
   @override
   Future<StatusCode> joinRoom(Data.Room room) async {
     RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
       roomId: room.id,
-      roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo),
+      roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo, RCRTCLiveRoleType.Broadcaster),
     );
     if (result.code != 0) {
       joined = false;
@@ -256,6 +272,16 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
   }
 
   @override
+  Future<bool> autoJoinRoom(String roomId) async {
+    RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
+      roomId: roomId,
+      roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.AudioVideo, RCRTCLiveRoleType.Audience),
+    );
+    joined = result.code != 0;
+    return joined;
+  }
+
+  @override
   void exit(
     BuildContext context,
     Data.Room room,
@@ -263,10 +289,10 @@ class LiveAudiencePageModel extends AbstractModel implements Model {
     void onError(BuildContext context, String info),
   ) async {
     int result = 0;
-    if (joined)
-      result = await RCRTCEngine.getInstance().leaveRoom();
-    else
-      result = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
+//    if (joined)
+    result = await RCRTCEngine.getInstance().leaveRoom();
+    // else
+    // result = await RCRTCEngine.getInstance().unsubscribeLiveStream(room.url);
     RongIMClient.quitChatRoom(room.id);
     RongIMClient.disconnect(false);
     if (result > 0) {

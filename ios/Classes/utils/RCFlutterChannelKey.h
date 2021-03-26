@@ -115,10 +115,10 @@ FOUNDATION_EXTERN NSString * const KCreateVideoTextureView;
 FOUNDATION_EXTERN NSString * const KReleaseVideoTextureView;
 
 // subscribe live stream
-FOUNDATION_EXTERN NSString * const KSubscribeLiveStream;
+//FOUNDATION_EXTERN NSString * const KSubscribeLiveStream;
 
 // unsubscribe live stream
-FOUNDATION_EXTERN NSString * const KUnsubscribeLiveStream;
+//FOUNDATION_EXTERN NSString * const KUnsubscribeLiveStream;
 
 // subscribe stream
 FOUNDATION_EXTERN NSString * const KSubscribeStream;
@@ -146,6 +146,12 @@ FOUNDATION_EXTERN NSString * const kOnRemoteUserPublishStream;
 
 // on remote user unpublish stream
 FOUNDATION_EXTERN NSString * const KOnRemoteUserUnPublishStream;
+
+// on remote user publish Live stream
+FOUNDATION_EXTERN NSString * const kOnRemoteUserPublishLiveStream;
+
+// on remote user unpublish Live stream
+FOUNDATION_EXTERN NSString * const KOnRemoteUserUnPublishLiveStream;
 
 FOUNDATION_EXTERN NSString * const KPreloadEffect;
 
@@ -190,6 +196,8 @@ FOUNDATION_EXTERN NSString * const KSendMessage;
 FOUNDATION_EXTERN NSString * const KAddPublishStreamUrl;
 
 FOUNDATION_EXTERN NSString * const KRemovePublishStreamUrl;
+
+FOUNDATION_EXTERN NSString * const KGetLiveStreams;
 
 FOUNDATION_EXTERN NSString * const KSetMixConfig;
 

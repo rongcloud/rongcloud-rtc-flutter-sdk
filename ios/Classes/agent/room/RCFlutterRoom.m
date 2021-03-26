@@ -37,13 +37,14 @@
 }
 
 - (void)registerRoomChannel {
+    if (!self.rtcRoom.roomId) {
+        return;
+    }
     NSString *channelId = [NSString stringWithFormat:@"%@%@",KRoom,self.rtcRoom.roomId];
-    FlutterMethodChannel *channel =
-    [FlutterMethodChannel methodChannelWithName:channelId binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
+    FlutterMethodChannel *channel = [FlutterMethodChannel methodChannelWithName:channelId binaryMessenger:[[RCFlutterEngine sharedEngine].pluginRegister messenger]];
+    [[RCFlutterEngine sharedEngine].pluginRegister addMethodCallDelegate:self channel:channel];
     self.methodChannel = channel;
 }
-
-
 
 - (void)setRtcRoom:(RCRTCRoom *)rtcRoom {
     @synchronized (self) {
@@ -133,6 +134,15 @@
             }
         }
     }
+    
+    RCRTCRoom *room = [[RCRTCEngine sharedInstance] room];
+    for (RCRTCInputStream *stream in [room getLiveStreams]) {
+        for (NSDictionary *dic in dics) {
+            if ([dic[@"streamId"] isEqual:[stream streamId]] && [dic[@"type"] intValue] == [stream mediaType]) {
+                [arr addObject:stream];
+            }
+        }
+    }
     return arr;
 }
 
@@ -145,6 +155,8 @@
         [self getRoomAttributes:call result:result];
     } else if ([call.method isEqualToString:KSendMessage]) {
         [self sendMessage:call result:result];
+    } else if ([call.method isEqualToString:KGetLiveStreams]) {
+        [self getLiveStreams:call result:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -206,5 +218,19 @@
         result(dic);
     }];
 }
+
+
+- (void)getLiveStreams:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSMutableArray *arr = [NSMutableArray array];
+    NSArray *streams = [self.rtcRoom getLiveStreams];
+    for (RCRTCInputStream *inputStream in streams) {
+        RCFlutterInputStream *stream = [[RCFlutterInputStream alloc] init];
+        stream.rtcInputStream = inputStream;
+        [stream registerStreamChannel];
+        [arr addObject:[RCFlutterTools dictionaryToJson:[stream toDesc]]];
+    }
+    result(arr);
+}
+
 
 @end

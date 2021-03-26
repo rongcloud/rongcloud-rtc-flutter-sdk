@@ -24,7 +24,18 @@ class AudioLiveListModel extends AbstractModel implements Model {
     RongIMClient.connect(DefaultData.user.token, (code, userId) async {
       if (code == RCRTCErrorCode.OK || code == RCRTCErrorCode.ALREADY_CONNECTED) {
         RongIMClient.joinChatRoom(roomId, -1);
-        onJoined(context);
+
+        await RCRTCEngine.getInstance().init(null);
+
+        RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(
+          roomId: roomId,
+          roomConfig: RCRTCRoomConfig(RCRTCRoomType.Live, RCRTCLiveType.Audio, RCRTCLiveRoleType.Audience),
+        );
+        if (result.code == 0) {
+          onJoined(context);
+        } else {
+          onJoinError(context, 'joinRoom error, code = ${result.code}');
+        }
       } else {
         onJoinError(context, '加入房间错误:code = $code');
       }

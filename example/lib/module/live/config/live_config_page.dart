@@ -232,11 +232,11 @@ class _LiveConfigPageState extends AbstractViewState<Presenter, LiveConfigPage> 
               top: 38.dp,
               right: 12.dp,
             ),
-            child: 'module_close'.png.image.toButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
+            // child: 'module_close'.png.image.toButton(
+            //   onPressed: () {
+            //     Navigator.pop(context);
+            //   },
+            // ),
           ),
         ),
         Align(

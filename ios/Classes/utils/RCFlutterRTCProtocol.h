@@ -129,15 +129,13 @@ typedef void(^RCFlutterLiveOperationCallback)(BOOL isSuccess, RCRTCCode desc, RC
 /*!
  离开房间
  
- @param roomId 房间 Id
- @param completion 加入房间回调
+ @param leaveRTCRoom 加入房间回调
  @discussion
  离开房间时不需要调用取消资源发布和关闭摄像头, SDK 内部会做好取消发布和关闭摄像头资源释放逻辑
  
  @remarks 房间管理
  */
-- (void)leaveRTCRoom:(NSString *)roomId
-          completion:(void (^)(BOOL, RCRTCCode code))completion;
+- (void)leaveRTCRoom:(void (^)(BOOL, RCRTCCode code))completion;
 
 /*!
  切换使用外放/听筒
