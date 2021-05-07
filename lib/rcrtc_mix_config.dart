@@ -40,7 +40,9 @@ class AudioConfig {
 }
 
 class CDNPushUrl {
-  String pushUrl;
+  CDNPushUrl(this.pushUrl);
+
+  final String pushUrl;
 
   Map<String, dynamic> toJson() => {
         'pushurl': pushUrl,
@@ -102,7 +104,7 @@ class CustomLayout {
 }
 
 class RCRTCMixConfig {
-  int version = 1;
+  int version = 2;
   MixLayoutMode mode;
 
   String hostUserId;

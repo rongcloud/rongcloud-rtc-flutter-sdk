@@ -7,6 +7,9 @@
 #import "RCFlutterAVStream+Private.h"
 
 #import "RCFlutterUser+Private.h"
+
+#import "RCFlutterMessageFactory.h"
+
 @implementation RCFlutterRoom (RTCRoomProtocol)
 
 - (void)didJoinUser:(RCRTCRemoteUser *)user {
@@ -125,4 +128,10 @@
         [self.methodChannel invokeMethod:KOnRemoteUserUnPublishLiveStream arguments:json];
     });
 }
+
+- (void)didReceiveMessage:(RCMessage *)message {
+    NSString *msg = [RCFlutterMessageFactory message2String:message];
+    [self.methodChannel invokeMethod:KOnReceiveMessage arguments:msg];
+}
+
 @end

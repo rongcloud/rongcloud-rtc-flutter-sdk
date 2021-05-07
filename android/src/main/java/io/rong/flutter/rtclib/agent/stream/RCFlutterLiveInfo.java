@@ -21,13 +21,14 @@ import io.rong.flutter.rtclib.utils.UIThreadHandler;
 public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
 
     private static final String TAG = "RCFlutterLiveInfo";
+    private final MethodChannel mMethodChannel;
 
     private RCRTCLiveInfo info;
 
     public RCFlutterLiveInfo(BinaryMessenger bMsg, RCRTCLiveInfo info) {
         this.info = info;
-        MethodChannel channel = new MethodChannel(bMsg, "rong.flutter.rtclib/LiveInfo:" + info.getLiveUrl());
-        channel.setMethodCallHandler(this);
+        mMethodChannel = new MethodChannel(bMsg, "rong.flutter.rtclib/LiveInfo:" + info.getRoomId());
+        mMethodChannel.setMethodCallHandler(this);
     }
 
     @Override
@@ -121,5 +122,9 @@ public class RCFlutterLiveInfo implements MethodChannel.MethodCallHandler {
                         UIThreadHandler.success(result, code.getValue());
                     }
                 });
+    }
+
+    public void release() {
+        mMethodChannel.setMethodCallHandler(null);
     }
 }

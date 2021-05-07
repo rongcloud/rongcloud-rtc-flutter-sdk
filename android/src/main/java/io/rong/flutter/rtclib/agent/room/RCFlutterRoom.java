@@ -27,6 +27,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.rong.flutter.imlib.MessageFactory;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterAudioInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterInputStream;
 import io.rong.flutter.rtclib.agent.stream.RCFlutterVideoInputStream;
@@ -199,6 +200,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             for (RCFlutterRemoteUser remoteUser : remoteUserList) {
                 if (remoteUser.getId().equals(user.getUserId())) {
                     remoteUserList.remove(remoteUser);
+                    remoteUser.release();
                     JSONObject jsonObj = new JSONObject();
                     jsonObj.put("remoteUser", remoteUser);
                     UIThreadHandler.post(
@@ -216,6 +218,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             for (RCFlutterRemoteUser RCFlutterRemoteUser : remoteUserList) {
                 if (RCFlutterRemoteUser.getId().equals(user.getUserId())) {
                     remoteUserList.remove(RCFlutterRemoteUser);
+                    RCFlutterRemoteUser.release();
                     JSONObject jsonObj = new JSONObject();
                     jsonObj.put("remoteUser", RCFlutterRemoteUser);
                     UIThreadHandler.post(
@@ -233,6 +236,14 @@ public class RCFlutterRoom implements MethodCallHandler {
             jsonObj.put("code", code);
             UIThreadHandler.post(
                     () -> channel.invokeMethod("onLeaveRoom", jsonObj.toJSONString())
+            );
+        }
+
+        @Override
+        public void onReceiveMessage(Message message) {
+            String msg = MessageFactory.getInstance().message2String(message);
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onReceiveMessage", msg)
             );
         }
     });
@@ -256,6 +267,9 @@ public class RCFlutterRoom implements MethodCallHandler {
               break;
           case "getLiveStreams":
               getLiveStreams(result);
+              break;
+          case "getSessionId":
+              getSessionId(result);
               break;
       }
   }
@@ -358,6 +372,10 @@ public class RCFlutterRoom implements MethodCallHandler {
       UIThreadHandler.success(result, jsonStreams);
   }
 
+  private void getSessionId(Result result) {
+      UIThreadHandler.success(result, rtcRoom.getSessionId());
+  }
+
   public String getId() {
     return rtcRoom.getRoomId();
   }
@@ -407,8 +425,10 @@ public class RCFlutterRoom implements MethodCallHandler {
   private RCFlutterInputStream addStream(RCRTCInputStream is) {
       List<RCFlutterInputStream> temp = new ArrayList<>();
       for (RCFlutterInputStream stream : streamList) {
-          if (stream.getStreamId().equals(is.getStreamId()) && stream.getType() == is.getMediaType().getValue())
+          if (stream.getStreamId().equals(is.getStreamId()) && stream.getType() == is.getMediaType().getValue()) {
               temp.add(stream);
+              stream.release();
+          }
       }
       streamList.removeAll(temp);
       RCFlutterInputStream stream = null;
@@ -436,5 +456,18 @@ public class RCFlutterRoom implements MethodCallHandler {
 
   public List<RCFlutterInputStream> getStreamList() {
       return streamList;
+  }
+
+  public void release() {
+      for (RCFlutterRemoteUser user : remoteUserList) {
+          user.release();
+      }
+      remoteUserList.clear();
+      localUser.release();
+      for (RCFlutterInputStream rcFlutterInputStream : streamList) {
+          rcFlutterInputStream.release();
+      }
+      streamList.clear();
+      channel.setMethodCallHandler(null);
   }
 }

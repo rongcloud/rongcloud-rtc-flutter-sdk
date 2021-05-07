@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 
 import '../../utils/rcrtc_log.dart';
 import 'rcrtc_video_output_stream.dart';
+import 'rcrtc_video_stream_config.dart';
 
 enum RCRTCCameraCaptureCameraType {
   Front,
@@ -62,6 +65,12 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   /// 是否开启大小流
   Future<void> enableTinyStream(bool enable) async {
     await channel.invokeMethod("enableTinyStream", enable);
+  }
+
+  /// 小流配置信息
+  Future<bool> setTinyVideoConfig(RCRTCVideoStreamConfig config) async {
+    var json = jsonEncode(config);
+    return await channel.invokeMethod("setTinyVideoConfig", json);
   }
 
   bool isFrontCamera() {

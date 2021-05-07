@@ -405,6 +405,10 @@ switchToNormalStream:(nonnull NSArray<RCRTCInputStream *> *)streams
 /// 视频配置
 /// @param config 配置视频
 - (void)setVideoConfig:(RCRTCVideoStreamConfig *)config;
+
+/// 小流视频配置
+/// @param config 配置小流视频
+- (BOOL)setTinyVideoConfig:(RCRTCVideoStreamConfig *)config;
 @end
 
 

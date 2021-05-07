@@ -4,7 +4,7 @@ import android.util.LongSparseArray;
 
 public class RCFlutterTextureViewFactory {
 
-    private LongSparseArray<RCFlutterTextureView> renders = new LongSparseArray<>();
+    private final LongSparseArray<RCFlutterTextureView> renders = new LongSparseArray<>();
 
     private static class SingletonHolder {
         static RCFlutterTextureViewFactory instance = new RCFlutterTextureViewFactory();

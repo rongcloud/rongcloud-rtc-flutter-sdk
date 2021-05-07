@@ -94,4 +94,8 @@ public class RCFlutterStream implements MethodCallHandler {
   public RCRTCStream getRtcStream() {
     return rtcStream;
   }
+
+  public void release() {
+    channel.setMethodCallHandler(null);
+  }
 }

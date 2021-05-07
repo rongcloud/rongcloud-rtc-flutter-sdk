@@ -22,4 +22,8 @@ public class RCFlutterUser implements MethodChannel.MethodCallHandler {
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {}
+
+  public void release() {
+    methodChannel.setMethodCallHandler(null);
+  }
 }

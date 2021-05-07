@@ -101,92 +101,102 @@
     NSString *json = call.arguments;
     NSDictionary *dic = [RCFlutterTools decodeToDic:json];
     RCRTCMixConfig *config = [self parseMixConfig:dic];
-    [self.liveInfo setMixStreamConfig:config
-                           completion:^(BOOL isSuccess, RCRTCCode code) {
+    [self.liveInfo setMixConfig:config completion:^(BOOL isSuccess, RCRTCCode code) {
         result(@(code));
     }];
 }
 
 // 设置合流布局
-- (RCRTCMixConfig *)parseMixConfig:(NSDictionary *)rawDic{
+- (RCRTCMixConfig *)parseMixConfig:(NSDictionary *)dic {
     RCRTCMixConfig *streamConfig = [[RCRTCMixConfig alloc] init];
     
-    RCRTCMixLayoutMode mode = [rawDic[@"mode"] integerValue];
-    // 布局配置类
-    // 选择模式
+    RCRTCMixLayoutMode mode = [dic[@"mode"] integerValue];
     streamConfig.layoutMode = mode;
-
-    // 设置合流视频参数：宽 ,高 ,帧率 ,码率
-    NSDictionary *vConfigDic = rawDic[@"output"][@"video"];
-    RCRTCVideoConfig *vConfig = [[RCRTCVideoConfig alloc] init];
     
-    if ([vConfigDic.allKeys containsObject:@"normal"] && vConfigDic[@"normal"] != [NSNull null]) {
-        [vConfig.videoLayout setValuesForKeysWithDictionary:vConfigDic[@"normal"]];
-    }
-    
-    if ([vConfigDic.allKeys containsObject:@"tiny"] && vConfigDic[@"tiny"] != [NSNull null]) {
-        [vConfig.tinyVideoLayout setValuesForKeysWithDictionary:vConfigDic[@"tiny"]];
-    }
-    // 设置是否裁剪
-    streamConfig.mediaConfig.videoConfig = vConfig;
-    streamConfig.mediaConfig.videoConfig.videoExtend.renderMode = 1;
-
-    // 音频配置
-    NSDictionary *aConfigDic = rawDic[@"output"][@"audio"];
-    
-    streamConfig.mediaConfig.audioConfig.bitrate = [aConfigDic[@"bitrate"] integerValue];
-
-
-    NSMutableArray *streamArr = [NSMutableArray array];
-    // 添加本地输出流
-    NSArray<RCRTCOutputStream *> *localStreams = RCRTCEngine.sharedInstance.currentRoom.localUser.localStreams;
-    for (RCRTCOutputStream *vStream in localStreams) {
-        if (vStream.mediaType == RTCMediaTypeVideo) {
-            [streamArr addObject:vStream];
+    NSString *streamId = [dic objectForKey:@"host_stream_id"];
+    NSString *userId = [dic objectForKey:@"host_user_id"];
+    if (![streamId isEqual:[NSNull null]] && ![userId isEqual:[NSNull null]]) {
+        NSArray<RCRTCOutputStream *> *streams = RCRTCEngine.sharedInstance.room.localUser.streams;
+        for (RCRTCOutputStream *stream in streams) {
+            if (stream.mediaType == RTCMediaTypeVideo &&
+                [[stream streamId] isEqualToString:streamId] &&
+                [[stream userId] isEqualToString:userId]) {
+                streamConfig.hostVideoStream = stream;
+            }
         }
     }
 
-    switch (mode) {
-        case RCRTCMixLayoutModeCustom:
-            // 自定义布局
-        {
-            // 如果是自定义布局需要设置下面这些
-            NSArray<RCRTCRemoteUser *> *remoteUsers = RCRTCEngine.sharedInstance.currentRoom.remoteUsers;
-            for (RCRTCRemoteUser* remoteUser in remoteUsers) {
-                for (RCRTCInputStream *inputStream in remoteUser.remoteStreams) {
-                    if (inputStream.mediaType == RTCMediaTypeVideo) {
-                        [streamArr addObject:inputStream];
-                    }
+    NSDictionary *output = [dic objectForKey:@"output"];
+    if (![output isEqual:[NSNull null]]) {
+        NSDictionary *video = [output objectForKey:@"video"];
+        if (![video isEqual:[NSNull null]]) {
+
+            NSDictionary *normal = [video objectForKey:@"normal"];
+            if (![normal isEqual:[NSNull null]]) {
+                [streamConfig.mediaConfig.videoConfig.videoLayout setValuesForKeysWithDictionary:normal];
+            }
+            NSDictionary *tiny = [video objectForKey:@"tiny"];
+            if (![tiny isEqual:[NSNull null]]) {
+                [streamConfig.mediaConfig.videoConfig.tinyVideoLayout setValuesForKeysWithDictionary:normal];
+            }
+            
+            NSDictionary *exparams = [video objectForKey:@"exparams"];
+            if (![exparams isEqual:[NSNull null]]) {
+                streamConfig.mediaConfig.videoConfig.videoExtend.renderMode = [exparams[@"renderMode"] integerValue];
+            } else {
+                streamConfig.mediaConfig.videoConfig.videoExtend.renderMode = RCRTCVideoRenderModeCrop;
+            }
+            
+            if (streamConfig.version == 2) {
+                streamConfig.customMode = YES;
+            }
+        } else {
+            if (streamConfig.version == 2) {
+                streamConfig.customMode = NO;
+            }
+        }
+        
+        NSDictionary *audio = [output objectForKey:@"audio"];
+        if (![audio isEqual:[NSNull null]]) {
+            streamConfig.mediaConfig.audioConfig.bitrate = [audio[@"bitrate"] integerValue];
+        }
+    } else {
+        if (streamConfig.version == 2) {
+            streamConfig.customMode = NO;
+        }
+    }
+    
+    NSDictionary *input = [dic objectForKey:@"input"];
+    NSArray *customs = nil;
+    if (![input isEqual:[NSNull null]]) {
+        customs = [input objectForKey:@"video"];
+    }
+    if (mode == RCRTCMixLayoutModeCustom && ![customs isEqual:[NSNull null]]) {
+        NSMutableArray<RCRTCStream *> *streams = [NSMutableArray array];
+        NSArray<RCRTCRemoteUser *> *users = RCRTCEngine.sharedInstance.room.remoteUsers;
+        for (RCRTCRemoteUser* user in users) {
+            for (RCRTCInputStream *stream in user.remoteStreams) {
+                if (stream.mediaType == RTCMediaTypeVideo) {
+                    [streams addObject:stream];
                 }
             }
-            NSMutableArray <RCRTCCustomLayout *> *customLayouts = [self customLayoutsWithStreams:streamArr withConfigArr:rawDic[@"input"][@"video"]];
-            streamConfig.customLayouts = customLayouts;
         }
-            break;
-        case RCRTCMixLayoutModeSuspension:
-            //悬浮布局
-        {
-            RCRTCOutputStream *vStream = [streamArr lastObject];
-            streamConfig.hostVideoStream = vStream;
+        
+        for (RCRTCOutputStream *stream in RCRTCEngine.sharedInstance.room.localUser.streams) {
+            if (stream.mediaType == RTCMediaTypeVideo) {
+                [streams addObject:stream];
+            }
         }
-            break;
-        case RCRTCMixLayoutModeAdaptive:
-            //自适应布局
-        {
-            RCRTCOutputStream *vStream = [streamArr lastObject];
-            streamConfig.hostVideoStream = vStream;
-        }
-            break;
-        default:
-            break;
+        
+        
+        NSMutableArray<RCRTCCustomLayout *> *layouts = [self customLayoutsWithStreams:streams withConfigArr:customs];
+        streamConfig.customLayouts = layouts;
     }
-
     return streamConfig;
 }
 
-- (NSMutableArray <RCRTCCustomLayout *> *)customLayoutsWithStreams:(NSMutableArray *)streams
-                 withConfigArr:(NSArray *)configs
-{
+- (NSMutableArray<RCRTCCustomLayout *> *)customLayoutsWithStreams:(NSMutableArray *)streams
+                                                    withConfigArr:(NSArray *)configs {
 //    NSInteger streamCount = streams.count;
 //    int itemWidth = 150;
 //    int itemHeight = itemWidth;
@@ -200,7 +210,7 @@
                 inputConfig.width = [dic[@"width"] integerValue];
                 inputConfig.height = [dic[@"width"] integerValue];
                 inputConfig.videoStream = stream;
-            }else{
+            } else {
                 // TODO: 流的数量和配置数量不对应怎么办?
                 //需要 json 转 model的解析工具封装且不能影响 RCRTCLib层的代码
             }

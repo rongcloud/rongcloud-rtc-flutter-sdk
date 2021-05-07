@@ -55,6 +55,10 @@
     [[RCRTCEngine sharedInstance].defaultVideoStream setVideoConfig:config];
 }
 
+- (BOOL)setTinyVideoConfig:(RCRTCVideoStreamConfig *)config {
+    return [[RCRTCEngine sharedInstance].defaultVideoStream setTinyVideoConfig:config];
+}
+
 - (void)setIsMute:(BOOL)mute {
     [[RCRTCEngine sharedInstance].defaultVideoStream setIsMute:mute];
 }

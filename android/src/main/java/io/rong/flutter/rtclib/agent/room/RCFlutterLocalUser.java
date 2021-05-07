@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ public class RCFlutterLocalUser extends RCFlutterUser {
 
     private final BinaryMessenger bMsg;
     private final RCRTCLocalUser rtcLocalUser;
+    private final List<RCFlutterLiveInfo> mRCFlutterLiveInfoList = new LinkedList<>();
 
     public RCFlutterLocalUser(BinaryMessenger msg, RCRTCLocalUser localUser) {
         super(msg, localUser);
@@ -139,7 +141,9 @@ public class RCFlutterLocalUser extends RCFlutterUser {
                     public void onSuccess(RCRTCLiveInfo info) {
                         JSONObject jsonObject = new JSONObject();
                         jsonObject.put("code", 0);
-                        jsonObject.put("content", JSON.toJSONString(new RCFlutterLiveInfo(bMsg, info)));
+                        RCFlutterLiveInfo flutterLiveInfo = new RCFlutterLiveInfo(bMsg, info);
+                        mRCFlutterLiveInfoList.add(flutterLiveInfo);
+                        jsonObject.put("content", JSON.toJSONString(flutterLiveInfo));
                         UIThreadHandler.success(result, jsonObject.toJSONString());
                     }
 
@@ -164,7 +168,9 @@ public class RCFlutterLocalUser extends RCFlutterUser {
                         public void onSuccess(RCRTCLiveInfo info) {
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.put("code", 0);
-                            jsonObject.put("content", JSON.toJSONString(new RCFlutterLiveInfo(bMsg, info)));
+                            RCFlutterLiveInfo flutterLiveInfo = new RCFlutterLiveInfo(bMsg, info);
+                            mRCFlutterLiveInfoList.add(flutterLiveInfo);
+                            jsonObject.put("content", JSON.toJSONString(flutterLiveInfo));
                             UIThreadHandler.success(result, jsonObject.toJSONString());
                         }
 
@@ -420,6 +426,15 @@ public class RCFlutterLocalUser extends RCFlutterUser {
             public void onFailed(RTCErrorCode errorCode) {
             }
         });
+    }
+
+    @Override
+    public void release() {
+        super.release();
+        for (RCFlutterLiveInfo flutterLiveInfo : mRCFlutterLiveInfoList) {
+            flutterLiveInfo.release();
+        }
+        mRCFlutterLiveInfoList.clear();
     }
 
 }

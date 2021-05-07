@@ -42,7 +42,7 @@
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     if ([call.method isEqualToString:KGetStreams]) {
         NSMutableArray *array = [NSMutableArray array];
-        for (RCRTCOutputStream *outputStream in ((RCRTCLocalUser *)self.rtcUser).localStreams) {
+        for (RCRTCOutputStream *outputStream in ((RCRTCLocalUser *)self.rtcUser).streams) {
             RCFlutterOutputStream *stream = nil;
             if ([outputStream isMemberOfClass:[RCRTCCameraOutputStream class]]) {
                 stream = [RCFlutterVideoCapture sharedVideoCapture];
@@ -58,7 +58,7 @@
         [self publishRTCDefaultLiveStreams:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             if (isSuccess) {
-                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
+                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] room] roomId] userId:self.userId];
                 [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
                 [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
             } else {
@@ -75,7 +75,7 @@
                         completion:^(BOOL isSuccess, RCRTCCode desc, RCRTCLiveInfo * _Nullable liveInfo) {
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             if (isSuccess) {
-                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] currentRoom] roomId] userId:self.userId];
+                RCFlutterLiveInfo *info = [RCFlutterLiveInfo flutterLiveInfoWithLiveInfo:liveInfo roomId:[[[RCRTCEngine sharedInstance] room] roomId] userId:self.userId];
                 [dic setObject:[NSNumber numberWithInt:0] forKey:@"code"];
                 [dic setObject:[RCFlutterTools dictionaryToJson:[info toDesc]] forKey:@"content"];
             } else {

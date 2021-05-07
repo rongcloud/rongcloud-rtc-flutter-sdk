@@ -51,6 +51,10 @@
         NSDictionary *dic = [RCFlutterTools decodeToDic:call.arguments];
         [self setVideoConfigFromFlutter:dic];
         result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KSetTinyVideoConfig]) {
+        NSDictionary *dic = [RCFlutterTools decodeToDic:call.arguments];
+        BOOL res = [self setTinyVideoConfigFromFlutter:dic];
+        result([NSNumber numberWithBool:res]);
     } else if ([call.method isEqualToString:KEnableTinyStream]) {
         NSNumber *enable = (NSNumber *)call.arguments;
         [self enableTinyStream:[enable boolValue]];
@@ -128,6 +132,11 @@ SingleInstanceM(VideoCapture);
     [self setVideoConfig:videoConfig];
 }
 
+- (BOOL)setTinyVideoConfigFromFlutter:(NSDictionary *)config {
+    RCRTCVideoStreamConfig *videoConfig = [self getStreamConfig:config];
+    return [self setTinyVideoConfig:videoConfig];
+}
+
 - (void)setVideoTextureView:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSNumber *textureId = (NSNumber *)call.arguments;
     RCFlutterTextureView *view = [[RCFlutterTextureViewFactory sharedViewFactory] get:textureId.integerValue];
@@ -158,17 +167,27 @@ SingleInstanceM(VideoCapture);
 
 - (RCRTCVideoSizePreset)getResolution:(NSString *)resolution {
     NSDictionary *resolutionDic = @{
-        @"RESOLUTION_132_176":@(RCRTCVideoSizePreset176x144),
+        @"RESOLUTION_144_176":@(RCRTCVideoSizePreset176x144),
         @"RESOLUTION_144_256":@(RCRTCVideoSizePreset256x144),
+    
+        @"RESOLUTION_180_180":@(RCRTCVideoSizePreset180x180),
+        @"RESOLUTION_180_240":@(RCRTCVideoSizePreset240x180),
         @"RESOLUTION_180_320":@(RCRTCVideoSizePreset320x180),
+    
         @"RESOLUTION_240_240":@(RCRTCVideoSizePreset240x240),
         @"RESOLUTION_240_320":@(RCRTCVideoSizePreset320x240),
+    
+        @"RESOLUTION_360_360":@(RCRTCVideoSizePreset360x360),
         @"RESOLUTION_360_480":@(RCRTCVideoSizePreset480x360),
         @"RESOLUTION_360_640":@(RCRTCVideoSizePreset640x360),
+    
         @"RESOLUTION_480_480":@(RCRTCVideoSizePreset480x480),
         @"RESOLUTION_480_640":@(RCRTCVideoSizePreset640x480),
         @"RESOLUTION_480_720":@(RCRTCVideoSizePreset720x480),
+    
         @"RESOLUTION_720_1280":@(RCRTCVideoSizePreset1280x720),
+    
+        @"RESOLUTION_1080_1920":@(RCRTCVideoSizePreset1920x1080),
     };
     if ([resolutionDic.allKeys containsObject:resolution]) {
         return [resolutionDic[resolution] intValue];

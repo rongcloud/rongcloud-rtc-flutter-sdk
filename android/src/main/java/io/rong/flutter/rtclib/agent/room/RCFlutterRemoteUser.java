@@ -64,7 +64,7 @@ public class RCFlutterRemoteUser extends RCFlutterUser {
                     @Override
                     public void onFailed(RTCErrorCode rtcErrorCode) {
                         String errorCode = String.valueOf(rtcErrorCode.getValue());
-                        result.error(errorCode, rtcErrorCode.getReason(), null);
+                        UIThreadHandler.error(result, errorCode, rtcErrorCode.getReason());
                     }
                 });
     }
@@ -80,7 +80,7 @@ public class RCFlutterRemoteUser extends RCFlutterUser {
                     @Override
                     public void onFailed(RTCErrorCode rtcErrorCode) {
                         String errorCode = String.valueOf(rtcErrorCode.getValue());
-                        result.error(errorCode, rtcErrorCode.getReason(), null);
+                        UIThreadHandler.error(result, errorCode, rtcErrorCode.getReason());
                     }
                 });
     }
@@ -91,5 +91,14 @@ public class RCFlutterRemoteUser extends RCFlutterUser {
 
     public List<RCFlutterInputStream> getStreamList() {
         return streamList;
+    }
+
+    @Override
+    public void release() {
+        super.release();
+        for (RCFlutterInputStream stream : streamList) {
+            stream.release();
+        }
+        streamList.clear();
     }
 }

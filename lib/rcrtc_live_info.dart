@@ -15,7 +15,7 @@ class RCRTCLiveInfo {
       : roomId = info['roomId'],
         liveUrl = info['liveUrl'],
         userId = info['userId'] {
-    _channel = MethodChannel("rong.flutter.rtclib/LiveInfo:$liveUrl");
+    _channel = MethodChannel("rong.flutter.rtclib/LiveInfo:$roomId");
   }
 
   Future<RCRTCCodeResult<List<String>>> addPublishStreamUrl(String url) async {

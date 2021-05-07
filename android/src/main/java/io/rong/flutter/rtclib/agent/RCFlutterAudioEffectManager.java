@@ -233,4 +233,8 @@ public class RCFlutterAudioEffectManager implements IStateObserver, ILoadingStat
     private final MethodChannel channel;
 
     private final ILoadingStateCallback callback;
+
+    public void release() {
+        channel.setMethodCallHandler(null);
+    }
 }

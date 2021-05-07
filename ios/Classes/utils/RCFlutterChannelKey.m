@@ -53,6 +53,8 @@ NSString * const KSetVideoConfig = @"setVideoConfig";
 // stopCamera
 NSString * const KStopCamera = @"stopCamera";
 
+NSString *const  KSetTinyVideoConfig = @"setTinyVideoConfig";
+
 NSString * const KEnableTinyStream = @"enableTinyStream";
 
 NSString * const KIsCameraFocusSupported = @"isCameraFocusSupported";
@@ -154,6 +156,8 @@ NSString * const kOnRemoteUserPublishLiveStream = @"onRemoteUserPublishLiveResou
 // on remote user unpublish Live stream
 NSString * const KOnRemoteUserUnPublishLiveStream = @"onRemoteUserUnPublishLiveResource";
 
+NSString * const KOnReceiveMessage = @"onReceiveMessage";
+
 NSString * const KPreloadEffect = @"preloadEffect";
 
 NSString * const KUnloadEffect = @"unloadEffect";
@@ -199,6 +203,8 @@ NSString * const KAddPublishStreamUrl = @"addPublishStreamUrl";
 NSString * const KRemovePublishStreamUrl = @"removePublishStreamUrl";
 
 NSString * const KGetLiveStreams = @"getLiveStreams";
+
+NSString * const KGetSessionId = @"getSessionId";
 
 NSString * const KSetMixConfig = @"setMixConfig";
 

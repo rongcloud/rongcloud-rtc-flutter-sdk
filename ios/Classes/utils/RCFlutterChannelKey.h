@@ -52,6 +52,9 @@ FOUNDATION_EXTERN NSString * const KSetVideoConfig;
 // stopCamera
 FOUNDATION_EXTERN NSString * const KStopCamera;
 
+// 小流配置信息setTinyVideoConfig
+FOUNDATION_EXTERN NSString * const KSetTinyVideoConfig;
+
 FOUNDATION_EXTERN NSString * const KEnableTinyStream;
 
 FOUNDATION_EXTERN NSString * const KIsCameraFocusSupported;
@@ -153,6 +156,8 @@ FOUNDATION_EXTERN NSString * const kOnRemoteUserPublishLiveStream;
 // on remote user unpublish Live stream
 FOUNDATION_EXTERN NSString * const KOnRemoteUserUnPublishLiveStream;
 
+FOUNDATION_EXTERN NSString * const KOnReceiveMessage;
+
 FOUNDATION_EXTERN NSString * const KPreloadEffect;
 
 FOUNDATION_EXTERN NSString * const KUnloadEffect;
@@ -198,6 +203,8 @@ FOUNDATION_EXTERN NSString * const KAddPublishStreamUrl;
 FOUNDATION_EXTERN NSString * const KRemovePublishStreamUrl;
 
 FOUNDATION_EXTERN NSString * const KGetLiveStreams;
+
+FOUNDATION_EXTERN NSString * const KGetSessionId;
 
 FOUNDATION_EXTERN NSString * const KSetMixConfig;
 

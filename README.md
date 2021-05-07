@@ -34,7 +34,7 @@
 dependencies:
   flutter:
     sdk: flutter
-  rongcloud_rtc_plugin: ^5.1.0
+  rongcloud_rtc_plugin: ^5.1.1
 ```
 
 iOS 需要在 Info.plist 中需要加入对相机和麦克风的权限申请
@@ -105,6 +105,11 @@ RCRTCEngine.getInstance().init(null);
 ### 1.4.加入 RTC 房间
 
 ```dart
+RCRTCRoomConfig roomConfig = RCRTCRoomConfig(
+  RCRTCRoomType.Normal,
+  RCRTCLiveType.AudioVideo,
+  RCRTCLiveRoleType.Broadcaster,
+);
 RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(roomId, roomConfig);
 ```
 
@@ -123,6 +128,7 @@ RCRTCTextureView view = RCRTCTextureView(
   (view, id) {
     stream.setTextureView(id);
   },
+  fit: BoxFit.contain,
   mirror: true,
 );
 ```
@@ -159,6 +165,7 @@ for (RCRTCRemoteUser user in remoteUserList) {
       (view, id) {
         stream.setTextureView(id);
       },
+      fit: BoxFit.contain,
       mirror: false,
     );
   });
@@ -198,10 +205,15 @@ streams.whereType<RCRTCVideoInputStream>().forEach((stream) {
     (view, id) {
       stream.setTextureView(id);
     },
+    fit: BoxFit.contain,
     mirror: false,
   );
 });
 ```
+
+# 直播模式处理流程
+
+如果只使用纯音频模式，请参考[此文档](doc/LIVE_MODE.md)
 
 # 纯音频模式处理流程
 

@@ -38,6 +38,11 @@ RCRTCEngine.getInstance().init(null);
 ### 1.4.加入 RTC 房间
 
 ```dart
+RCRTCRoomConfig roomConfig = RCRTCRoomConfig(
+  RCRTCRoomType.Live,
+  RCRTCLiveType.AudioVideo,
+  RCRTCLiveRoleType.Broadcaster,
+);
 RCRTCCodeResult result = await RCRTCEngine.getInstance().joinRoom(roomId, roomConfig);
 ```
 

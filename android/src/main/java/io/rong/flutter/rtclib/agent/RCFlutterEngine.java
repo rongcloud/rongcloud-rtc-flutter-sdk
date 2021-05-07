@@ -60,16 +60,16 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.0";
+    private static final String VER = "5.1.1";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
-    private HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
+    private final HashMap<String, RCFlutterRoom> roomMap = new HashMap<>();
     private RCFlutterCameraOutputStream cameraOutputStream;
     private RCFlutterMicOutputStream micOutputStream;
     private RCFlutterAudioEffectManager audioEffectManager;
     // key => (streamId + "_" + type)
-    private Map<String, RCFlutterVideoOutputStream> createdVideoOutputStreams;
+    private final Map<String, RCFlutterVideoOutputStream> createdVideoOutputStreams;
     private Context context;
     private MethodChannel channel;
     private FlutterPlugin.FlutterAssets flutterAssets;
@@ -174,10 +174,6 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private void unInit(Result result) {
         Log.d(TAG, "unInit: ");
 
-        cameraOutputStream = null;
-        micOutputStream = null;
-        audioEffectManager = null;
-
         RCRTCEngine.getInstance().unInit();
         UIThreadHandler.success(result, 0);
     }
@@ -218,7 +214,30 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             @Override
             public void onSuccess() {
                 RCFlutterLog.v(TAG, "leaveRoom onSuccess");
-                roomMap.remove(roomId);
+                RCFlutterRoom room = roomMap.remove(roomId);
+                if (room != null) {
+                    room.release();
+                }
+
+                if (cameraOutputStream != null) {
+                    cameraOutputStream.release();
+                }
+                if (micOutputStream != null) {
+                    micOutputStream.release();
+                }
+                if (audioEffectManager != null) {
+                    audioEffectManager.release();
+                }
+
+                cameraOutputStream = null;
+                micOutputStream = null;
+                audioEffectManager = null;
+
+                for (RCFlutterVideoOutputStream stream : createdVideoOutputStreams.values()) {
+                    stream.release();
+                }
+                createdVideoOutputStreams.clear();
+
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("code", 0);
                 UIThreadHandler.success(result, jsonObject.toJSONString());
@@ -233,9 +252,6 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
             }
         });
 
-        cameraOutputStream = null;
-        micOutputStream = null;
-        audioEffectManager = null;
     }
 
     private void getDefaultVideoStream(Result result) {

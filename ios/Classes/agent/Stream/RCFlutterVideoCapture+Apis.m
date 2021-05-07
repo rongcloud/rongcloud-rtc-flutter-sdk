@@ -42,4 +42,8 @@
     [[RCFlutterRTCManager sharedRTCManager] setVideoConfig:config];
 }
 
+- (BOOL)setTinyVideoConfig:(RCRTCVideoStreamConfig *)config {
+    return [[RCFlutterRTCManager sharedRTCManager] setTinyVideoConfig:config];
+}
+
 @end

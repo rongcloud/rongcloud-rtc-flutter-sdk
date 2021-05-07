@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
+import 'package:rongcloud_im_plugin/src/util/message_factory.dart';
 
 import '../../utils/rcrtc_debug_checker.dart';
 import '../stream/rcrtc_audio_input_stream.dart';
@@ -24,6 +25,7 @@ class RCRTCRoom {
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnPublishResource;
   Function(List<RCRTCInputStream> streamList) onPublishLiveStreams;
   Function(List<RCRTCInputStream> streamList) onUnPublishLiveStreams;
+  Function(Message message) onReceiveMessage;
 
   RCRTCRoom.fromJson(Map<String, dynamic> jsonObj)
       : _channel = MethodChannel('rong.flutter.rtclib/Room:${jsonObj['id']}'),
@@ -58,6 +60,9 @@ class RCRTCRoom {
         break;
       case 'onRemoteUserUnPublishLiveResource':
         _handleOnUnPublishLiveStreams(call.arguments);
+        break;
+      case 'onReceiveMessage':
+        _handleOnReceiveMessage(call.arguments);
         break;
     }
     return null;
@@ -176,6 +181,11 @@ class RCRTCRoom {
     if (onUnPublishLiveStreams != null) onUnPublishLiveStreams(streams);
   }
 
+  void _handleOnReceiveMessage(String msg) {
+    Message message = MessageFactory.instance.string2Message(msg);
+    onReceiveMessage?.call(message);
+  }
+
   Future<int> setRoomAttributeValue(String key, String value, MessageContent message) async {
     Map<String, dynamic> arguments = {
       "key": key,
@@ -235,5 +245,9 @@ class RCRTCRoom {
       }
     });
     return streams;
+  }
+
+  Future<String> getSessionId() async {
+    return _channel.invokeMethod('getSessionId');
   }
 }

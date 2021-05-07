@@ -18,7 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.0";
+static NSString * const VER = @"5.1.1";
 
 @interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
 
@@ -291,7 +291,11 @@ SingleInstanceM(Engine);
     NSMutableDictionary *ass = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.sendStats) {
         NSDictionary *avs = [self toDic:stat];
+#ifdef USE_REMOTE_SDK
         NSString *streamId = [self _convertFormartWithStr:stat.trackId];
+#else
+        NSString *streamId = stat.streamId;
+#endif
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
             [vss setObject:avs forKey:streamId];
         } else {
@@ -303,7 +307,11 @@ SingleInstanceM(Engine);
     NSMutableDictionary *ars = [NSMutableDictionary dictionary];
     for (RCRTCStreamStat *stat in form.recvStats) {
         NSDictionary *avs = [self toDic:stat];
+#ifdef USE_REMOTE_SDK
         NSString *streamId = [self _convertFormartWithStr:stat.trackId];
+#else
+        NSString *streamId = stat.streamId;
+#endif
         if ([stat.mediaType isEqualToString:RongRTCMediaTypeVideo]) {
             [vrs setObject:avs forKey:streamId];
         } else {
@@ -347,8 +355,13 @@ SingleInstanceM(Engine);
 
 - (NSDictionary *)toDic:(RCRTCStreamStat *)stat {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+#ifdef USE_REMOTE_SDK
     [dic setObject:stat.trackId forKey:@"id"];
     NSString *uid = [RCRTCStatusForm fetchUserIdFromTrackId:stat.trackId];
+#else
+    [dic setObject:stat.streamId forKey:@"id"];
+    NSString *uid = stat.userId;
+#endif
     [dic setObject:uid != nil ? uid : @"Unknown" forKey:@"uid"];
     [dic setObject:stat.codecName forKey:@"codecName"];
     [dic setObject:stat.mediaType forKey:@"mediaType"];

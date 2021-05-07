@@ -4,9 +4,11 @@ import android.hardware.Camera;
 
 import androidx.annotation.NonNull;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 
 import cn.rongcloud.rtc.api.stream.RCRTCCameraOutputStream;
+import cn.rongcloud.rtc.api.stream.RCRTCVideoStreamConfig;
 import cn.rongcloud.rtc.base.RCRTCStream;
 import cn.rongcloud.rtc.core.CameraVideoCapturer;
 import io.flutter.plugin.common.BinaryMessenger;
@@ -47,6 +49,9 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
         break;
       case "enableTinyStream":
         enableTinyStream(call, result);
+        break;
+      case "setTinyVideoConfig":
+        setTinyVideoConfig(call, result);
         break;
       case "isCameraFocusSupported":
         isCameraFocusSupported(result);
@@ -139,6 +144,19 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
     boolean enabled = (boolean) call.arguments;
     cameraOutputStream.enableTinyStream(enabled);
     UIThreadHandler.success(result, null);
+  }
+
+  private void setTinyVideoConfig(MethodCall call, Result result) {
+    String jsonStr = (String) call.arguments;
+    RCFlutterLog.d(TAG, " setVideoConfig :" + jsonStr);
+    RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig.Builder.create()
+            .setMaxRate(JSON.parseObject(jsonStr, RCFlutterVideoStreamConfig.class).getMaxRate())
+            .setMinRate(JSON.parseObject(jsonStr, RCFlutterVideoStreamConfig.class).getMinRate())
+            .setVideoFps(JSON.parseObject(jsonStr, RCFlutterVideoStreamConfig.class).getVideoFps())
+            .setVideoResolution(JSON.parseObject(jsonStr, RCFlutterVideoStreamConfig.class).getVideoResolution())
+            .build();
+    boolean ret = cameraOutputStream.setTinyVideoConfig(config);
+    UIThreadHandler.success(result, ret);
   }
 
   private void isCameraFocusSupported(Result result) {

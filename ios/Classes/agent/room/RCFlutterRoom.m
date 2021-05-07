@@ -157,6 +157,8 @@
         [self sendMessage:call result:result];
     } else if ([call.method isEqualToString:KGetLiveStreams]) {
         [self getLiveStreams:call result:result];
+    } else if ([call.method isEqualToString:KGetSessionId]) {
+        [self getSessionId:result];
     } else {
         result(FlutterMethodNotImplemented);
     }
@@ -219,7 +221,6 @@
     }];
 }
 
-
 - (void)getLiveStreams:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSMutableArray *arr = [NSMutableArray array];
     NSArray *streams = [self.rtcRoom getLiveStreams];
@@ -232,5 +233,8 @@
     result(arr);
 }
 
+- (void)getSessionId:(FlutterResult)result {
+    result(self.rtcRoom.sessionId);
+}
 
 @end
