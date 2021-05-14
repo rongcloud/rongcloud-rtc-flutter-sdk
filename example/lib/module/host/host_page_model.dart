@@ -1,13 +1,18 @@
+import 'dart:async';
+
+import 'package:FlutterRTC/data/constants.dart' as Util;
 import 'package:FlutterRTC/data/data.dart';
+import 'package:FlutterRTC/frame/network/network.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
+import 'package:FlutterRTC/global_config.dart';
 import 'package:FlutterRTC/widgets/ui.dart';
 import 'package:handy_toast/handy_toast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-import 'meeting_page_contract.dart';
+import 'host_page_contract.dart';
 
-class MeetingPageModel extends AbstractModel implements Model {
+class HostPageModel extends AbstractModel implements Model {
   Future<UserView> createLocalView() async {
     RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
     UserView view = UserView(DefaultData.user);
@@ -51,20 +56,45 @@ class MeetingPageModel extends AbstractModel implements Model {
     }
   }
 
+  Future<int> publishStream(
+    dynamic stream,
+    Util.Callback callback,
+  ) async {
+    RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
+    Completer<int> completer = Completer();
+    user.publishLiveStream(
+      stream,
+      (info) {
+        callback(info);
+        completer.complete(0);
+      },
+      (code, message) {
+        completer.complete(code);
+      },
+    );
+    return completer.future;
+  }
+
   @override
-  Future<bool> changeAudio(bool publish) async {
+  Future<bool> changeAudio(
+    bool publish,
+    Util.Callback callback,
+  ) async {
     RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
     RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
-    int code = publish ? await user.publishStream(stream) : await user.unPublishStream(stream);
+    int code = publish ? await publishStream(stream, callback) : await user.unPublishStream(stream);
     if (code != RCRTCErrorCode.OK) 'Audio stream ${publish ? 'publish' : 'unPublish'} error, code = $code'.toast();
     return code == RCRTCErrorCode.OK ? publish : !publish;
   }
 
   @override
-  Future<bool> changeVideo(bool publish) async {
+  Future<bool> changeVideo(
+    bool publish,
+    Util.Callback callback,
+  ) async {
     RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
     RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
-    int code = publish ? await user.publishStream(stream) : await user.unPublishStream(stream);
+    int code = publish ? await publishStream(stream, callback) : await user.unPublishStream(stream);
     if (code != RCRTCErrorCode.OK) 'Video stream ${publish ? 'publish' : 'unPublish'} error, code = $code'.toast();
     return code == RCRTCErrorCode.OK ? publish : !publish;
   }
@@ -118,6 +148,7 @@ class MeetingPageModel extends AbstractModel implements Model {
         ?.whereType<RCRTCAudioInputStream>();
     if (audios?.isEmpty ?? true) return null;
     var stream = audios.first;
+
     int code = subscribe ? await user.subscribeStream(stream) : await user.unsubscribeStream(stream);
     if (code != RCRTCErrorCode.OK)
       return subscribe ? null : stream;
@@ -147,9 +178,43 @@ class MeetingPageModel extends AbstractModel implements Model {
 
   @override
   Future<int> exit() async {
+    _release();
     RCRTCEngine.getInstance().unRegisterStatusReportListener();
     int code = await RCRTCEngine.getInstance().leaveRoom();
     RCRTCEngine.getInstance().unInit();
     return code;
+  }
+
+  // void _create(String url) {
+  //   String key = DefaultData.user.key;
+  //   String uid = DefaultData.user.id;
+  //   String rid = RCRTCEngine.getInstance().getRoom().id;
+  //   Http.post(
+  //     GlobalConfig.host + '/test_room/$rid',
+  //     {'user_id': uid, 'user_name': 'Test', 'mcu_url': url, 'key': key},
+  //     (error, data) {
+  //       print("_create success, error = $error, data = $data");
+  //     },
+  //     (error) {
+  //       print("_create error, error = $error");
+  //     },
+  //     tag,
+  //   );
+  // }
+
+  void _release() {
+    String key = DefaultData.user.key;
+    String id = RCRTCEngine.getInstance().getRoom().id;
+    Http.delete(
+      GlobalConfig.host + '/test_room/$id',
+      {'key': key},
+      (error, data) {
+        print("_release success, error = $error, data = $data");
+      },
+      (error) {
+        print("_release error, error = $error");
+      },
+      tag,
+    );
   }
 }

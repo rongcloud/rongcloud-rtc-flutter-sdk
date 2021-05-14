@@ -34,7 +34,7 @@
 dependencies:
   flutter:
     sdk: flutter
-  rongcloud_rtc_plugin: ^5.1.1
+  rongcloud_rtc_plugin: ^5.1.1+1
 ```
 
 iOS 需要在 Info.plist 中需要加入对相机和麦克风的权限申请
@@ -213,11 +213,11 @@ streams.whereType<RCRTCVideoInputStream>().forEach((stream) {
 
 # 直播模式处理流程
 
-如果只使用纯音频模式，请参考[此文档](doc/LIVE_MODE.md)
+如果使用直播模式，请参考[此文档](doc/LIVE_MODE.md)
 
 # 纯音频模式处理流程
 
-如果只使用纯音频模式，请参考[此文档](doc/AUDIO_ONLY.md)
+如果使用纯音频模式，请参考[此文档](doc/AUDIO_ONLY.md)
 
 ## 其他接口
 

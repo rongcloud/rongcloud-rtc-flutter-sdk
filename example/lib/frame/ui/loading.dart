@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class Loading {
   @protected
@@ -23,7 +22,23 @@ class Loading {
           color: Colors.black.withAlpha(150),
           alignment: Alignment.center,
           child: Center(
-            child: CircularProgressIndicator(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                Divider(
+                  height: 10,
+                ),
+                Text(
+                  '加载中',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         onWillPop: () {

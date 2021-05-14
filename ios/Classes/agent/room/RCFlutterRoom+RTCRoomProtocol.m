@@ -8,7 +8,11 @@
 
 #import "RCFlutterUser+Private.h"
 
-#import "RCFlutterMessageFactory.h"
+#import <RongIMLib/RongIMLib.h>
+
+@interface RCFlutterMessageFactory : NSObject
++ (NSString *)message2String:(RCMessage *)message;
+@end
 
 @implementation RCFlutterRoom (RTCRoomProtocol)
 

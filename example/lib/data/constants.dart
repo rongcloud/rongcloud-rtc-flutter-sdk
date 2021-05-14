@@ -1,50 +1,12 @@
-enum MessageType {
-  normal,
-  join,
-  left,
-  invite,
-  link,
-  kick,
-  error,
-}
+typedef void Callback(info);
 
-enum MessageError {
-  no_permission,
-  unsubscribe_error,
-  join_error,
-}
-
-enum Status {
-  ok,
-  error,
-}
-
-enum PermissionStatus {
-  granted,
-  camera_denied,
-  mic_denied,
-  both_denied,
-  unknown,
-}
+typedef void StateCallback(code, info);
 
 enum Mode {
   Meeting,
-  Live,
-  Audio,
+  Host,
+  Audience,
 }
-
-const List<String> ModeStrings = [
-  "会议",
-  "直播",
-  "通话",
-];
-
-const List<String> OrientationStrings = [
-  "竖向上",
-  "竖向下",
-  "横向右",
-  "横向左",
-];
 
 const List<String> FPSStrings = [
   '10',
@@ -53,24 +15,47 @@ const List<String> FPSStrings = [
   '30',
 ];
 
-enum Resolution {
-  SD,
-  HD,
-  FHD,
-}
-
 const List<String> ResolutionStrings = [
-  '标清',
-  '高清',
-  '超清',
+  '144x176',
+  '144x256',
+
+  '180x180',
+  '180x240',
+  '180x320',
+
+  '240x240',
+  '240x320',
+
+  '360x360',
+  '360x480',
+  '360x640',
+
+  '480x480',
+  '480x640',
+  '480x720',
+
+  '720x1280',
+
+  '1080x1920',
 ];
 
-const List<String> EffectStrings = [
-  '反派大笑',
-  '狗子叫声',
-  '胜利号角',
+const List<int> MinVideoKbps = [
+  50,
+  100,
+  200,
+  300,
 ];
 
-const List<String> MusicStrings = [
-  '我和我的祖国',
+const List<int> MaxVideoKbps = [
+  300,
+  500,
+  800,
+  1000,
+  1200,
 ];
+
+enum Role {
+  Local,
+  Remote,
+  Audience,
+}

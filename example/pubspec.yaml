@@ -31,7 +31,6 @@ dependencies:
   bottom_drawer: ^0.0.2
   wakelock: ^0.2.1+1
   handy_toast: ^0.0.3
-  intl: ^0.16.1
   context_holder: ^0.0.4
   rongcloud_rtc_plugin:
     path: ../

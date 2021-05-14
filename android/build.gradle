@@ -17,7 +17,6 @@ rootProject.allprojects {
         google()
         jcenter()
         maven { url "https://dl.bintray.com/rongcloud/maven" }
-        maven { url "http://maven.rongcloud.cn/repository/maven-releases/" }
     }
 }
 
@@ -65,7 +64,7 @@ dependencies {
         assert im_sdk_version != null, "You need to config im_sdk_version in version.config!!"
         assert rtc_sdk_version != null, "You need to config rtc_sdk_version in version.config!!"
         implementation 'cn.rongcloud.sdk:im_lib:' + im_sdk_version
-        implementation 'cn.rongcloud.sdk:rtc_lib:' + rtc_sdk_version
+        api 'cn.rongcloud.sdk:rtc_lib:' + rtc_sdk_version
     } else
-        implementation project(':rtclib')
+        api project(':rtclib')
 }

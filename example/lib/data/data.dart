@@ -1,126 +1,128 @@
 import 'dart:convert';
 
-import 'package:FlutterRTC/frame/utils/extension.dart';
 import 'package:FlutterRTC/frame/utils/local_storage.dart';
-import 'package:FlutterRTC/widgets/buttons.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-import '../global_config.dart';
 import 'constants.dart';
 
-class Login {
-  String token;
+class Result {
+  final int code;
+  final String content;
 
-  Login(this.token);
-
-  Login.fromJson(Map<String, dynamic> json) : token = json['token'];
+  Result(this.code, this.content);
 }
 
 class User {
   String id;
   String name;
-  String avatar;
-  String cover;
+  String key;
+  String navigate;
+  String file;
+  String media;
   String token;
+  bool audio;
+  bool video;
 
-  User.unknown(this.id) : name = 'Unknown' {
-    avatar = _randomAvatar();
-    cover = _randomCover();
+  User.remote(
+    this.id,
+  ) {
+    audio = false;
+    video = false;
   }
 
   User.create(
     this.id,
-    this.name,
-  ) {
-    avatar = _randomAvatar();
-    cover = _randomCover();
-  }
+    this.key,
+    this.navigate,
+    this.file,
+    this.media,
+    this.token,
+  ) : this.name = 'Unknown';
 
-  factory User() {
-    String prefix = GlobalConfig.userIdPrefix;
-    int current = DateTime.now().millisecondsSinceEpoch;
-    User user = User.create('$prefix$current', '');
-    return user;
-  }
-
-  String _randomAvatar() {
-    return 'avatar/avatar_${this.id.toInt % 7}'.png;
-  }
-
-  String _randomCover() {
-    return 'cover/cover_${this.id.toInt % 6}'.png;
-  }
-
-  Map<String, dynamic> toJSON() => {
-        'id': id,
-        'name': name,
-        'avatar': avatar,
-        'cover': cover,
-      };
-
-  User.fromJSON(Map<String, dynamic> json)
+  User.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         name = json['name'],
-        avatar = json['avatar'],
-        cover = json['cover'];
+        key = json['key'],
+        navigate = json['navigate'],
+        file = json['file'],
+        media = json['media'],
+        token = json['token'];
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'key': key,
+        'navigate': navigate,
+        'file': file,
+        'media': media,
+        'token': token,
+      };
 }
 
 class Config {
-  bool mic;
-  bool speaker;
-  bool camera;
-  bool frontCamera;
   bool enableTinyStream;
-  RCRTCFps fps;
-  Resolution resolution;
   bool mirror;
+  bool mic;
+  bool camera;
+  bool audio;
+  bool video;
+  bool frontCamera;
+  bool speaker;
+  int minVideoKbps;
+  int maxVideoKbps;
+  RCRTCFps fps;
+  RCRTCVideoResolution resolution;
 
   Config.config()
-      : mic = true,
-        speaker = false,
-        camera = true,
+      : enableTinyStream = true,
+        mirror = true,
+        mic = false,
+        camera = false,
+        audio = false,
+        video = false,
         frontCamera = true,
-        enableTinyStream = true,
+        speaker = false,
+        minVideoKbps = 3,
+        maxVideoKbps = 2,
         fps = RCRTCFps.fps_30,
-        resolution = Resolution.FHD,
-        mirror = true;
+        resolution = RCRTCVideoResolution.RESOLUTION_720_1280;
 
   RCRTCVideoStreamConfig get videoConfig {
+    _videoConfig.minRate = MinVideoKbps[minVideoKbps];
+    _videoConfig.maxRate = MaxVideoKbps[maxVideoKbps];
     _videoConfig.fps = fps;
-    switch (resolution) {
-      case Resolution.SD:
-        _videoConfig.resolution = RCRTCVideoResolution.RESOLUTION_360_480;
-        break;
-      case Resolution.HD:
-        _videoConfig.resolution = RCRTCVideoResolution.RESOLUTION_480_640;
-        break;
-      case Resolution.FHD:
-        _videoConfig.resolution = RCRTCVideoResolution.RESOLUTION_720_1280;
-        break;
-    }
+    _videoConfig.resolution = resolution;
     return _videoConfig;
   }
 
-  Map<String, dynamic> toJSON() => {
-        'mic': mic,
-        'speaker': speaker,
-        'camera': camera,
-        'frontCamera': frontCamera,
+  Map<String, dynamic> toJson() => {
         'enableTinyStream': enableTinyStream,
+        'mirror': mirror,
+        'mic': mic,
+        'camera': camera,
+        'audio': audio,
+        'video': video,
+        'frontCamera': frontCamera,
+        'speaker': speaker,
+        'minVideoKbps': minVideoKbps,
+        'maxVideoKbps': maxVideoKbps,
         'fps': fps.index,
         'resolution': resolution.index,
-        'mirror': mirror,
       };
 
-  Config.fromJSON(Map<String, dynamic> json)
-      : mic = json['mic'],
-        speaker = json['speaker'],
+  Config.fromJson(Map<String, dynamic> json)
+      : enableTinyStream = json['enableTinyStream'],
+        mirror = json['mirror'],
+        mic = json['mic'],
         camera = json['camera'],
+        audio = json['audio'],
+        video = json['video'],
         frontCamera = json['frontCamera'],
-        enableTinyStream = json['enableTinyStream'],
+        speaker = json['speaker'],
+        minVideoKbps = json['minVideoKbps'],
+        maxVideoKbps = json['maxVideoKbps'],
         fps = RCRTCFps.values[json['fps']],
-        resolution = Resolution.values[json['resolution']],
-        mirror = json['mirror'];
+        resolution = RCRTCVideoResolution.values[json['resolution']];
 
   final RCRTCVideoStreamConfig _videoConfig = RCRTCVideoStreamConfig(
     300,
@@ -130,83 +132,54 @@ class Config {
   );
 }
 
-class AudioMixConfig {}
-
-class Message {
-  User user;
-  MessageType type;
-  String message;
-
-  Message(
-    this.user,
-    this.type,
-    this.message,
+class CDN {
+  CDN(
+    this.id,
+    this.name,
   );
 
-  Map<String, dynamic> toJSON() => {
-        'user': user.toJSON(),
-        'type': type.index,
-        'message': message,
-      };
-
-  Message.fromJSON(Map<String, dynamic> json)
-      : user = User.fromJSON(json['user']),
-        type = MessageType.values[json['type']],
-        message = json['message'];
+  final String id;
+  final String name;
 }
 
-class Room {
-  String id;
-  User user;
-  String url;
+class Stream {
+  Stream(
+    this.user,
+    this.stream,
+  );
 
-  Room(this.id, this.user, this.url);
-
-  Map<String, dynamic> toJSON() => {
-        'id': id,
-        'user': user.toJSON(),
-        'url': url,
-      };
-
-  Room.fromJSON(Map<String, dynamic> json)
-      : id = json['id'],
-        user = User.fromJSON(json['user']),
-        url = json['url'];
-}
-
-class RoomList {
-  List<Room> list;
-
-  RoomList(this.list);
+  final String user;
+  final String stream;
 }
 
 class DefaultData {
-  static User get user => getUser();
-
-  static User getUser() {
-    if (_user == null) {
-      String json = LocalStorage.getString('user');
-      if (json != null && json.isNotEmpty) {
-        _user = User.fromJSON(jsonDecode(json));
-      } else {
-        _user = User();
-        LocalStorage.setString('user', jsonEncode(_user.toJSON()));
-      }
-    }
-    return _user;
-  }
-
-  static void setUserName(String name) {
-    if (_user.name != name) {
-      _user.name = name;
-      LocalStorage.setString("user", jsonEncode(_user.toJSON()));
+  static void loadUsers() {
+    String json = LocalStorage.getString('users');
+    if (json != null && json.isNotEmpty) {
+      var list = jsonDecode(json);
+      for (var user in list) _users.add(User.fromJson(user));
     }
   }
 
-  static void logout() {
-    _user = null;
-    LocalStorage.setString('user', '');
+  static void clear() {
+    _users.clear();
+    String json = jsonEncode(_users);
+    LocalStorage.setString("users", json);
   }
+
+  static set user(User user) {
+    _user = user;
+    _users.removeWhere(
+        (element) => "${user.id}${user.name}${user.key}" == "${element.id}${element.name}${element.key}");
+    _users.add(user);
+    String json = jsonEncode(_users);
+    LocalStorage.setString("users", json);
+  }
+
+  static User get user => _user;
+
+  static List<User> get users => _users;
 
   static User _user;
+  static List<User> _users = [];
 }

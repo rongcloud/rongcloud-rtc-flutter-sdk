@@ -2,16 +2,15 @@ import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
 import 'package:flutter/widgets.dart';
-import 'package:rongcloud_rtc_plugin/rcrtc_error_code.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-import 'meeting_page_contract.dart';
-import 'meeting_page_model.dart';
+import 'host_page_contract.dart';
+import 'host_page_model.dart';
 
-class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Presenter {
+class HostPagePresenter extends AbstractPresenter<View, Model> implements Presenter {
   @override
   IModel createModel() {
-    return MeetingPageModel();
+    return HostPageModel();
   }
 
   @override
@@ -77,12 +76,22 @@ class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Pre
 
   @override
   Future<bool> changeAudio(bool publish) {
-    return model?.changeAudio(publish);
+    return model?.changeAudio(
+      publish,
+      (info) {
+        view?.onPublished(info);
+      },
+    );
   }
 
   @override
   Future<bool> changeVideo(bool publish) {
-    return model?.changeVideo(publish);
+    return model?.changeVideo(
+      publish,
+      (info) {
+        view?.onPublished(info);
+      },
+    );
   }
 
   @override

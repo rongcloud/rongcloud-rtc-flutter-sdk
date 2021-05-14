@@ -9,18 +9,18 @@ import 'package:flutter/widgets.dart';
 import 'package:handy_toast/handy_toast.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
-import 'meeting_page_contract.dart';
-import 'meeting_page_presenter.dart';
+import 'host_page_contract.dart';
+import 'host_page_presenter.dart';
 
-class MeetingPage extends AbstractView {
+class HostPage extends AbstractView {
   @override
-  _MeetingPageState createState() => _MeetingPageState();
+  _HostPageState createState() => _HostPageState();
 }
 
-class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingPage> implements View, IRCRTCStatusReportListener {
+class _HostPageState extends AbstractViewState<HostPagePresenter, HostPage> implements View, IRCRTCStatusReportListener {
   @override
-  MeetingPagePresenter createPresenter() {
-    return MeetingPagePresenter();
+  HostPagePresenter createPresenter() {
+    return HostPagePresenter();
   }
 
   @override
@@ -52,7 +52,33 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
     return WillPopScope(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('会议号: ${RCRTCEngine.getInstance().getRoom().id}'),
+          title: Text('房间号: ${RCRTCEngine.getInstance().getRoom().id}'),
+          actions: [
+            // IconButton(
+            //   icon: Icon(
+            //     Icons.link,
+            //   ),
+            //   onPressed: _info != null ? () => _showLink(context) : null,
+            // ),
+            IconButton(
+              icon: Icon(
+                Icons.alt_route,
+              ),
+              onPressed: _info != null ? () => _showCDNInfo(context) : null,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.picture_in_picture,
+              ),
+              onPressed: _info != null ? () => _showMixInfo(context) : null,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.message,
+              ),
+              onPressed: () => _showMessagePanel(context),
+            ),
+          ],
         ),
         body: Container(
           child: Column(
@@ -464,6 +490,69 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
     );
   }
 
+  // void _showLink(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: Text('直播地址'),
+  //         content: SelectableText(
+  //           _info.liveUrl,
+  //         ),
+  //         actions: [
+  //           FlatButton(
+  //             child: Text('Ok'),
+  //             onPressed: () {
+  //               Navigator.pop(context);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  void _showCDNInfo(BuildContext context) async {
+    Loading.show(context);
+    final String id = await RCRTCEngine.getInstance().getRoom().getSessionId();
+    Loading.dismiss(context);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return CDNConfig(
+          id: id,
+          callback: (config) {
+            _info?.setMixConfig(config);
+            Navigator.pop(context);
+          },
+        );
+      },
+    );
+  }
+
+  void _showMixInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return MixConfig(
+          callback: (config) {
+            _info?.setMixConfig(config);
+            Navigator.pop(context);
+          },
+        );
+      },
+    );
+  }
+
+  void _showMessagePanel(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return MessagePanel(RCRTCEngine.getInstance().getRoom().id, true);
+      },
+    );
+  }
+
   void _changeMic(bool open) async {
     bool result = await presenter?.changeMic(open);
     setState(() {
@@ -563,7 +652,6 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
   void _changeResolution(RCRTCVideoResolution resolution) async {
     _config.resolution = resolution;
     await presenter?.changeVideoConfig(_config.videoConfig);
-    // if (Platform.isIOS) _local?.invalidate();
     setState(() {});
   }
 
@@ -682,8 +770,16 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   @override
   void onLocalViewCreated(UserView view) {
-    _local = view;
-    setState(() {});
+    setState(() {
+      _local = view;
+    });
+  }
+
+  @override
+  void onPublished(RCRTCLiveInfo info) {
+    setState(() {
+      _info = info;
+    });
   }
 
   @override
@@ -739,6 +835,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   Config _config;
   RCRTCVideoStreamConfig _tinyConfig;
+  RCRTCLiveInfo _info;
   UserView _local;
   List<UserView> _remotes = [];
   StatusReport _report;

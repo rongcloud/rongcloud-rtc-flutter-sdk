@@ -1,3 +1,4 @@
+import 'package:FlutterRTC/data/constants.dart';
 import 'package:FlutterRTC/data/data.dart';
 import 'package:FlutterRTC/frame/template/mvp/model.dart';
 import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
@@ -7,6 +8,8 @@ import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 abstract class View implements IView {
   void onLocalViewCreated(UserView view);
+
+  void onPublished(RCRTCLiveInfo info);
 
   void onUserJoin(User user);
 
@@ -28,9 +31,9 @@ abstract class Model implements IModel {
 
   Future<bool> changeCamera(bool open);
 
-  Future<bool> changeAudio(bool publish);
+  Future<bool> changeAudio(bool publish, Callback callback);
 
-  Future<bool> changeVideo(bool publish);
+  Future<bool> changeVideo(bool publish, Callback callback);
 
   Future<bool> changeFrontCamera(bool front);
 

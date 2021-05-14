@@ -36,17 +36,17 @@ subprojects {
         if (project.name == "libcore" && it.hasProperty('android') && !im.exists()) {
             android {
                 packagingOptions {
-                    exclude 'lib/armeabi/libRongIMLib.so'
-                    exclude 'lib/armeabi-v7a/libRongIMLib.so'
-                    exclude 'lib/arm64-v8a/libRongIMLib.so'
-                    exclude 'lib/x86/libRongIMLib.so'
-                    exclude 'lib/x86_64/libRongIMLib.so'
+//                    exclude 'lib/armeabi/libRongIMLib.so'
+//                    exclude 'lib/armeabi-v7a/libRongIMLib.so'
+//                    exclude 'lib/arm64-v8a/libRongIMLib.so'
+//                    exclude 'lib/x86/libRongIMLib.so'
+//                    exclude 'lib/x86_64/libRongIMLib.so'
 
-                    exclude 'lib/armeabi/libsqlite.so'
-                    exclude 'lib/armeabi-v7a/libsqlite.so'
-                    exclude 'lib/arm64-v8a/libsqlite.so'
-                    exclude 'lib/x86/libsqlite.so'
-                    exclude 'lib/x86_64/libsqlite.so'
+//                    exclude 'lib/armeabi/libsqlite.so'
+//                    exclude 'lib/armeabi-v7a/libsqlite.so'
+//                    exclude 'lib/arm64-v8a/libsqlite.so'
+//                    exclude 'lib/x86/libsqlite.so'
+//                    exclude 'lib/x86_64/libsqlite.so'
                 }
             }
         }
