@@ -174,6 +174,19 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
     private void unInit(Result result) {
         Log.d(TAG, "unInit: ");
 
+        if (cameraOutputStream != null) {
+            cameraOutputStream.release();
+            cameraOutputStream = null;
+        }
+        if (micOutputStream != null) {
+            micOutputStream.release();
+            micOutputStream = null;
+        }
+        if (audioEffectManager != null) {
+            audioEffectManager.release();
+            audioEffectManager = null;
+        }
+
         RCRTCEngine.getInstance().unInit();
         UIThreadHandler.success(result, 0);
     }
