@@ -1,9 +1,9 @@
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/template/mvp/view.dart';
-import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/utils/extension.dart';
-import 'package:FlutterRTC/widgets/ui.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/view.dart';
+import 'package:rc_rtc_flutter_example/frame/ui/loading.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/extension.dart';
+import 'package:rc_rtc_flutter_example/widgets/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:handy_toast/handy_toast.dart';
@@ -27,7 +27,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
   void init(BuildContext context) {
     super.init(context);
 
-    var user = User.remote(ModalRoute.of(context).settings.arguments);
+    var user = User.remote(ModalRoute.of(context)?.settings.arguments as String);
     _host = UserView(user);
     _host.mirror = false;
 
@@ -57,7 +57,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                   '音频',
                   value: AVStreamType.audio,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -68,7 +68,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                   '视频',
                   value: AVStreamType.video,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -79,7 +79,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                   '音视频',
                   value: AVStreamType.audio_video,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -90,7 +90,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                   '小视频',
                   value: AVStreamType.video_tiny,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -101,7 +101,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                   '小音视频',
                   value: AVStreamType.audio_video_tiny,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -133,7 +133,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                 color: Colors.blue,
                 child: Stack(
                   children: [
-                    _host?.widget ?? Container(),
+                    _host.widget ?? Container(),
                     Align(
                       alignment: Alignment.topRight,
                       child: Padding(
@@ -142,10 +142,10 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
                           top: 5.dp,
                         ),
                         child: BoxFitChooser(
-                          fit: _host?.fit,
+                          fit: _host.fit,
                           onSelected: (fit) {
                             setState(() {
-                              _host?.fit = fit;
+                              _host.fit = fit;
                             });
                           },
                         ),
@@ -192,21 +192,21 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
     showDialog(
       context: context,
       builder: (context) {
-        return MessagePanel(RCRTCEngine.getInstance().getRoom().id, false);
+        return MessagePanel(RCRTCEngine.getInstance().getRoom()!.id, false);
       },
     );
   }
 
   void _refresh() {
     if (_type == AVStreamType.audio) {
-      _host?.videoStream = null;
+      _host.videoStream = null;
       setState(() {});
     }
-    presenter?.subscribe(_type);
+    presenter.subscribe(_type);
   }
 
   void _changeSpeaker() async {
-    bool result = await presenter?.changeSpeaker(!_speaker);
+    bool result = await presenter.changeSpeaker(!_speaker);
     setState(() {
       _speaker = result;
     });
@@ -214,7 +214,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
 
   Future<bool> _exit() {
     Loading.show(context);
-    presenter?.exit();
+    presenter.exit();
     Loading.dismiss(context);
     return Future.value(true);
   }
@@ -222,7 +222,7 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
   @override
   void onConnectionStats(StatusReport report) {
     _report = report;
-    if (_reportSetter != null) _reportSetter(() {});
+    _reportSetter?.call(() {});
   }
 
   @override
@@ -231,25 +231,25 @@ class _AudiencePageState extends AbstractViewState<AudiencePagePresenter, Audien
   }
 
   @override
-  void onAudioStreamReceived(RCRTCAudioInputStream stream) {
-    _host?.audioStream = stream;
+  void onAudioStreamReceived(RCRTCAudioInputStream? stream) {
+    _host.audioStream = stream;
     setState(() {});
   }
 
   @override
-  void onVideoStreamReceived(RCRTCVideoInputStream stream) {
-    _host?.videoStream = stream;
+  void onVideoStreamReceived(RCRTCVideoInputStream? stream) {
+    _host.videoStream = stream;
     setState(() {});
   }
 
   @override
-  void onConnectError(int code, String message) {
+  void onConnectError(int? code, String? message) {
     'Subscribe error, code = $code, message = $message'.toast();
   }
 
-  UserView _host;
-  StatusReport _report;
-  StateSetter _reportSetter;
-  AVStreamType _type;
+  late UserView _host;
+  StatusReport? _report;
+  StateSetter? _reportSetter;
+  AVStreamType _type = AVStreamType.audio_video;
   bool _speaker = false;
 }

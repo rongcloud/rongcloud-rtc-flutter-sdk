@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/network/network.dart';
-import 'package:FlutterRTC/frame/template/mvp/model.dart';
-import 'package:FlutterRTC/global_config.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/network/network.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/model.dart';
+import 'package:rc_rtc_flutter_example/global_config.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
@@ -31,7 +31,7 @@ class ConnectPageModel extends AbstractModel implements Model {
       GlobalConfig.host + '/token/$id',
       {'key': key},
       (error, data) {
-        String token = data['token'];
+        String? token = data['token'];
         completer.complete(Result(0, token));
       },
       (error) {
@@ -66,12 +66,12 @@ class ConnectPageModel extends AbstractModel implements Model {
     RongIMClient.connect(token, (code, id) {
       if (code == RCRTCErrorCode.OK) {
         User user = User.create(
-          id,
+          id!,
           key,
           navigate,
           file,
           media,
-          token ?? '',
+          token,
         );
         DefaultData.user = user;
       }
@@ -86,9 +86,12 @@ class ConnectPageModel extends AbstractModel implements Model {
   ) async {
     String key = GlobalConfig.appKey;
 
-    User user = DefaultData.users.firstWhere((user) => user.name == name, orElse: () => null);
-    String _token;
-    if (user != null) {
+    User? user;
+    String? _token;
+
+    int index = DefaultData.users.indexWhere((user) => user.name == name);
+    if (index >= 0) {
+      user = DefaultData.users[index];
       _token = user.token;
     } else {
       Result result = await token(key);
@@ -98,18 +101,18 @@ class ConnectPageModel extends AbstractModel implements Model {
 
     RongIMClient.init(key);
 
-    RongIMClient.connect(_token, (code, id) {
+    RongIMClient.connect(_token!, (code, id) {
       if (code == RCRTCErrorCode.OK) {
         if (user == null) {
           user = User.create(
-            id,
+            id!,
             GlobalConfig.appKey,
             GlobalConfig.navServer,
             GlobalConfig.fileServer,
             GlobalConfig.mediaServer,
             _token ?? '',
           );
-          user.name = name;
+          user?.name = name;
         }
         DefaultData.user = user;
       }
@@ -140,6 +143,6 @@ class ConnectPageModel extends AbstractModel implements Model {
       ),
     );
 
-    callback(result.code, result.reason);
+    callback(result.code, result.reason ?? (mode != Mode.Audience ? "" : info));
   }
 }

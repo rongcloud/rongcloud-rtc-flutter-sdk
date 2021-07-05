@@ -1,5 +1,5 @@
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/frame/template/mvp/model.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/model.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'audience_page_contract.dart';
@@ -13,21 +13,21 @@ class AudiencePageModel extends AbstractModel implements Model {
     Callback video,
     StateCallback error,
   ) async {
-    List<RCRTCInputStream> streams = await RCRTCEngine.getInstance().getRoom().getLiveStreams();
+    List<RCRTCInputStream> streams = await RCRTCEngine.getInstance().getRoom()!.getLiveStreams();
 
-    int code = await RCRTCEngine.getInstance().getRoom().localUser.unsubscribeStreams(streams);
+    int code = await RCRTCEngine.getInstance().getRoom()!.localUser.unsubscribeStreams(streams);
     print("unsubscribe code = $code");
 
     await _subscribe(streams, type, audio, video);
 
     success(null);
 
-    RCRTCEngine.getInstance().getRoom().onPublishLiveStreams = (streams) async {
+    RCRTCEngine.getInstance().getRoom()!.onPublishLiveStreams = (streams) async {
       await _subscribe(streams, type, audio, video);
     };
 
-    RCRTCEngine.getInstance().getRoom().onUnPublishLiveStreams = (streams) async {
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.unsubscribeStreams(streams);
+    RCRTCEngine.getInstance().getRoom()!.onUnPublishLiveStreams = (streams) async {
+      int code = await RCRTCEngine.getInstance().getRoom()!.localUser.unsubscribeStreams(streams);
       var audios = streams.whereType<RCRTCAudioInputStream>();
       if (audios.isNotEmpty) audio(null);
       var videos = streams.whereType<RCRTCVideoInputStream>();
@@ -42,7 +42,7 @@ class AudiencePageModel extends AbstractModel implements Model {
     final Callback audio,
     final Callback video,
   ) async {
-    List<RCRTCInputStream> subs = List();
+    List<RCRTCInputStream> subs = [];
     var audios = streams.whereType<RCRTCAudioInputStream>();
     bool containAudioStream = type == AVStreamType.audio_video || type == AVStreamType.audio_video_tiny || type == AVStreamType.audio;
     if (audios.isNotEmpty && containAudioStream) {
@@ -55,7 +55,7 @@ class AudiencePageModel extends AbstractModel implements Model {
       video(videos.first);
       subs.add(videos.first);
     }
-    int code = await RCRTCEngine.getInstance().getRoom().localUser.subscribeStreams(subs, tiny: type == AVStreamType.audio_video_tiny || type == AVStreamType.video_tiny);
+    int code = await RCRTCEngine.getInstance().getRoom()!.localUser.subscribeStreams(subs, tiny: type == AVStreamType.audio_video_tiny || type == AVStreamType.video_tiny);
     print("subscribe code = $code");
   }
 

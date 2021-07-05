@@ -9,7 +9,7 @@ class RCRTCLiveInfo {
   final String roomId;
   final String liveUrl;
   final String userId;
-  MethodChannel _channel;
+  late MethodChannel _channel;
 
   RCRTCLiveInfo.fromJSON(info)
       : roomId = info['roomId'],
@@ -19,11 +19,18 @@ class RCRTCLiveInfo {
   }
 
   Future<RCRTCCodeResult<List<String>>> addPublishStreamUrl(String url) async {
-    Map<String, dynamic> map = await _channel.invokeMethod("addPublishStreamUrl", url);
+    Map<dynamic, dynamic> map = await _channel.invokeMethod("addPublishStreamUrl", url);
     int code = map["code"];
-    RCRTCCodeResult result = RCRTCCodeResult(code);
+    RCRTCCodeResult<List<String>> result = RCRTCCodeResult(code);
     if (code == 0) {
-      result.object = map["data"];
+      List<dynamic> temp = map["data"];
+      List<String> list = [];
+      temp.forEach((element) {
+        if (element is String) {
+          list.add(element);
+        }
+      });
+      result.object = list;
     } else {
       result.reason = map["data"];
     }
@@ -31,11 +38,17 @@ class RCRTCLiveInfo {
   }
 
   Future<RCRTCCodeResult<List<String>>> removePublishStreamUrl(String url) async {
-    Map<String, dynamic> map = await _channel.invokeMethod("removePublishStreamUrl", url);
+    Map<dynamic, dynamic> map = await _channel.invokeMethod("removePublishStreamUrl", url);
     int code = map["code"];
     RCRTCCodeResult<List<String>> result = RCRTCCodeResult(code);
     if (code == 0) {
-      result.object = map["data"];
+      List<dynamic> temp = map["data"];
+      List<String> list = [];
+      temp.forEach((element) {
+        if (element is String) {
+          list.add(element);
+        }
+      });
     } else {
       result.reason = map["data"];
     }
@@ -43,6 +56,7 @@ class RCRTCLiveInfo {
   }
 
   Future<int> setMixConfig(RCRTCMixConfig config) async {
-    return await _channel.invokeMethod("setMixConfig", jsonEncode(config));
+    int? ret = await _channel.invokeMethod("setMixConfig", jsonEncode(config));
+    return ret ?? -1;
   }
 }

@@ -60,7 +60,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.1+1";
+    private static final String VER = "5.1.4";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
@@ -234,17 +234,16 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
                 if (cameraOutputStream != null) {
                     cameraOutputStream.release();
+                    cameraOutputStream = null;
                 }
                 if (micOutputStream != null) {
                     micOutputStream.release();
+                    micOutputStream = null;
                 }
                 if (audioEffectManager != null) {
                     audioEffectManager.release();
+                    audioEffectManager = null;
                 }
-
-                cameraOutputStream = null;
-                micOutputStream = null;
-                audioEffectManager = null;
 
                 for (RCFlutterVideoOutputStream stream : createdVideoOutputStreams.values()) {
                     stream.release();

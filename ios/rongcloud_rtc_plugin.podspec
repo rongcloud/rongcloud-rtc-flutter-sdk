@@ -46,21 +46,10 @@ Pod::Spec.new do |s|
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+
   s.dependency 'Flutter'
-  
-  s.dependency 'Libyuv', '1703'
-  
-#  local = ENV['USE_LOCAL_SDK']
-#  if local and local == 'true'
-#    im_framework = '../../ios-imsdk/imlib/bin/RongIMLib.framework'
-#    rtc_framework = '../../ios-rtcsdk/RongRTCLib/bin/RongRTCLib.framework'
-#    s.vendored_frameworks = im_framework, rtc_framework
-#    s.frameworks = "AssetsLibrary","VideoToolbox", "GLKit", "MapKit", "ImageIO", "CoreLocation", "SystemConfiguration", "QuartzCore", "OpenGLES", "CoreVideo", "CoreTelephony", "CoreMedia", "CoreAudio", "CFNetwork", "AudioToolbox", "AVFoundation", "UIKit", "CoreGraphics"
-#    s.libraries = "c++","z","sqlite3","bz2"
-#  else
-    s.dependency 'RongCloudIM/IMLib', im_sdk_version
-    s.dependency 'RongRTCLib', rtc_sdk_version
-#  end
+  s.dependency 'RongCloudIM/IMLib', im_sdk_version
+  s.dependency 'RongCloudRTC/RongRTCLib', rtc_sdk_version
 
   s.static_framework = true
   

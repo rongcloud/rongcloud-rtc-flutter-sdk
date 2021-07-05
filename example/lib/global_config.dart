@@ -13,4 +13,5 @@ class GlobalConfig {
   static const String mediaServer = '';
 
   static const String host = 'http://120.92.13.87:8080/';
+  // static const String host = 'http://10.3.2.94:8080/';
 }

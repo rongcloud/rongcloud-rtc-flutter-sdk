@@ -11,22 +11,21 @@ typedef AudioMixEndCallback();
 class RCRTCAudioMixer {
   static RCRTCAudioMixer getInstance() {
     if (_instance == null) _instance = RCRTCAudioMixer._();
-    return _instance;
+    return _instance!;
   }
 
   RCRTCAudioMixer._() : _channel = MethodChannel('rong.flutter.rtclib/AudioMixer') {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  Future<dynamic> _methodCallHandler(MethodCall call) {
+  Future<dynamic> _methodCallHandler(MethodCall call) async {
     if (call.method == 'onMixEnd') {
       _handleOnMixEnd();
     }
-    return null;
   }
 
   void _handleOnMixEnd() {
-    if (_callback != null) _callback();
+    _callback?.call();
   }
 
   void setAudioMixEndCallback(AudioMixEndCallback callback) {
@@ -40,7 +39,8 @@ class RCRTCAudioMixer {
       "playback": playback,
       "loopCount": loopCount,
     };
-    return await _channel.invokeMethod("startMix", arguments);
+    bool? ret = await _channel.invokeMethod("startMix", arguments);
+    return ret ?? false;
   }
 
   Future<bool> startMix(String path, AudioMixerMode mode, bool playback, int loopCount) async {
@@ -50,7 +50,8 @@ class RCRTCAudioMixer {
       "playback": playback,
       "loopCount": loopCount,
     };
-    return await _channel.invokeMethod("startMix", arguments);
+    bool? ret = await _channel.invokeMethod("startMix", arguments);
+    return ret ?? false;
   }
 
   // Future<void> setPlayback(bool playback) async {
@@ -64,64 +65,68 @@ class RCRTCAudioMixer {
     Map<String, dynamic> arguments = {
       "volume": volume,
     };
-    return await _channel.invokeMethod("setMixingVolume", arguments);
+    await _channel.invokeMethod("setMixingVolume", arguments);
   }
 
   Future<int> getMixingVolume() async {
-    return await _channel.invokeMethod("getMixingVolume");
+    int? ret = await _channel.invokeMethod("getMixingVolume");
+    return ret ?? -1;
   }
 
   Future<void> setPlaybackVolume(int volume) async {
     Map<String, dynamic> arguments = {
       "volume": volume,
     };
-    return await _channel.invokeMethod("setPlaybackVolume", arguments);
+    await _channel.invokeMethod("setPlaybackVolume", arguments);
   }
 
   Future<int> getPlaybackVolume() async {
-    return await _channel.invokeMethod("getPlaybackVolume");
+    int? ret = await _channel.invokeMethod("getPlaybackVolume");
+    return ret ?? -1;
   }
 
   Future<void> setVolume(int volume) async {
     Map<String, dynamic> arguments = {
       "volume": volume,
     };
-    return await _channel.invokeMethod("setVolume", arguments);
+    await _channel.invokeMethod("setVolume", arguments);
   }
 
   Future<int> getDurationMillis(String path) async {
     Map<String, dynamic> arguments = {
       "path": path,
     };
-    return await _channel.invokeMethod("getDurationMillis", arguments);
+    int? ret = await _channel.invokeMethod("getDurationMillis", arguments);
+    return ret ?? -1;
   }
 
   Future<double> getCurrentPosition() async {
-    return await _channel.invokeMethod("getCurrentPosition");
+    double? ret = await _channel.invokeMethod("getCurrentPosition");
+    return ret ?? -1;
   }
 
   Future<void> seekTo(double position) async {
     Map<String, dynamic> arguments = {
       "position": position,
     };
-    return await _channel.invokeMethod("seekTo", arguments);
+    await _channel.invokeMethod("seekTo", arguments);
   }
 
   Future<void> pause() async {
-    return await _channel.invokeMethod("pause");
+    await _channel.invokeMethod("pause");
   }
 
   Future<void> resume() async {
-    return await _channel.invokeMethod("resume");
+    await _channel.invokeMethod("resume");
   }
 
   Future<void> stop() async {
-    return await _channel.invokeMethod("stop");
+    await _channel.invokeMethod("stop");
   }
 
-  static RCRTCAudioMixer _instance;
+  static RCRTCAudioMixer? _instance;
 
   final MethodChannel _channel;
 
-  AudioMixEndCallback _callback;
+  AudioMixEndCallback? _callback;
 }

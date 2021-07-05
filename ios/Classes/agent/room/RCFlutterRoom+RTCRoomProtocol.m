@@ -20,6 +20,7 @@
     // {\"remoteUser\":{\"id\":\"15699998823_873B_ios\",\"streamList\":[]}}
     RCFlutterRemoteUser *remoteUser = [[RCFlutterRemoteUser alloc] init];
     remoteUser.rtcUser = user;
+    [self addRemoteUser:remoteUser];
     NSDictionary *dic = [remoteUser toDesc];
     NSMutableDictionary *userDic = [NSMutableDictionary dictionary];
     [userDic setValue:dic forKey:@"remoteUser"];
@@ -57,6 +58,8 @@
             NSDictionary *dic = [inputStream toDesc];
             [streamList addObject:dic];
             userId = stream.userId;
+            RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];
+            [remoteUser addStream:inputStream];
         }
         // 全量
         RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];
@@ -82,6 +85,8 @@
             NSDictionary *dic = [inputStream toDesc];
             [streamList addObject:dic];
             userId = stream.userId;
+            RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];
+            [remoteUser removeStream:inputStream];
         }
         // 全量
         RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];

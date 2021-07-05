@@ -9,20 +9,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCFlutterRoom: NSObject <FlutterPlugin, RCRTCRoomEventDelegate>
 
-/*!
- 房间ID
- */
-@property(nonatomic, copy, readonly) NSString *roomId;
+///*!
+// 房间ID
+// */
+//@property(nonatomic, copy) NSString *roomId;
+//
+///*!
+// 当前用户
+// */
+//@property(nonatomic, strong) RCFlutterLocalUser *localUser;
+//
+///*!
+// 参与用户
+// */
+//@property(nonatomic, strong) NSMutableArray<RCFlutterRemoteUser *> *remoteUsers;
 
-/*!
- 当前用户
- */
-@property(nonatomic, strong, readonly) RCFlutterLocalUser *localUser;
+- (void) addRemoteUser:(RCFlutterRemoteUser *) user;
 
-/*!
- 参与用户
- */
-@property(nonatomic, strong, readonly) NSArray<RCFlutterRemoteUser *> *remoteUsers;
 @end
 
 NS_ASSUME_NONNULL_END

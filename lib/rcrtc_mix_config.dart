@@ -20,19 +20,21 @@ class CustomLayoutList {
 }
 
 class MediaConfig {
-  AudioConfig audioConfig;
-  List<CDNPushUrl> cdn;
-  VideoConfig videoConfig;
+  AudioConfig? audioConfig;
+  List<CDNPushUrl>? cdn;
+  VideoConfig? videoConfig;
 
   Map<String, dynamic> toJson() => {
-        'video': videoConfig != null ? videoConfig.toJson() : null,
-        'audio': audioConfig != null ? audioConfig.toJson() : null,
-        'cdn': cdn != null ? cdn.map((e) => e.toJson()).toList() : null,
+        'video': videoConfig != null ? videoConfig!.toJson() : null,
+        'audio': audioConfig != null ? audioConfig!.toJson() : null,
+        'cdn': cdn != null ? cdn!.map((e) => e.toJson()).toList() : null,
       };
 }
 
 class AudioConfig {
-  int bitrate;
+  AudioConfig(this.bitrate);
+
+  final int bitrate;
 
   Map<String, dynamic> toJson() => {
         'bitrate': bitrate,
@@ -50,20 +52,22 @@ class CDNPushUrl {
 }
 
 class VideoConfig {
-  VideoExtend extend;
-  VideoLayout tinyVideoLayout;
-  VideoLayout videoLayout;
+  VideoExtend? extend;
+  VideoLayout? tinyVideoLayout;
+  VideoLayout? videoLayout;
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> dataJson = new Map();
-    dataJson['normal'] = videoLayout != null ? videoLayout.toJson() : null;
-    dataJson['tiny'] = tinyVideoLayout != null ? tinyVideoLayout.toJson() : null;
-    dataJson['exparams'] = extend != null ? extend.toJson() : null;
+    dataJson['normal'] = videoLayout != null ? videoLayout!.toJson() : null;
+    dataJson['tiny'] = tinyVideoLayout != null ? tinyVideoLayout!.toJson() : null;
+    dataJson['exparams'] = extend != null ? extend!.toJson() : null;
     return dataJson;
   }
 }
 
 class VideoLayout {
+  VideoLayout(this.bitrate, this.fps, this.width, this.height);
+
   int bitrate;
   int height;
   int width;
@@ -78,6 +82,8 @@ class VideoLayout {
 }
 
 class VideoExtend {
+  VideoExtend(this.renderMode);
+
   VideoRenderMode renderMode;
 
   Map<String, dynamic> toJson() => {
@@ -86,6 +92,8 @@ class VideoExtend {
 }
 
 class CustomLayout {
+  CustomLayout(this.userId, this.streamId, this.x, this.y, this.width, this.height);
+
   String userId;
   String streamId;
   int x;
@@ -105,13 +113,12 @@ class CustomLayout {
 
 class RCRTCMixConfig {
   int version = 2;
-  MixLayoutMode mode;
+  MixLayoutMode mode = MixLayoutMode.SUSPENSION;
+  String? hostUserId;
+  String? hostStreamId;
 
-  String hostUserId;
-  String hostStreamId;
-
-  MediaConfig mediaConfig;
-  CustomLayoutList customLayoutList;
+  MediaConfig? mediaConfig;
+  CustomLayoutList? customLayoutList;
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> dataJson = new Map();
@@ -119,8 +126,8 @@ class RCRTCMixConfig {
     dataJson['mode'] = mode.index + 1;
     dataJson['host_user_id'] = hostUserId;
     dataJson['host_stream_id'] = hostStreamId;
-    dataJson['output'] = mediaConfig != null ? mediaConfig.toJson() : null;
-    dataJson['input'] = customLayoutList != null ? customLayoutList.toJson() : null;
+    dataJson['output'] = mediaConfig != null ? mediaConfig!.toJson() : null;
+    dataJson['input'] = customLayoutList != null ? customLayoutList!.toJson() : null;
     return dataJson;
   }
 }

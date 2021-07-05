@@ -7,7 +7,7 @@ import 'rcrtc_user.dart';
 
 class RCRTCRemoteUser extends RCRTCUser {
   /// remote user 对应发布的资源
-  final List<RCRTCInputStream> streamList = List();
+  final List<RCRTCInputStream> streamList = [];
 
   RCRTCRemoteUser.fromJson(Map<String, dynamic> jsonObj) : super.fromJson(jsonObj) {
     List<dynamic> jsonStreamList = jsonObj['streamList'];

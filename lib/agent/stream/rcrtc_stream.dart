@@ -59,10 +59,11 @@ class RCRTCStream {
 
   Future<int> mute(bool value) async {
     RCRTCLog.d(tag, "set mute $value");
-    int code = await channel.invokeMethod("mute", value);
-    if (code == 0) _mute = value;
-    RCRTCLog.d(tag, "after mute success is 0 : $code}");
-    return code;
+    int? code = await channel.invokeMethod("mute", value);
+    int ret = code ?? -1;
+    if (ret == 0) _mute = value;
+    RCRTCLog.d(tag, "after mute success is 0 : $ret}");
+    return ret;
   }
 
   bool isMute() {
@@ -71,8 +72,9 @@ class RCRTCStream {
   }
 
   Future<RCRTCResourceState> getResourceState() async {
-    int stateValue = await channel.invokeMethod("getResourceState");
-    if (stateValue == 0) {
+    int? code = await channel.invokeMethod("getResourceState");
+    int ret = code ?? -1;
+    if (ret == 0) {
       return RCRTCResourceState.forbidden;
     } else {
       return RCRTCResourceState.normal;

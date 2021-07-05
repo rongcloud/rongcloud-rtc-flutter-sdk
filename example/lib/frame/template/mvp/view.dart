@@ -10,7 +10,7 @@ abstract class AbstractView extends StatefulWidget {}
 abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> extends State<V> implements IView {
   bool _first = true;
 
-  P _presenter;
+  late P _presenter;
 
   P get presenter => _presenter;
 
@@ -19,7 +19,15 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
   @override
   Widget build(BuildContext context) {
     Size size = designSize();
-    ScreenUtil.init(context, width: size.width, height: size.height);
+
+    ScreenUtil.init(
+      BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width,
+        maxHeight: MediaQuery.of(context).size.height,
+      ),
+      designSize: size,
+      orientation: Orientation.portrait,
+    );
 
     _init(context);
 
@@ -31,7 +39,7 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
     _first = false;
 
     _presenter = createPresenter();
-    _presenter?.attachView(this, context);
+    _presenter.attachView(this, context);
 
     init(context);
   }
@@ -46,8 +54,7 @@ abstract class AbstractViewState<P extends IPresenter, V extends AbstractView> e
 
   @override
   void dispose() {
-    _presenter?.detachView();
-    _presenter = null;
+    _presenter.detachView();
     super.dispose();
   }
 }

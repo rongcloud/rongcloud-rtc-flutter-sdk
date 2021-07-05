@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param dics 数据结构
 - (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRoom:(NSArray<NSDictionary *> *)dics;
 
+- (void)destroy;
+
 @end
 
 NS_ASSUME_NONNULL_END

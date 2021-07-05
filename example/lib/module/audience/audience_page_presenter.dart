@@ -1,5 +1,5 @@
-import 'package:FlutterRTC/frame/template/mvp/model.dart';
-import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/model.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/presenter.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
@@ -19,30 +19,30 @@ class AudiencePagePresenter extends AbstractPresenter<View, Model> implements Pr
 
   @override
   void subscribe(AVStreamType type) {
-    model?.subscribe(
+    model.subscribe(
       type,
       (_) {
-        view?.onConnected();
+        view.onConnected();
       },
       (stream) {
-        view?.onAudioStreamReceived(stream);
+        view.onAudioStreamReceived(stream);
       },
       (stream) {
-        view?.onVideoStreamReceived(stream);
+        view.onVideoStreamReceived(stream);
       },
       (code, info) {
-        view?.onConnectError(code, info);
+        view.onConnectError(code, info);
       },
     );
   }
 
   @override
   Future<bool> changeSpeaker(bool enable) {
-    return model?.changeSpeaker(enable);
+    return model.changeSpeaker(enable);
   }
 
   @override
   void exit() {
-    model?.exit();
+    model.exit();
   }
 }

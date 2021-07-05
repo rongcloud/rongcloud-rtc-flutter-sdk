@@ -10,8 +10,8 @@ abstract class IPresenter<V extends IView> {
 }
 
 abstract class AbstractPresenter<V extends IView, M extends IModel> implements IPresenter {
-  V _view;
-  M _model;
+  late V _view;
+  late M _model;
 
   V get view => _view;
 
@@ -19,20 +19,14 @@ abstract class AbstractPresenter<V extends IView, M extends IModel> implements I
 
   @override
   void attachView(IView view, BuildContext context) {
-    _view = view;
-    _model = createModel();
+    _view = view as V;
+    _model = createModel() as M;
     init(context);
   }
 
   @override
   void detachView() {
-    if (_view != null) {
-      _view = null;
-    }
-    if (_model != null) {
-      _model.dispose();
-      _model = null;
-    }
+    _model.dispose();
   }
 
   @protected

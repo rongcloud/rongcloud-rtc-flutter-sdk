@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:rongcloud_im_plugin/rongcloud_im_plugin.dart';
 import 'package:rongcloud_im_plugin/src/util/message_factory.dart';
 
-import '../../utils/rcrtc_debug_checker.dart';
 import '../stream/rcrtc_audio_input_stream.dart';
 import '../stream/rcrtc_input_stream.dart';
 import '../stream/rcrtc_stream.dart';
@@ -16,16 +15,16 @@ class RCRTCRoom {
   final MethodChannel _channel;
   final String id;
   final RCRTCLocalUser localUser;
-  final List<RCRTCRemoteUser> remoteUserList = List<RCRTCRemoteUser>();
+  final List<RCRTCRemoteUser> remoteUserList = [];
 
-  Function(RCRTCRemoteUser remoteUser) onRemoteUserJoined;
-  Function(RCRTCRemoteUser remoteUser) onRemoteUserOffline;
-  Function(RCRTCRemoteUser remoteUser) onRemoteUserLeft;
-  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserPublishResource;
-  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList) onRemoteUserUnPublishResource;
-  Function(List<RCRTCInputStream> streamList) onPublishLiveStreams;
-  Function(List<RCRTCInputStream> streamList) onUnPublishLiveStreams;
-  Function(Message message) onReceiveMessage;
+  Function(RCRTCRemoteUser remoteUser)? onRemoteUserJoined;
+  Function(RCRTCRemoteUser remoteUser)? onRemoteUserOffline;
+  Function(RCRTCRemoteUser remoteUser)? onRemoteUserLeft;
+  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList)? onRemoteUserPublishResource;
+  Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList)? onRemoteUserUnPublishResource;
+  Function(List<RCRTCInputStream> streamList)? onPublishLiveStreams;
+  Function(List<RCRTCInputStream> streamList)? onUnPublishLiveStreams;
+  Function(Message message)? onReceiveMessage;
 
   RCRTCRoom.fromJson(Map<String, dynamic> jsonObj)
       : _channel = MethodChannel('rong.flutter.rtclib/Room:${jsonObj['id']}'),
@@ -38,7 +37,7 @@ class RCRTCRoom {
     _channel.setMethodCallHandler(methodCallHandler);
   }
 
-  Future<dynamic> methodCallHandler(MethodCall call) {
+  Future<dynamic> methodCallHandler(MethodCall call) async {
     switch (call.method) {
       case 'onUserJoined':
         _handleOnUserJoined(call.arguments);
@@ -65,7 +64,6 @@ class RCRTCRoom {
         _handleOnReceiveMessage(call.arguments);
         break;
     }
-    return null;
   }
 
   void _handleOnUserJoined(String jsonStr) {
@@ -73,13 +71,13 @@ class RCRTCRoom {
     RCRTCRemoteUser targetUser = RCRTCRemoteUser.fromJson(jsonObj['remoteUser']);
     for (RCRTCRemoteUser user in remoteUserList) assert(user.id != targetUser.id);
     remoteUserList.add(targetUser);
-    if (onRemoteUserJoined != null) onRemoteUserJoined(targetUser);
+    onRemoteUserJoined?.call(targetUser);
   }
 
   void _handleOnUserOffline(String jsonStr) {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     String userId = jsonObj['remoteUser']['id'];
-    RCRTCRemoteUser targetUser;
+    RCRTCRemoteUser? targetUser;
     for (RCRTCRemoteUser user in remoteUserList) {
       if (user.id == userId) {
         targetUser = user;
@@ -87,14 +85,13 @@ class RCRTCRoom {
         break;
       }
     }
-    RCRTCDebugChecker.notNull(targetUser);
-    if (onRemoteUserOffline != null) onRemoteUserOffline(targetUser);
+    onRemoteUserOffline?.call(targetUser!);
   }
 
   void _handleOnUserLeft(String jsonStr) {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     String userId = jsonObj['remoteUser']['id'];
-    RCRTCRemoteUser targetUser;
+    RCRTCRemoteUser? targetUser;
     for (RCRTCRemoteUser user in remoteUserList) {
       if (user.id == userId) {
         targetUser = user;
@@ -102,21 +99,19 @@ class RCRTCRoom {
         break;
       }
     }
-    RCRTCDebugChecker.notNull(targetUser);
-    if (onRemoteUserLeft != null) onRemoteUserLeft(targetUser);
+    onRemoteUserLeft?.call(targetUser!);
   }
 
   void _handleOnRemoteUserPublishResource(String jsonStr) {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     String userId = jsonObj['remoteUser']['id'];
-    RCRTCRemoteUser targetUser;
+    RCRTCRemoteUser? targetUser;
     for (RCRTCRemoteUser user in remoteUserList) {
       if (user.id == userId) {
         targetUser = user;
         break;
       }
     }
-    RCRTCDebugChecker.notNull(targetUser);
     List<dynamic> jsonStreamList = jsonObj['streamList'];
     List<RCRTCInputStream> targetStreamList = jsonStreamList.map((stream) {
       if (stream['type'] == 0) {
@@ -125,34 +120,32 @@ class RCRTCRoom {
         return RCRTCVideoInputStream.fromJson(stream);
       }
     }).toList();
-    targetUser.streamList.addAll(targetStreamList);
-    if (onRemoteUserPublishResource != null) onRemoteUserPublishResource(targetUser, targetStreamList);
+    targetUser?.streamList.addAll(targetStreamList);
+    onRemoteUserPublishResource?.call(targetUser!, targetStreamList);
   }
 
   void _handleOnRemoteUserUnPublishResource(String jsonStr) {
     Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
     String userId = jsonObj['remoteUser']['id'];
-    RCRTCRemoteUser targetUser;
+    RCRTCRemoteUser? targetUser;
     for (RCRTCRemoteUser user in remoteUserList) {
       if (user.id == userId) {
         targetUser = user;
         break;
       }
     }
-    RCRTCDebugChecker.notNull(targetUser);
     List<dynamic> jsonStreamList = jsonObj['streamList'];
-    List<RCRTCInputStream> targetStreamList = List();
+    List<RCRTCInputStream> targetStreamList = [];
     for (Map<String, dynamic> jsonStream in jsonStreamList) {
-      for (RCRTCStream stream in targetUser.streamList) {
+      for (RCRTCStream stream in targetUser!.streamList) {
         if (stream.streamId == jsonStream['streamId'] && stream.type.index == jsonStream['type']) {
-          targetStreamList.add(stream);
+          targetStreamList.add(stream as RCRTCInputStream);
           break;
         }
       }
     }
-    RCRTCDebugChecker.isTrue(targetStreamList.length == jsonStreamList.length);
-    for (RCRTCStream stream in targetStreamList) targetUser.streamList.remove(stream);
-    if (onRemoteUserUnPublishResource != null) onRemoteUserUnPublishResource(targetUser, targetStreamList);
+    for (RCRTCStream stream in targetStreamList) targetUser!.streamList.remove(stream);
+    onRemoteUserUnPublishResource?.call(targetUser!, targetStreamList);
   }
 
   void _handleOnPublishLiveStreams(String jsonStr) {
@@ -165,7 +158,7 @@ class RCRTCRoom {
         return RCRTCVideoInputStream.fromJson(stream);
       }
     }).toList();
-    if (onPublishLiveStreams != null) onPublishLiveStreams(streams);
+    onPublishLiveStreams?.call(streams);
   }
 
   void _handleOnUnPublishLiveStreams(String jsonStr) {
@@ -178,12 +171,12 @@ class RCRTCRoom {
         return RCRTCVideoInputStream.fromJson(stream);
       }
     }).toList();
-    if (onUnPublishLiveStreams != null) onUnPublishLiveStreams(streams);
+    onUnPublishLiveStreams?.call(streams);
   }
 
   void _handleOnReceiveMessage(String msg) {
-    Message message = MessageFactory.instance.string2Message(msg);
-    onReceiveMessage?.call(message);
+    Message? message = MessageFactory.instance?.string2Message(msg);
+    if (message != null) onReceiveMessage?.call(message);
   }
 
   Future<int> setRoomAttributeValue(String key, String value, MessageContent message) async {
@@ -193,8 +186,8 @@ class RCRTCRoom {
       "object": message.getObjectName(),
       "content": message.encode(),
     };
-    int result = await _channel.invokeMethod('setRoomAttributeValue', arguments);
-    return Future.value(result);
+    int? result = await _channel.invokeMethod('setRoomAttributeValue', arguments);
+    return result ?? -1;
   }
 
   Future<int> deleteRoomAttributes(List<String> keys, MessageContent message) async {
@@ -203,16 +196,16 @@ class RCRTCRoom {
       "object": message.getObjectName(),
       "content": message.encode(),
     };
-    int result = await _channel.invokeMethod('deleteRoomAttributes', arguments);
-    return Future.value(result);
+    int? result = await _channel.invokeMethod('deleteRoomAttributes', arguments);
+    return result ?? -1;
   }
 
-  Future<Map<String, String>> getRoomAttributes(List<String> keys) async {
+  Future<Map<String, String>?> getRoomAttributes(List<String> keys) async {
     Map<String, dynamic> arguments = {
       "keys": jsonEncode(keys),
     };
-    Map<String, String> results = await _channel.invokeMapMethod('getRoomAttributes', arguments);
-    return Future.value(results);
+    Map<String, String>? results = await _channel.invokeMapMethod('getRoomAttributes', arguments);
+    return results;
   }
 
   Future<void> sendMessage(
@@ -234,9 +227,9 @@ class RCRTCRoom {
   }
 
   Future<List<RCRTCInputStream>> getLiveStreams() async {
-    List<dynamic> list = await _channel.invokeListMethod('getLiveStreams');
-    List<RCRTCInputStream> streams = List();
-    list.forEach((element) {
+    List<dynamic>? list = await _channel.invokeListMethod('getLiveStreams');
+    List<RCRTCInputStream> streams = [];
+    list?.forEach((element) {
       var stream = jsonDecode(element);
       if (stream['type'] == 0) {
         streams.add(RCRTCAudioInputStream.fromJson(stream));
@@ -247,7 +240,7 @@ class RCRTCRoom {
     return streams;
   }
 
-  Future<String> getSessionId() async {
+  Future<String?> getSessionId() async {
     return _channel.invokeMethod('getSessionId');
   }
 }

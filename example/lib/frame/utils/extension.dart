@@ -1,8 +1,15 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_screenutil/screenutil.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 void init(BuildContext context) {
-  ScreenUtil.init(context);
+  ScreenUtil.init(
+    BoxConstraints(
+      maxWidth: MediaQuery.of(context).size.width,
+      maxHeight: MediaQuery.of(context).size.height,
+    ),
+    designSize: Size(375, 667),
+    orientation: Orientation.portrait,
+  );
 }
 
 extension NumExtension on num {
@@ -12,32 +19,20 @@ extension NumExtension on num {
 
   @Deprecated('Use dp instead')
   get width {
-    if (this != null)
-      return ScreenUtil().setWidth(this);
-    else
-      return null;
+    return ScreenUtil().setWidth(this);
   }
 
   @Deprecated('Use dp instead')
   get height {
-    if (this != null)
-      return ScreenUtil().setHeight(this);
-    else
-      return null;
+    return ScreenUtil().setHeight(this);
   }
 
   get sp {
-    if (this != null)
-      return ScreenUtil().setSp(this, allowFontScalingSelf: false);
-    else
-      return null;
+    return ScreenUtil().setSp(this);
   }
 
   get spWithSystemScaling {
-    if (this != null)
-      return ScreenUtil().setSp(this, allowFontScalingSelf: true);
-    else
-      return null;
+    return ScreenUtil().setSp(this);
   }
 }
 

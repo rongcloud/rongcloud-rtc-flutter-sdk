@@ -1,11 +1,11 @@
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/template/mvp/view.dart';
-import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/utils/extension.dart';
-import 'package:FlutterRTC/global_config.dart';
-import 'package:FlutterRTC/router/router.dart';
-import 'package:FlutterRTC/widgets/ui.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/view.dart';
+import 'package:rc_rtc_flutter_example/frame/ui/loading.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/extension.dart';
+import 'package:rc_rtc_flutter_example/global_config.dart';
+import 'package:rc_rtc_flutter_example/router/router.dart';
+import 'package:rc_rtc_flutter_example/widgets/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:handy_toast/handy_toast.dart';
@@ -88,7 +88,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
                               '会议模式',
                               value: Mode.Meeting,
                               groupValue: _mode,
-                              onChanged: (value) {
+                              onChanged: (dynamic value) {
                                 _inputController.text = '';
                                 setState(() {
                                   _mode = value;
@@ -100,7 +100,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
                               '主播模式',
                               value: Mode.Host,
                               groupValue: _mode,
-                              onChanged: (value) {
+                              onChanged: (dynamic value) {
                                 _inputController.text = '';
                                 setState(() {
                                   _mode = value;
@@ -112,7 +112,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
                               '观众模式',
                               value: Mode.Audience,
                               groupValue: _mode,
-                              onChanged: (value) {
+                              onChanged: (dynamic value) {
                                 _inputController.text = '';
                                 setState(() {
                                   _mode = value;
@@ -175,10 +175,10 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
         'Media Server:${GlobalConfig.mediaServer.isEmpty ? '自动获取' : GlobalConfig.mediaServer}\n';
     if (_connected)
       info += '当前使用: \n'
-          'App Key:${DefaultData.user.key}\n'
-          'Nav Server:${DefaultData.user.navigate}\n'
-          'File Server:${DefaultData.user.file}\n'
-          'Media Server:${DefaultData.user.media.isEmpty ? '自动获取' : DefaultData.user.media}\n';
+          'App Key:${DefaultData.user!.key}\n'
+          'Nav Server:${DefaultData.user!.navigate}\n'
+          'File Server:${DefaultData.user!.file}\n'
+          'Media Server:${DefaultData.user!.media!.isEmpty ? '自动获取' : DefaultData.user!.media}\n';
     showDialog(
       context: context,
       builder: (context) {
@@ -188,7 +188,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
             info,
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 Navigator.pop(context);
@@ -201,7 +201,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
   }
 
   void _disconnect() {
-    presenter?.disconnect();
+    presenter.disconnect();
     setState(() {
       _connected = false;
     });
@@ -215,7 +215,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
     if (name.isEmpty) return 'User Name Should not be null!'.toast();
 
     Loading.show(context);
-    presenter?.login(name);
+    presenter.login(name);
   }
 
   String _getHint() {
@@ -227,7 +227,6 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
       case Mode.Audience:
         return 'Room id';
     }
-    return '???';
   }
 
   Widget _buildArea(BuildContext context) {
@@ -255,7 +254,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
                   '音视频模式',
                   value: RCRTCLiveType.AudioVideo,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -266,7 +265,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
                   '音频模式',
                   value: RCRTCLiveType.Audio,
                   groupValue: _type,
-                  onChanged: (value) {
+                  onChanged: (dynamic value) {
                     setState(() {
                       _type = value;
                     });
@@ -297,7 +296,6 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
           ],
         );
     }
-    return Container();
   }
 
   // void _showUrl(BuildContext context) {
@@ -344,7 +342,6 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
       case Mode.Audience:
         return '观看直播';
     }
-    return '???';
   }
 
   void _action() {
@@ -352,12 +349,12 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
     if (info.isEmpty) return '${_getHint()} should not be null!'.toast();
     Loading.show(context);
     RCRTCLiveType type = _mode == Mode.Host ? _type : RCRTCLiveType.AudioVideo;
-    if (_mode != Mode.Audience) RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) => stream.enableTinyStream(_config.enableTinyStream));
-    presenter?.action(info, _mode, type);
+    if (_mode != Mode.Audience) RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) => stream?.enableTinyStream(_config.enableTinyStream));
+    presenter.action(info, _mode, type);
   }
 
   @override
-  void onConnected(String id) {
+  void onConnected(String? id) {
     Loading.dismiss(context);
     'IM Connected.'.toast();
     setState(() {
@@ -366,7 +363,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
   }
 
   @override
-  void onConnectError(int code, String id) {
+  void onConnectError(int code, String? id) {
     Loading.dismiss(context);
     'IM Connect Error, code = $code'.toast();
     setState(() {
@@ -413,7 +410,7 @@ class _ConnectPageState extends AbstractViewState<ConnectPagePresenter, ConnectP
     );
   }
 
-  void onError(int code, String info) {
+  void onError(int code, String? info) {
     Loading.dismiss(context);
     '${_getAction()}失败, Code = $code, Info = $info'.toast();
   }

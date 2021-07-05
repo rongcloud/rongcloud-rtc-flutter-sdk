@@ -9,7 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  用户发布的音视频流
  */
-@property(nonatomic, copy, readonly) NSArray<RCFlutterInputStream *> *remoteAVStreams;
+@property(nonatomic, strong, readonly) NSMutableArray<RCFlutterInputStream *> *remoteAVStreams;
 
 @end
 

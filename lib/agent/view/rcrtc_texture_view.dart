@@ -7,16 +7,14 @@ import 'package:flutter/services.dart';
 
 import '../rcrtc_engine.dart';
 
-typedef TextureViewCreatedCallback(RCRTCTextureView view, int id);
+typedef TextureViewCreatedCallback(RCRTCTextureView view, int? id);
 
 class RCRTCTextureView extends StatefulWidget {
   RCRTCTextureView(
     this.callback, {
     this.fit = BoxFit.cover,
     this.mirror = false,
-  })  : assert(fit != null),
-        assert(mirror != null),
-        super(key: Key('RCRTCTextureView[${DateTime.now().microsecondsSinceEpoch}]'));
+  }) : super(key: Key('RCRTCTextureView[${DateTime.now().microsecondsSinceEpoch}]'));
 
   final bool mirror;
   final BoxFit fit;
@@ -31,7 +29,7 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
   int _height = 0;
   int _rotation = 0;
   int _textureId = -1;
-  StreamSubscription<dynamic> _eventSubscription;
+  StreamSubscription<dynamic>? _eventSubscription;
 
   RCRTCTextureView _view;
 
@@ -45,7 +43,8 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
     final Map<dynamic, dynamic> map = event;
     switch (map['event']) {
       case 'didTextureChangeRotation':
-        int rotation = map['rotation'];
+        int? temp = map['rotation'];
+        int rotation = temp ?? 0;
         bool change = false;
         if (rotation == 90 || rotation == 270) {
           if (_rotation != 90 && _rotation != 270) change = true;
@@ -56,11 +55,11 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
         if (change) {
           setState(() {
             if (_rotation == 90 || _rotation == 270) {
-              int temp = _height;
+              int? temp = _height;
               _height = _width;
               _width = temp;
             } else {
-              int temp = _width;
+              int? temp = _width;
               _width = _height;
               _height = temp;
             }
@@ -69,7 +68,8 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
         break;
       case 'didTextureChangeVideoSize':
         setState(() {
-          _rotation = map['rotation'];
+          int? temp = map['rotation'];
+          _rotation = temp ?? 0;
           if (_rotation == 90 || _rotation == 270) {
             _height = map['width'];
             _width = map['height'];
@@ -85,7 +85,7 @@ class _RCRTCTextureViewState extends State<RCRTCTextureView> {
   }
 
   void errorListener(Object obj) {
-    final PlatformException e = obj;
+    final PlatformException e = obj as PlatformException;
     throw e;
   }
 

@@ -168,14 +168,16 @@ public class RCFlutterAudioMixer extends RCRTCAudioMixingStateChangeListener imp
     }
 
     @Override
-    public void onMixEnd() {
-        UIThreadHandler.post(
-                () -> channel.invokeMethod("onMixEnd", null)
-        );
+    public void onStateChanged(RCRTCAudioMixer.MixingState state, RCRTCAudioMixer.MixingStateReason reason) {
+        if (state == RCRTCAudioMixer.MixingState.STOPPED && reason == RCRTCAudioMixer.MixingStateReason.ALL_LOOPS_COMPLETED) {
+            UIThreadHandler.post(
+                    () -> channel.invokeMethod("onMixEnd", null)
+            );
+        }
     }
 
     @Override
-    public void onStateChanged(RCRTCAudioMixer.MixingState mixingState) {
+    public void onReportPlayingProgress(float v) {
     }
 
     private FlutterAssets assets;

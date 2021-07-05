@@ -15,15 +15,20 @@
 @property(nonatomic, strong) RCRTCRoom *rtcRoom;
 @property(nonatomic, copy) NSString *roomId;
 @property(nonatomic, strong) RCFlutterLocalUser *localUser;
-@property(nonatomic, strong,) NSArray<RCFlutterRemoteUser *> *remoteUsers;
+@property(nonatomic, strong) NSMutableArray<RCFlutterRemoteUser *> *remoteUsers;
 @property(nonatomic, strong) FlutterMethodChannel *methodChannel;
+
 @end
 
 @implementation RCFlutterRoom
 
-- (void)dealloc {
-    RCLogI(@"RCFlutterRoom dealloc");
+- (void)destroy {
+    RCLogI(@"RCFlutterRoom destroy");
     self.localUser = nil;
+    for (RCFlutterRemoteUser *user in self.remoteUsers) {
+        [user destroy];
+    }
+    [self.remoteUsers removeAllObjects];
     self.remoteUsers = nil;
     self.rtcRoom = nil;
 }
@@ -53,27 +58,27 @@
         self.roomId = rtcRoom.roomId;
         self.localUser.rtcUser = rtcRoom.localUser;
         [self.localUser registerChannel];
-        NSMutableArray *arr = [NSMutableArray array];
         for (RCRTCRemoteUser *remoteUser in rtcRoom.remoteUsers) {
             RCFlutterRemoteUser *rfru = [[RCFlutterRemoteUser alloc] init];
             rfru.rtcUser = remoteUser;
             [rfru registerChannel];
-            [arr addObject:rfru];
+            [self.remoteUsers addObject:rfru];
         }
-        self.remoteUsers = arr.copy;
         [self registerRoomChannel];
     }
 }
 
+- (void) addRemoteUser:(RCFlutterRemoteUser *) user {
+    [self.remoteUsers addObject:user];
+}
+
 - (RCFlutterRemoteUser *)getRemoteUserFromUserId:(NSString *)userId {
-    RCFlutterRemoteUser *rfru = [[RCFlutterRemoteUser alloc] init];
     for (RCFlutterRemoteUser *remoteUser in self.remoteUsers) {
         if ([remoteUser.userId isEqualToString:userId]) {
-            rfru = remoteUser;
-            break;
+            return remoteUser;
         }
     }
-    return rfru;;
+    return nil;
 }
 
 - (NSMutableDictionary *)toDesc {

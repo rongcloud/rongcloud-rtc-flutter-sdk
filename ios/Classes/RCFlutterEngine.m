@@ -18,7 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.1+1";
+static NSString * const VER = @"5.1.4";
 
 @interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
 
@@ -95,6 +95,7 @@ SingleInstanceM(Engine);
 }
 
 - (void)destroyCache {
+    [self.room destroy];
     self.room = nil;
     [self.createdOutputStreams removeAllObjects];
     self.createdOutputStreams = nil;

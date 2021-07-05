@@ -14,6 +14,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// 根据数据结构，从 remoteUser 获取RTC层Streams
 /// @param streamDics 数据结构
 - (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRemoteUser:(NSArray<NSDictionary *> *)streamDics;
+
+- (void)addStream:(RCFlutterInputStream *)stream;
+- (void)removeStream:(RCFlutterInputStream *)stream;
+
+- (void)destroy;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -21,12 +21,11 @@ class Http {
   }
 
   static void init([
-    bool enableCheckCert,
-    String proxy,
+    bool enableCheckCert = false,
+    String? proxy,
   ]) {
     (_dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client) {
       // ssl
-      enableCheckCert = enableCheckCert ?? false;
       if (enableCheckCert)
         client.badCertificateCallback = (
           X509Certificate cert,
@@ -46,7 +45,7 @@ class Http {
 
   static Future<void> get(
     String url,
-    Map<String, String> params,
+    Map<String, String>? params,
     void onSuccess(HttpError error, dynamic data),
     void onError(HttpError error),
     CancelToken tag,
@@ -74,7 +73,7 @@ class Http {
 
   static Future<void> post(
     String url,
-    Map<String, String> params,
+    Map<String, String>? params,
     void onSuccess(HttpError error, dynamic data),
     void onError(HttpError error),
     CancelToken tag,
@@ -102,7 +101,7 @@ class Http {
 
   static Future<void> delete(
     String url,
-    Map<String, String> params,
+    Map<String, String>? params,
     void onSuccess(HttpError error, dynamic data),
     void onError(HttpError error),
     CancelToken tag,
@@ -129,5 +128,5 @@ class Http {
   }
 
   static Dio _dio = Dio();
-  static List<String> _certs = List();
+  static List<String> _certs = [];
 }

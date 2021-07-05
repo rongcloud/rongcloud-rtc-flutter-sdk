@@ -9,7 +9,7 @@ typedef EffectFinishedCallback(int effectId);
 class RCRTCAudioEffectManager {
   RCRTCAudioEffectManager.fromJson(Map<String, dynamic> json)
       : _channel = MethodChannel('rong.flutter.rtclib/AudioEffectManager:${json['id']}'),
-        _callbacks = new List() {
+        _callbacks = [] {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
@@ -17,13 +17,12 @@ class RCRTCAudioEffectManager {
     _callbacks.clear();
   }
 
-  Future<dynamic> _methodCallHandler(MethodCall call) {
+  Future<dynamic> _methodCallHandler(MethodCall call) async {
     switch (call.method) {
       case 'onEffectFinished':
         _handleOnEffectFinished(call.arguments);
         break;
     }
-    return null;
   }
 
   void _handleOnEffectFinished(String string) {
@@ -43,110 +42,110 @@ class RCRTCAudioEffectManager {
 
   Future<int> preloadEffectFromAssets(String assets, int effectId) async {
     Map<String, dynamic> arguments = {'assets': assets, 'effectId': effectId};
-    String result = await _channel.invokeMethod("preloadEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("preloadEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> preloadEffect(String path, int effectId) async {
     Map<String, dynamic> arguments = {'path': path, 'effectId': effectId};
-    String result = await _channel.invokeMethod("preloadEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("preloadEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> unloadEffect(int effectId) async {
     Map<String, dynamic> arguments = {'effectId': effectId};
-    String result = await _channel.invokeMethod("unloadEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("unloadEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> playEffect(int effectId, int loopCount, int volume) async {
     Map<String, dynamic> arguments = {'effectId': effectId, 'loopCount': loopCount, 'volume': volume};
-    String result = await _channel.invokeMethod("playEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("playEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> pauseEffect(int effectId) async {
     Map<String, dynamic> arguments = {'effectId': effectId};
-    String result = await _channel.invokeMethod("pauseEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("pauseEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> pauseAllEffects() async {
-    String result = await _channel.invokeMethod("pauseAllEffects");
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("pauseAllEffects");
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> resumeEffect(int effectId) async {
     Map<String, dynamic> arguments = {'effectId': effectId};
-    String result = await _channel.invokeMethod("resumeEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("resumeEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> resumeAllEffects() async {
-    String result = await _channel.invokeMethod("resumeAllEffects");
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("resumeAllEffects");
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> stopEffect(int effectId) async {
     Map<String, dynamic> arguments = {'effectId': effectId};
-    String result = await _channel.invokeMethod("stopEffect", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("stopEffect", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> stopAllEffects() async {
-    String result = await _channel.invokeMethod("stopAllEffects");
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("stopAllEffects");
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> setEffectsVolume(int volume) async {
     Map<String, dynamic> arguments = {'volume': volume};
-    String result = await _channel.invokeMethod("setEffectsVolume", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("setEffectsVolume", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> getEffectsVolume() async {
-    String result = await _channel.invokeMethod("getEffectsVolume");
-    Map<String, dynamic> json = jsonDecode(result);
-    int volume = json['volume'];
-    return volume;
+    String? result = await _channel.invokeMethod("getEffectsVolume");
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? volume = json['volume'];
+    return volume ?? -1;
   }
 
   Future<int> setEffectVolume(int effectId, int volume) async {
     Map<String, dynamic> arguments = {'effectId': effectId, 'volume': volume};
-    String result = await _channel.invokeMethod("setEffectVolume", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int code = json['code'];
-    return code;
+    String? result = await _channel.invokeMethod("setEffectVolume", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? code = json['code'];
+    return code ?? -1;
   }
 
   Future<int> getEffectVolume(int effectId) async {
     Map<String, dynamic> arguments = {'effectId': effectId};
-    String result = await _channel.invokeMethod("getEffectVolume", arguments);
-    Map<String, dynamic> json = jsonDecode(result);
-    int volume = json['volume'];
-    return volume;
+    String? result = await _channel.invokeMethod("getEffectVolume", arguments);
+    Map<String, dynamic> json = jsonDecode(result!);
+    int? volume = json['volume'];
+    return volume ?? -1;
   }
 
   final MethodChannel _channel;

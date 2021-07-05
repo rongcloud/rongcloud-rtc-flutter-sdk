@@ -5,7 +5,7 @@ class Loading {
   Loading(this._retain, this._entry);
 
   static void show(BuildContext context) {
-    Loading loading = _cache[context];
+    Loading? loading = _cache[context];
     if (loading == null) {
       loading = Loading(0, _buildLoading(context));
     }
@@ -47,13 +47,13 @@ class Loading {
       );
     });
 
-    Overlay.of(context).insert(entry);
+    Overlay.of(context)?.insert(entry);
 
     return entry;
   }
 
   static void dismiss(BuildContext context) {
-    Loading loading = _cache[context];
+    Loading? loading = _cache[context];
     if (loading != null) {
       loading._retain--;
       if (loading._retain <= 0) {
@@ -63,7 +63,7 @@ class Loading {
     }
   }
 
-  static Map<BuildContext, Loading> _cache = Map();
+  static Map<BuildContext, Loading?> _cache = Map();
 
   int _retain = 0;
 

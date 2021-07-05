@@ -5,13 +5,12 @@ import 'rcrtc_audio_output_stream.dart';
 
 class RCRTCMicOutputStream extends RCRTCAudioOutputStream {
   RCRTCMicOutputStream.fromJson(stream) : super.fromJson(stream) {
-    bool state = stream['state'];
+    bool? state = stream['state'];
     _isMicrophoneDisable = state ?? false;
   }
 
   void release() {
     _syncActions.clear();
-    _syncActions = null;
   }
 
   @override
@@ -25,15 +24,16 @@ class RCRTCMicOutputStream extends RCRTCAudioOutputStream {
     }
   }
 
-  void _handleChangeAudioScenarioSyncActions(String id) {
-    SyncActions actions = _syncActions.remove(id);
-    if (actions != null) actions();
+  void _handleChangeAudioScenarioSyncActions(String? id) {
+    SyncActions? actions = _syncActions.remove(id);
+    actions?.call();
   }
 
   Future<int> setMicrophoneDisable(bool disable) async {
-    int code = await channel.invokeMethod("setMicrophoneDisable", disable);
-    if (code == 0) _isMicrophoneDisable = disable;
-    return code;
+    int? code = await channel.invokeMethod("setMicrophoneDisable", disable);
+    int ret = code ?? -1;
+    if (ret == 0) _isMicrophoneDisable = disable;
+    return ret;
   }
 
   bool isMicrophoneDisable() {
@@ -62,11 +62,11 @@ class RCRTCMicOutputStream extends RCRTCAudioOutputStream {
   }
 
   Future<int> getRecordingVolume() async {
-    int volume = await channel.invokeMethod("getRecordingVolume");
-    return Future.value(volume);
+    int? volume = await channel.invokeMethod("getRecordingVolume");
+    return volume ?? -1;
   }
 
-  bool _isMicrophoneDisable;
+  bool _isMicrophoneDisable = false;
 
   Map<String, SyncActions> _syncActions = Map();
 }

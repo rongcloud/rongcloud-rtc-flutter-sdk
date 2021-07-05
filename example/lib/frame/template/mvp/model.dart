@@ -6,7 +6,7 @@ abstract class IModel {
 }
 
 abstract class AbstractModel implements IModel {
-  CancelToken _tag;
+  late CancelToken _tag;
 
   CancelToken get tag => _tag;
 

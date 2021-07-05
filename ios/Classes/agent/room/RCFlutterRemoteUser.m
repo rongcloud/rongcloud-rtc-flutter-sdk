@@ -13,8 +13,7 @@
 
 @interface RCFlutterRemoteUser ()
 
-@property(nonatomic, copy) NSArray<RCFlutterInputStream *> *remoteAVStreams;
-
+@property(nonatomic, strong) NSMutableArray<RCFlutterInputStream *> *remoteAVStreams;
 
 @end
 
@@ -39,17 +38,17 @@
     }
     return self;
 }
+
 - (void)setRtcUser:(RCRTCUser *)rtcUser {
     [super setRtcUser:rtcUser];
     [self registerChannel];
-    NSMutableArray *arr = [NSMutableArray array];
+    [self.remoteAVStreams removeAllObjects];
     for (RCRTCInputStream *inputStream in ((RCRTCRemoteUser *)rtcUser).remoteStreams) {
         RCFlutterInputStream *rfistm = [[RCFlutterInputStream alloc] init];
         rfistm.rtcInputStream = inputStream;
         [rfistm registerStreamChannel];
-        [arr addObject:rfistm];
+        [self.remoteAVStreams addObject:rfistm];
     }
-    self.remoteAVStreams = arr;
 }
 
 - (void)switchToTinyStream:(NSArray *)streams result:(FlutterResult)result {
@@ -60,6 +59,7 @@
     }];
     
 }
+
 - (void)switchToNormalStream:(NSArray *)streams result:(FlutterResult)result {
     NSArray *toNormalss = [self getRTCRemoteInputStreamsFromRemoteUser:streams];
     
@@ -83,6 +83,7 @@
     }
     return arr.copy;
 }
+
 - (NSArray<RCRTCInputStream *> *)getRTCRemoteInputStreamsFromRemoteUser:(NSArray<NSDictionary *> *)streamDics{
     NSMutableArray *arr = [NSMutableArray array];
     for (NSDictionary *dic in streamDics) {
@@ -110,12 +111,40 @@
         }
         [dic setValue:streamList forKey:@"streamList"];
     }
-    return dic;;
+    return dic;
 }
 
-- (void)dealloc {
-    RCLogI(@"RCFlutterRemoteUser dealloc");
+- (void)addStream:(RCFlutterInputStream *)stream {
+    bool added = false;
+    for (RCFlutterInputStream *inputStream in self.remoteAVStreams) {
+        if (inputStream.streamId == stream.streamId && inputStream.streamType == stream.streamType) {
+            added = true;
+            break;
+        }
+    }
+    if (!added) {
+        [self.remoteAVStreams addObject:stream];
+    }
+}
+
+- (void)removeStream:(RCFlutterInputStream *)stream {
+    RCFlutterInputStream *targe = nil;
+    for (RCFlutterInputStream *inputStream in self.remoteAVStreams) {
+        if (inputStream.streamId == stream.streamId && inputStream.streamType == stream.streamType) {
+            targe = inputStream;
+            break;
+        }
+    }
+    if (targe) {
+        [self.remoteAVStreams removeObject:targe];
+    }
+}
+
+- (void)destroy {
+    RCLogI(@"RCFlutterRemoteUser destroy");
+    [self.remoteAVStreams removeAllObjects];
     self.remoteAVStreams = nil;
     self.rtcUser = nil;
 }
+
 @end

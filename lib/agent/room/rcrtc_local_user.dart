@@ -11,42 +11,43 @@ import 'rcrtc_user.dart';
 class RCRTCLocalUser extends RCRTCUser {
   static const _tag = "RCRTCLocalUser";
 
-  final List<RCRTCOutputStream> _streamList = List<RCRTCOutputStream>();
+  final List<RCRTCOutputStream> _streamList = [];
 
   RCRTCLocalUser.fromJson(Map<String, dynamic> jsonObj) : super.fromJson(jsonObj);
 
   Future<int> publishDefaultStreams() async {
-    return await methodChannel.invokeMethod('publishDefaultStreams');
+    int? ret = await methodChannel.invokeMethod('publishDefaultStreams');
+    return ret ?? -1;
   }
 
   Future<void> publishDefaultLiveStreams(
     void onSuccess(RCRTCLiveInfo liveInfo),
-    void onError(int code, String message),
+    void onError(int code, String? message),
   ) async {
-    String json = await methodChannel.invokeMethod('publishDefaultLiveStreams');
-    Map<String, dynamic> result = jsonDecode(json);
+    String? json = await methodChannel.invokeMethod('publishDefaultLiveStreams');
+    Map<String, dynamic> result = jsonDecode(json!);
     RCRTCLog.d(_tag, "publishDefaultLiveStreams $result");
-    int code = result['code'];
-    String content = result["content"];
+    int code = result['code'] ?? -1;
+    String? content = result["content"];
     if (code == 0) {
-      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content)));
+      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content!)));
     } else {
       onError(code, content);
     }
   }
 
-  Future<void> publishLiveStream(
+  void publishLiveStream(
     RCRTCOutputStream stream,
     void onSuccess(RCRTCLiveInfo liveInfo),
-    void onError(int code, String message),
+    void onError(int code, String? message),
   ) async {
-    String json = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
-    Map<String, dynamic> result = jsonDecode(json);
+    String? json = await methodChannel.invokeMethod("publishLiveStream", jsonEncode(stream));
+    Map<String, dynamic> result = jsonDecode(json!);
     RCRTCLog.d(_tag, "publishLiveStream $result");
-    int code = result['code'];
-    String content = result["content"];
+    int code = result['code'] ?? -1;
+    String? content = result["content"];
     if (code == 0) {
-      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content)));
+      onSuccess(RCRTCLiveInfo.fromJSON(jsonDecode(content!)));
     } else {
       onError(code, content);
     }
@@ -54,10 +55,12 @@ class RCRTCLocalUser extends RCRTCUser {
 
   Future<int> publishStreams(List<RCRTCOutputStream> streams) async {
     var jsonStreams = streams.map<String>((stream) => jsonEncode(stream)).toList();
-    return await methodChannel.invokeMethod("publishStreams", jsonStreams);
+    int? ret = await methodChannel.invokeMethod("publishStreams", jsonStreams);
+    return ret ?? -1;
   }
 
-  Future<int> publishStream(RCRTCOutputStream stream) async {
+  Future<int> publishStream(RCRTCOutputStream? stream) async {
+    if (stream == null) return -1;
     return publishStreams([stream]);
   }
 
@@ -67,10 +70,12 @@ class RCRTCLocalUser extends RCRTCUser {
 
   Future<int> unPublishStreams(List<RCRTCOutputStream> streams) async {
     var jsonStreams = streams.map<String>((stream) => jsonEncode(stream)).toList();
-    return await methodChannel.invokeMethod("unPublishStreams", jsonStreams);
+    int? ret = await methodChannel.invokeMethod("unPublishStreams", jsonStreams);
+    return ret ?? -1;
   }
 
-  Future<int> unPublishStream(RCRTCOutputStream stream) async {
+  Future<int> unPublishStream(RCRTCOutputStream? stream) async {
+    if (stream == null) return -1;
     return unPublishStreams([stream]);
   }
 
@@ -85,8 +90,8 @@ class RCRTCLocalUser extends RCRTCUser {
 
     String streamListJson = jsonEncode(streams);
     RCRTCLog.d(_tag, "subscribeStreams $streamListJson");
-    int code = await methodChannel.invokeMethod('subscribeStreams', arguments);
-    return code;
+    int? code = await methodChannel.invokeMethod('subscribeStreams', arguments);
+    return code ?? -1;
   }
 
   Future<int> subscribeStream(RCRTCInputStream stream) async {
@@ -96,8 +101,8 @@ class RCRTCLocalUser extends RCRTCUser {
   Future<int> unsubscribeStreams(List<RCRTCInputStream> streamList) async {
     String streamListJson = jsonEncode(streamList);
     RCRTCLog.d(_tag, "unsubscribeStreams $streamListJson");
-    int code = await methodChannel.invokeMethod('unsubscribeStreams', streamListJson);
-    return code;
+    int? code = await methodChannel.invokeMethod('unsubscribeStreams', streamListJson);
+    return code ?? -1;
   }
 
   Future<int> unsubscribeStream(RCRTCInputStream stream) async {
@@ -106,8 +111,8 @@ class RCRTCLocalUser extends RCRTCUser {
 
   Future<List<RCRTCOutputStream>> getStreams() async {
     _streamList.clear();
-    List<dynamic> jsonList = await methodChannel.invokeListMethod('getStreams');
-    jsonList.forEach((json) {
+    List<dynamic>? jsonList = await methodChannel.invokeListMethod('getStreams');
+    jsonList?.forEach((json) {
       _streamList.add(RCRTCOutputStream.fromJson(jsonDecode(json)));
     });
     return _streamList;
@@ -120,8 +125,8 @@ class RCRTCLocalUser extends RCRTCUser {
       "object": message.getObjectName(),
       "content": message.encode(),
     };
-    int result = await methodChannel.invokeMethod('setAttributeValue', arguments);
-    return Future.value(result);
+    int? result = await methodChannel.invokeMethod('setAttributeValue', arguments);
+    return result ?? -1;
   }
 
   Future<int> deleteAttributes(List<String> keys, MessageContent message) async {
@@ -130,15 +135,15 @@ class RCRTCLocalUser extends RCRTCUser {
       "object": message.getObjectName(),
       "content": message.encode(),
     };
-    int result = await methodChannel.invokeMethod('deleteAttributes', arguments);
-    return Future.value(result);
+    int? result = await methodChannel.invokeMethod('deleteAttributes', arguments);
+    return result ?? -1;
   }
 
-  Future<Map<String, String>> getAttributes(List<String> keys) async {
+  Future<Map<String, String>?> getAttributes(List<String> keys) async {
     Map<String, dynamic> arguments = {
       "keys": jsonEncode(keys),
     };
-    Map<String, String> results = await methodChannel.invokeMapMethod('getAttributes', arguments);
-    return Future.value(results);
+    Map<String, String>? results = await methodChannel.invokeMapMethod('getAttributes', arguments);
+    return results;
   }
 }

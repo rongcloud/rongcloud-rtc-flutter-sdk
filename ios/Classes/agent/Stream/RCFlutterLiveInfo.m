@@ -53,6 +53,7 @@
     if (self.liveInfo) {
         dic[@"roomId"] = self.roomId;
         dic[@"userId"] = self.userId;
+        dic[@"liveUrl"] = self.liveInfo.liveUrl;
     }
     return dic;
 }
@@ -146,23 +147,12 @@
             } else {
                 streamConfig.mediaConfig.videoConfig.videoExtend.renderMode = RCRTCVideoRenderModeCrop;
             }
-            
-            if (streamConfig.version == 2) {
-                streamConfig.customMode = YES;
-            }
-        } else {
-            if (streamConfig.version == 2) {
-                streamConfig.customMode = NO;
-            }
+
         }
         
         NSDictionary *audio = [output objectForKey:@"audio"];
         if (![audio isEqual:[NSNull null]]) {
             streamConfig.mediaConfig.audioConfig.bitrate = [audio[@"bitrate"] integerValue];
-        }
-    } else {
-        if (streamConfig.version == 2) {
-            streamConfig.customMode = NO;
         }
     }
     
@@ -191,6 +181,10 @@
         
         NSMutableArray<RCRTCCustomLayout *> *layouts = [self customLayoutsWithStreams:streams withConfigArr:customs];
         streamConfig.customLayouts = layouts;
+
+        streamConfig.customMode = YES;
+    } else {
+        streamConfig.customMode = NO;
     }
     return streamConfig;
 }
@@ -204,7 +198,7 @@
     for (RCRTCStream *stream in streams) {
         RCRTCCustomLayout *inputConfig = [[RCRTCCustomLayout alloc] init];
         for (NSDictionary *dic in configs) {
-            if ([dic[@"user_id"] isEqualToString:stream.userId]) {
+            if ([dic[@"user_id"] isEqualToString:stream.userId] && [dic[@"stream_id"] isEqualToString:stream.streamId]) {
                 inputConfig.x = [dic[@"x"] integerValue];
                 inputConfig.y = [dic[@"y"] integerValue];
                 inputConfig.width = [dic[@"width"] integerValue];

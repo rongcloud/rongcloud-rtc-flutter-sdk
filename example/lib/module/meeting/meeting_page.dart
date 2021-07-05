@@ -1,9 +1,10 @@
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/template/mvp/view.dart';
-import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/utils/extension.dart';
-import 'package:FlutterRTC/widgets/ui.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/view.dart';
+import 'package:rc_rtc_flutter_example/frame/ui/loading.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/extension.dart';
+import 'package:rc_rtc_flutter_example/widgets/ui.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:handy_toast/handy_toast.dart';
@@ -27,7 +28,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
   void init(BuildContext context) {
     super.init(context);
 
-    Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
+    Map<String, dynamic> arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     _config = Config.fromJson(arguments);
 
     _tinyConfig = RCRTCVideoStreamConfig(
@@ -52,7 +53,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
     return WillPopScope(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('会议号: ${RCRTCEngine.getInstance().getRoom().id}'),
+          title: Text('会议号: ${RCRTCEngine.getInstance().getRoom()?.id}'),
         ),
         body: Container(
           child: Column(
@@ -81,7 +82,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     top: 5.dp,
                                   ),
                                   child: Text(
-                                    '${DefaultData.user.id}',
+                                    '${DefaultData.user?.id}',
                                     softWrap: true,
                                     style: TextStyle(
                                       color: Colors.white,
@@ -99,7 +100,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     top: 15.dp,
                                   ),
                                   child: BoxFitChooser(
-                                    fit: _local?.fit,
+                                    fit: _local?.fit ?? BoxFit.contain,
                                     onSelected: (fit) {
                                       setState(() {
                                         _local?.fit = fit;
@@ -172,7 +173,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     isDense: true,
                                     value: _config.fps,
                                     items: _buildFpsItems(),
-                                    onChanged: (fps) => _changeFps(fps),
+                                    onChanged: (dynamic fps) => _changeFps(fps),
                                   ),
                                 ),
                                 DropdownButtonHideUnderline(
@@ -180,7 +181,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     isDense: true,
                                     value: _config.resolution,
                                     items: _buildResolutionItems(),
-                                    onChanged: (resolution) => _changeResolution(resolution),
+                                    onChanged: (dynamic resolution) => _changeResolution(resolution),
                                   ),
                                 ),
                               ],
@@ -200,7 +201,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     isDense: true,
                                     value: _config.minVideoKbps,
                                     items: _buildMinVideoKbpsItems(),
-                                    onChanged: (kbps) => _changeMinVideoKbps(kbps),
+                                    onChanged: (dynamic kbps) => _changeMinVideoKbps(kbps),
                                   ),
                                 ),
                               ],
@@ -220,7 +221,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                     isDense: true,
                                     value: _config.maxVideoKbps,
                                     items: _buildMaxVideoKbpsItems(),
-                                    onChanged: (kbps) => _changeMaxVideoKbps(kbps),
+                                    onChanged: (dynamic kbps) => _changeMaxVideoKbps(kbps),
                                   ),
                                 ),
                               ],
@@ -266,7 +267,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                         isDense: true,
                                         value: _tinyConfig.resolution,
                                         items: _buildResolutionItems(),
-                                        onChanged: (resolution) => _changeTinyResolution(resolution),
+                                        onChanged: (dynamic resolution) => _changeTinyResolution(resolution),
                                       ),
                                     ),
                                   ],
@@ -286,7 +287,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                         isDense: true,
                                         value: MinVideoKbps.indexOf(_tinyConfig.minRate),
                                         items: _buildMinVideoKbpsItems(),
-                                        onChanged: (kbps) => _changeTinyMinVideoKbps(kbps),
+                                        onChanged: (dynamic kbps) => _changeTinyMinVideoKbps(kbps),
                                       ),
                                     ),
                                     Text(
@@ -302,7 +303,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                         isDense: true,
                                         value: MaxVideoKbps.indexOf(_tinyConfig.maxRate),
                                         items: _buildMaxVideoKbpsItems(),
-                                        onChanged: (kbps) => _changeTinyMaxVideoKbps(kbps),
+                                        onChanged: (dynamic kbps) => _changeTinyMaxVideoKbps(kbps),
                                       ),
                                     ),
                                   ],
@@ -465,14 +466,14 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
   }
 
   void _changeMic(bool open) async {
-    bool result = await presenter?.changeMic(open);
+    bool result = await presenter.changeMic(open);
     setState(() {
       _config.mic = result;
     });
   }
 
   void _changeCamera(bool open) async {
-    bool result = await presenter?.changeCamera(open);
+    bool result = await presenter.changeCamera(open);
     setState(() {
       if (!result) _local?.invalidate();
       _config.camera = result;
@@ -481,7 +482,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeAudio(bool publish) async {
     Loading.show(context);
-    bool result = await presenter?.changeAudio(publish);
+    bool result = await presenter.changeAudio(publish);
     setState(() {
       _config.audio = result;
     });
@@ -490,7 +491,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeVideo(bool publish) async {
     Loading.show(context);
-    bool result = await presenter?.changeVideo(publish);
+    bool result = await presenter.changeVideo(publish);
     setState(() {
       _config.video = result;
     });
@@ -498,7 +499,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
   }
 
   void _changeFrontCamera(bool front) async {
-    bool result = await presenter?.changeFrontCamera(front);
+    bool result = await presenter.changeFrontCamera(front);
     setState(() {
       _config.frontCamera = result;
     });
@@ -512,7 +513,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
   }
 
   void _changeSpeaker() async {
-    bool result = await presenter?.changeSpeaker(!_config.speaker);
+    bool result = await presenter.changeSpeaker(!_config.speaker);
     setState(() {
       _config.speaker = result;
     });
@@ -538,7 +539,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeFps(RCRTCFps fps) {
     _config.fps = fps;
-    presenter?.changeVideoConfig(_config.videoConfig);
+    presenter.changeVideoConfig(_config.videoConfig);
     setState(() {});
   }
 
@@ -562,7 +563,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeResolution(RCRTCVideoResolution resolution) async {
     _config.resolution = resolution;
-    await presenter?.changeVideoConfig(_config.videoConfig);
+    await presenter.changeVideoConfig(_config.videoConfig);
     // if (Platform.isIOS) _local?.invalidate();
     setState(() {});
   }
@@ -587,7 +588,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeMinVideoKbps(int kbps) {
     _config.minVideoKbps = kbps;
-    presenter?.changeVideoConfig(_config.videoConfig);
+    presenter.changeVideoConfig(_config.videoConfig);
     setState(() {});
   }
 
@@ -611,63 +612,63 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   void _changeMaxVideoKbps(int kbps) {
     _config.maxVideoKbps = kbps;
-    presenter?.changeVideoConfig(_config.videoConfig);
+    presenter.changeVideoConfig(_config.videoConfig);
     setState(() {});
   }
 
   void _changeTinyFps(RCRTCFps fps) async {
     _tinyConfig.fps = fps;
     setState(() {});
-    bool ret = await presenter?.changeTinyVideoConfig(_tinyConfig);
+    bool ret = await presenter.changeTinyVideoConfig(_tinyConfig);
     (ret ? '设置成功' : '设置失败').toast();
   }
 
   void _changeTinyResolution(RCRTCVideoResolution resolution) async {
     _tinyConfig.resolution = resolution;
     setState(() {});
-    bool ret = await presenter?.changeTinyVideoConfig(_tinyConfig);
+    bool ret = await presenter.changeTinyVideoConfig(_tinyConfig);
     (ret ? '设置成功' : '设置失败').toast();
   }
 
   void _changeTinyMinVideoKbps(int kbps) async {
     _tinyConfig.minRate = MinVideoKbps[kbps];
     setState(() {});
-    bool ret = await presenter?.changeTinyVideoConfig(_tinyConfig);
+    bool ret = await presenter.changeTinyVideoConfig(_tinyConfig);
     (ret ? '设置成功' : '设置失败').toast();
   }
 
   void _changeTinyMaxVideoKbps(int kbps) async {
     _tinyConfig.maxRate = MaxVideoKbps[kbps];
     setState(() {});
-    bool ret = await presenter?.changeTinyVideoConfig(_tinyConfig);
+    bool ret = await presenter.changeTinyVideoConfig(_tinyConfig);
     (ret ? '设置成功' : '设置失败').toast();
   }
 
   void _switchToNormalStream(String id) {
-    presenter?.switchToNormalStream(id);
+    presenter.switchToNormalStream(id);
   }
 
   void _switchToTinyStream(String id) {
-    presenter?.switchToTinyStream(id);
+    presenter.switchToTinyStream(id);
   }
 
   void _changeRemoteAudio(int index, bool subscribe) async {
     Loading.show(context);
-    _remotes[index].audioStream = await presenter?.changeRemoteAudioStatus(_remotes[index].user.id, subscribe);
+    _remotes[index].audioStream = await presenter.changeRemoteAudioStatus(_remotes[index].user.id, subscribe);
     setState(() {});
     Loading.dismiss(context);
   }
 
   void _changeRemoteVideo(int index, bool subscribe) async {
     Loading.show(context);
-    _remotes[index].videoStream = await presenter?.changeRemoteVideoStatus(_remotes[index].user.id, subscribe);
+    _remotes[index].videoStream = await presenter.changeRemoteVideoStatus(_remotes[index].user.id, subscribe);
     setState(() {});
     Loading.dismiss(context);
   }
 
   Future<bool> _exit() {
     Loading.show(context);
-    presenter?.exit();
+    presenter.exit();
     return Future.value(false);
   }
 
@@ -677,7 +678,7 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
     _remoteReportSetter.values.forEach((setter) {
       setter(() {});
     });
-    if (_localReportSetter != null) _localReportSetter(() {});
+    _localReportSetter?.call(() {});
   }
 
   @override
@@ -704,22 +705,20 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
 
   @override
   void onUserAudioStatusChanged(String id, bool publish) {
-    var view = _remotes.firstWhere(
+    var view = _remotes.firstWhereOrNull(
       (element) => element.user.id == id,
-      orElse: () => null,
     );
-    view?.user?.audio = publish;
+    view?.user.audio = publish;
     if (!publish) view?.audioStream = null;
     setState(() {});
   }
 
   @override
   void onUserVideoStatusChanged(String id, bool publish) {
-    var view = _remotes.firstWhere(
+    var view = _remotes.firstWhereOrNull(
       (element) => element.user.id == id,
-      orElse: () => null,
     );
-    view?.user?.video = publish;
+    view?.user.video = publish;
     if (!publish) view?.videoStream = null;
     setState(() {});
   }
@@ -737,11 +736,11 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
     Navigator.pop(context);
   }
 
-  Config _config;
-  RCRTCVideoStreamConfig _tinyConfig;
-  UserView _local;
+  late Config _config;
+  late RCRTCVideoStreamConfig _tinyConfig;
+  UserView? _local;
   List<UserView> _remotes = [];
-  StatusReport _report;
-  StateSetter _localReportSetter;
+  StatusReport? _report;
+  StateSetter? _localReportSetter;
   Map<String, StateSetter> _remoteReportSetter = Map();
 }

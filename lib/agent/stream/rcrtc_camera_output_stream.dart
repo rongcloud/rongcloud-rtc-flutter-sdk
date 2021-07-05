@@ -21,10 +21,10 @@ enum RCRTCCameraCaptureOrientation {
 class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   static const _tag = "RCRTCCameraOutputStream";
 
-  bool _isFrontCamera;
+  bool _isFrontCamera = true;
 
   RCRTCCameraOutputStream.fromJson(stream) : super.fromJson(stream) {
-    bool isFrontCamera = stream['frontCamera'];
+    bool? isFrontCamera = stream['frontCamera'];
     _isFrontCamera = isFrontCamera ?? true;
   }
 
@@ -70,7 +70,8 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   /// 小流配置信息
   Future<bool> setTinyVideoConfig(RCRTCVideoStreamConfig config) async {
     var json = jsonEncode(config);
-    return await channel.invokeMethod("setTinyVideoConfig", json);
+    bool? ret = await channel.invokeMethod("setTinyVideoConfig", json);
+    return ret ?? false;
   }
 
   bool isFrontCamera() {
@@ -78,13 +79,13 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
   }
 
   Future<bool> isCameraFocusSupported() async {
-    bool supported = await channel.invokeMethod("isCameraFocusSupported");
-    return Future.value(supported);
+    bool? supported = await channel.invokeMethod("isCameraFocusSupported");
+    return supported ?? false;
   }
 
   Future<bool> isCameraExposurePositionSupported() async {
-    bool supported = await channel.invokeMethod("isCameraExposurePositionSupported");
-    return Future.value(supported);
+    bool? supported = await channel.invokeMethod("isCameraExposurePositionSupported");
+    return supported ?? false;
   }
 
   Future<bool> setCameraExposurePositionInPreview(double x, double y) async {
@@ -92,8 +93,8 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
       "x": x,
       "y": y,
     };
-    bool success = await channel.invokeMethod("setCameraExposurePositionInPreview", arguments);
-    return Future.value(success);
+    bool? success = await channel.invokeMethod("setCameraExposurePositionInPreview", arguments);
+    return success ?? false;
   }
 
   Future<bool> setCameraFocusPositionInPreview(double x, double y) async {
@@ -101,8 +102,8 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
       "x": x,
       "y": y,
     };
-    bool success = await channel.invokeMethod("setCameraFocusPositionInPreview", arguments);
-    return Future.value(success);
+    bool? success = await channel.invokeMethod("setCameraFocusPositionInPreview", arguments);
+    return success ?? false;
   }
 
   Future<void> setCameraCaptureOrientation(RCRTCCameraCaptureOrientation orientation) async {

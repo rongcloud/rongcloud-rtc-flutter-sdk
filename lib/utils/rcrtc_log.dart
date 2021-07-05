@@ -15,22 +15,22 @@ class RCRTCLog {
   }
 
   static void v(String tag, String message) {
-    if (null != message && sLogLevel <= LOG_VERBOSE) log('V/' + TAG + tag + ': ' + message);
+    if (sLogLevel <= LOG_VERBOSE) log('V/' + TAG + tag + ': ' + message);
   }
 
   static void d(String tag, String message) {
-    if (null != message && sLogLevel <= LOG_DEBUG) log('D/' + TAG + tag + ': ' + message);
+    if (sLogLevel <= LOG_DEBUG) log('D/' + TAG + tag + ': ' + message);
   }
 
   static void i(String tag, String message) {
-    if (null != message && sLogLevel <= LOG_INFO) log('I/' + TAG + tag + ': ' + message);
+    if (sLogLevel <= LOG_INFO) log('I/' + TAG + tag + ': ' + message);
   }
 
   static void w(String tag, String message) {
-    if (null != message && sLogLevel <= LOG_WARN) log('W/' + TAG + tag + ': ' + message);
+    if (sLogLevel <= LOG_WARN) log('W/' + TAG + tag + ': ' + message);
   }
 
   static void e(String tag, String message) {
-    if (null != message && sLogLevel <= LOG_ERROR) log('E/' + TAG + tag + ': ' + message);
+    if (sLogLevel <= LOG_ERROR) log('E/' + TAG + tag + ': ' + message);
   }
 }

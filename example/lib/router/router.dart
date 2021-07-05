@@ -1,7 +1,7 @@
-import 'package:FlutterRTC/module/audience/audience_page.dart';
-import 'package:FlutterRTC/module/connect/connect_page.dart';
-import 'package:FlutterRTC/module/host/host_page.dart';
-import 'package:FlutterRTC/module/meeting/meeting_page.dart';
+import 'package:rc_rtc_flutter_example/module/audience/audience_page.dart';
+import 'package:rc_rtc_flutter_example/module/connect/connect_page.dart';
+import 'package:rc_rtc_flutter_example/module/host/host_page.dart';
+import 'package:rc_rtc_flutter_example/module/meeting/meeting_page.dart';
 import 'package:flutter/widgets.dart';
 
 class RouterManager {
@@ -20,5 +20,5 @@ class RouterManager {
   static const String HOST = '/host';
   static const String AUDIENCE = '/audience';
 
-  static Map<String, WidgetBuilder> _routes;
+  static late Map<String, WidgetBuilder> _routes;
 }

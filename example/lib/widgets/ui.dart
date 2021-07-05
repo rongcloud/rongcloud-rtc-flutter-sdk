@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:FlutterRTC/data/constants.dart';
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/network/network.dart';
-import 'package:FlutterRTC/frame/ui/loading.dart';
-import 'package:FlutterRTC/frame/utils/extension.dart';
-import 'package:FlutterRTC/global_config.dart';
+import 'package:rc_rtc_flutter_example/data/constants.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/network/network.dart';
+import 'package:rc_rtc_flutter_example/frame/ui/loading.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/extension.dart';
+import 'package:rc_rtc_flutter_example/global_config.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,8 +16,8 @@ import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 class InputBox extends StatelessWidget {
   InputBox({
-    @required this.hint,
-    @required this.controller,
+    required this.hint,
+    required this.controller,
     this.type,
     this.size,
     this.formatter,
@@ -38,7 +38,7 @@ class InputBox extends StatelessWidget {
         keyboardType: type ?? TextInputType.text,
         textInputAction: TextInputAction.done,
         style: TextStyle(
-          fontSize: size ?? 20.sp,
+          fontSize: size as double? ?? 20.sp,
           color: Colors.black,
           decoration: TextDecoration.none,
         ),
@@ -46,7 +46,7 @@ class InputBox extends StatelessWidget {
           border: InputBorder.none,
           hintText: hint,
           hintStyle: TextStyle(
-            fontSize: size ?? 20.sp,
+            fontSize: size as double? ?? 20.sp,
             color: Colors.black.withOpacity(0.7),
             decoration: TextDecoration.none,
           ),
@@ -65,9 +65,9 @@ class InputBox extends StatelessWidget {
 
   final String hint;
   final TextEditingController controller;
-  final TextInputType type;
-  final num size;
-  final List<TextInputFormatter> formatter;
+  final TextInputType? type;
+  final num? size;
+  final List<TextInputFormatter>? formatter;
 }
 
 class Button extends StatelessWidget {
@@ -93,7 +93,7 @@ class Button extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            fontSize: size ?? 20.sp,
+            fontSize: size as double? ?? 20.sp,
             color: Colors.black,
             decoration: TextDecoration.none,
           ),
@@ -104,16 +104,16 @@ class Button extends StatelessWidget {
   }
 
   final String text;
-  final num size;
-  final void Function() callback;
+  final num? size;
+  final void Function()? callback;
 }
 
 class Radios<T> extends StatelessWidget {
   Radios(
     this.text, {
-    @required this.value,
-    @required this.groupValue,
-    @required this.onChanged,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
   });
 
   @override
@@ -151,8 +151,8 @@ class CheckBoxes extends StatelessWidget {
   CheckBoxes(
     this.text, {
     this.enable = true,
-    @required this.checked,
-    @required this.onChanged,
+    required this.checked,
+    required this.onChanged,
   });
 
   @override
@@ -230,7 +230,7 @@ extension StringExtension on String {
 class UserView {
   UserView(this.user);
 
-  Widget get widget {
+  Widget? get widget {
     if (_build) {
       _build = false;
       _widget = _videoStream != null
@@ -247,7 +247,7 @@ class UserView {
   }
 
   bool get self {
-    return user.id == DefaultData.user.id;
+    return user.id == DefaultData.user?.id;
   }
 
   bool get audio => _audio;
@@ -260,7 +260,7 @@ class UserView {
     invalidate();
   }
 
-  RCRTCAudioInputStream get audioStream => _remoteAudioStream;
+  RCRTCAudioInputStream? get audioStream => _remoteAudioStream;
 
   bool get video => _video;
 
@@ -272,16 +272,16 @@ class UserView {
     invalidate();
   }
 
-  RCRTCVideoInputStream get videoStream => _remoteVideoStream;
+  RCRTCVideoInputStream? get videoStream => _remoteVideoStream;
 
-  get fit => _fit;
+  BoxFit get fit => _fit;
 
   set fit(BoxFit fit) {
     _fit = fit;
     invalidate();
   }
 
-  get mirror => _mirror;
+  bool get mirror => _mirror;
 
   set mirror(bool mirror) {
     _mirror = mirror;
@@ -300,20 +300,20 @@ class UserView {
   final User user;
 
   dynamic _audioStream;
-  RCRTCAudioInputStream _remoteAudioStream;
+  RCRTCAudioInputStream? _remoteAudioStream;
   bool _audio = false;
 
   dynamic _videoStream;
-  RCRTCVideoInputStream _remoteVideoStream;
+  RCRTCVideoInputStream? _remoteVideoStream;
   bool _video = false;
 
-  Widget _widget;
+  Widget? _widget;
 }
 
 class StatusTable extends StatelessWidget {
   StatusTable(
     this.report, {
-    @required this.role,
+    required this.role,
     this.audio,
     this.video,
   });
@@ -415,8 +415,8 @@ class StatusTable extends StatelessWidget {
       ],
     ));
 
-    if (report?.statusVideoSends?.isNotEmpty ?? false) {
-      report.statusVideoSends.forEach((stream, status) {
+    if (report?.statusVideoSends.isNotEmpty ?? false) {
+      report?.statusVideoSends.forEach((stream, status) {
         rows.add(TableRow(
           children: [
             Text(
@@ -460,8 +460,8 @@ class StatusTable extends StatelessWidget {
       });
     }
 
-    if (report?.statusAudioSends?.isNotEmpty ?? false) {
-      report.statusAudioSends.forEach((stream, status) {
+    if (report?.statusAudioSends.isNotEmpty ?? false) {
+      report?.statusAudioSends.forEach((stream, status) {
         rows.add(TableRow(
           children: [
             Text(
@@ -517,8 +517,8 @@ class StatusTable extends StatelessWidget {
   }
 
   Widget _buildRemote(BuildContext context) {
-    StatusBean audio = getAudioStatus();
-    StatusBean video = getVideoStatus();
+    StatusBean? audio = getAudioStatus();
+    StatusBean? video = getVideoStatus();
     return Table(
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       textDirection: TextDirection.ltr,
@@ -664,16 +664,16 @@ class StatusTable extends StatelessWidget {
     );
   }
 
-  StatusBean getAudioStatus() {
-    if ((audio?.isNotEmpty ?? false) && (report?.statusAudioRcvs?.containsKey(audio) ?? false)) {
-      return report.statusAudioRcvs[audio];
+  StatusBean? getAudioStatus() {
+    if ((audio?.isNotEmpty ?? false) && (report?.statusAudioRcvs.containsKey(audio) ?? false)) {
+      return report?.statusAudioRcvs[audio];
     }
     return null;
   }
 
-  StatusBean getVideoStatus() {
-    if ((video?.isNotEmpty ?? false) && (report?.statusVideoRcvs?.containsKey(video) ?? false)) {
-      return report.statusVideoRcvs[video];
+  StatusBean? getVideoStatus() {
+    if ((video?.isNotEmpty ?? false) && (report?.statusVideoRcvs.containsKey(video) ?? false)) {
+      return report?.statusVideoRcvs[video];
     }
     return null;
   }
@@ -762,8 +762,8 @@ class StatusTable extends StatelessWidget {
       ],
     ));
 
-    if (report?.statusVideoRcvs?.isNotEmpty ?? false) {
-      report.statusVideoRcvs.forEach((stream, status) {
+    if (report?.statusVideoRcvs.isNotEmpty ?? false) {
+      report?.statusVideoRcvs.forEach((stream, status) {
         rows.add(TableRow(
           children: [
             Text(
@@ -807,8 +807,8 @@ class StatusTable extends StatelessWidget {
       });
     }
 
-    if (report?.statusAudioRcvs?.isNotEmpty ?? false) {
-      report.statusAudioRcvs.forEach((stream, status) {
+    if (report?.statusAudioRcvs.isNotEmpty ?? false) {
+      report?.statusAudioRcvs.forEach((stream, status) {
         rows.add(TableRow(
           children: [
             Text(
@@ -863,14 +863,14 @@ class StatusTable extends StatelessWidget {
     );
   }
 
-  final StatusReport report;
+  final StatusReport? report;
   final Role role;
-  final String video, audio;
+  final String? video, audio;
 }
 
 class MixConfig extends StatefulWidget {
   MixConfig({
-    @required this.callback,
+    required this.callback,
   });
 
   @override
@@ -909,7 +909,7 @@ class _MixConfigState extends State<MixConfig> {
                       '自定义',
                       value: MixLayoutMode.CUSTOM,
                       groupValue: widget.config.mode,
-                      onChanged: (mode) {
+                      onChanged: (dynamic mode) {
                         setState(() {
                           widget.config.mode = mode;
                         });
@@ -920,7 +920,7 @@ class _MixConfigState extends State<MixConfig> {
                       '悬浮',
                       value: MixLayoutMode.SUSPENSION,
                       groupValue: widget.config.mode,
-                      onChanged: (mode) {
+                      onChanged: (dynamic mode) {
                         setState(() {
                           widget.config.mode = mode;
                         });
@@ -931,7 +931,7 @@ class _MixConfigState extends State<MixConfig> {
                       '自适应',
                       value: MixLayoutMode.ADAPTIVE,
                       groupValue: widget.config.mode,
-                      onChanged: (mode) {
+                      onChanged: (dynamic mode) {
                         setState(() {
                           widget.config.mode = mode;
                         });
@@ -1064,7 +1064,7 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   Widget _buildVideoConfig(BuildContext context) {
-    VideoLayout layout = widget.config.mediaConfig?.videoConfig?.videoLayout;
+    VideoLayout? layout = widget.config.mediaConfig?.videoConfig?.videoLayout;
     if (layout != null) {
       return Row(
         children: [
@@ -1084,7 +1084,7 @@ class _MixConfigState extends State<MixConfig> {
           ),
           Icons.clear.onClick(() {
             setState(() {
-              widget.config.mediaConfig.videoConfig.videoLayout = null;
+              widget.config.mediaConfig?.videoConfig?.videoLayout = null;
               _mediaConfigNullable();
             });
           }),
@@ -1100,7 +1100,7 @@ class _MixConfigState extends State<MixConfig> {
     TextEditingController widthInputController = TextEditingController();
     TextEditingController heightInputController = TextEditingController();
 
-    VideoLayout layout = widget.config.mediaConfig?.videoConfig?.videoLayout;
+    VideoLayout? layout = widget.config.mediaConfig?.videoConfig?.videoLayout;
     bitrateInputController.text = '${layout?.bitrate ?? 3000}';
     fpsInputController.text = '${layout?.fps ?? 30}';
     widthInputController.text = '${layout?.width ?? 720}';
@@ -1209,7 +1209,7 @@ class _MixConfigState extends State<MixConfig> {
             ],
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 FocusScope.of(context).requestFocus(FocusNode());
@@ -1221,20 +1221,16 @@ class _MixConfigState extends State<MixConfig> {
                 if (fps.isEmpty) return 'FPS should not be null!'.toast();
                 if (width.isEmpty) return 'Width should not be null!'.toast();
                 if (height.isEmpty) return 'Height should not be null!'.toast();
-                VideoLayout layout = VideoLayout();
-                layout.bitrate = bitrate.toInt;
-                layout.fps = fps.toInt;
-                layout.width = width.toInt;
-                layout.height = height.toInt;
+                VideoLayout layout = VideoLayout(bitrate.toInt as int, fps.toInt as int, width.toInt as int, height.toInt as int);
                 if (widget.config.mediaConfig == null) widget.config.mediaConfig = MediaConfig();
-                if (widget.config.mediaConfig.videoConfig == null) widget.config.mediaConfig.videoConfig = VideoConfig();
+                if (widget.config.mediaConfig?.videoConfig == null) widget.config.mediaConfig?.videoConfig = VideoConfig();
                 setState(() {
-                  widget.config.mediaConfig.videoConfig.videoLayout = layout;
+                  widget.config.mediaConfig?.videoConfig?.videoLayout = layout;
                 });
                 Navigator.pop(context);
               },
             ),
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -1247,7 +1243,7 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   Widget _buildTinyVideoConfig(BuildContext context) {
-    VideoLayout layout = widget.config.mediaConfig?.videoConfig?.tinyVideoLayout;
+    VideoLayout? layout = widget.config.mediaConfig?.videoConfig?.tinyVideoLayout;
     if (layout != null) {
       return Row(
         children: [
@@ -1267,7 +1263,7 @@ class _MixConfigState extends State<MixConfig> {
           ),
           Icons.clear.onClick(() {
             setState(() {
-              widget.config.mediaConfig.videoConfig.tinyVideoLayout = null;
+              widget.config.mediaConfig?.videoConfig?.tinyVideoLayout = null;
               _mediaConfigNullable();
             });
           }),
@@ -1283,7 +1279,7 @@ class _MixConfigState extends State<MixConfig> {
     TextEditingController widthInputController = TextEditingController();
     TextEditingController heightInputController = TextEditingController();
 
-    VideoLayout layout = widget.config.mediaConfig?.videoConfig?.tinyVideoLayout;
+    VideoLayout? layout = widget.config.mediaConfig?.videoConfig?.tinyVideoLayout;
     bitrateInputController.text = '${layout?.bitrate ?? 300}';
     fpsInputController.text = '${layout?.fps ?? 15}';
     widthInputController.text = '${layout?.width ?? 180}';
@@ -1392,7 +1388,7 @@ class _MixConfigState extends State<MixConfig> {
             ],
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 FocusScope.of(context).requestFocus(FocusNode());
@@ -1404,20 +1400,16 @@ class _MixConfigState extends State<MixConfig> {
                 if (fps.isEmpty) return 'FPS should not be null!'.toast();
                 if (width.isEmpty) return 'Width should not be null!'.toast();
                 if (height.isEmpty) return 'Height should not be null!'.toast();
-                VideoLayout layout = VideoLayout();
-                layout.bitrate = bitrate.toInt;
-                layout.fps = fps.toInt;
-                layout.width = width.toInt;
-                layout.height = height.toInt;
+                VideoLayout layout = VideoLayout(bitrate.toInt as int, fps.toInt as int, width.toInt as int, height.toInt as int);
                 if (widget.config.mediaConfig == null) widget.config.mediaConfig = MediaConfig();
-                if (widget.config.mediaConfig.videoConfig == null) widget.config.mediaConfig.videoConfig = VideoConfig();
+                if (widget.config.mediaConfig?.videoConfig == null) widget.config.mediaConfig?.videoConfig = VideoConfig();
                 setState(() {
-                  widget.config.mediaConfig.videoConfig.tinyVideoLayout = layout;
+                  widget.config.mediaConfig?.videoConfig?.tinyVideoLayout = layout;
                 });
                 Navigator.pop(context);
               },
             ),
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -1430,7 +1422,7 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   Widget _buildAudioConfig(BuildContext context) {
-    AudioConfig config = widget.config.mediaConfig?.audioConfig;
+    AudioConfig? config = widget.config.mediaConfig?.audioConfig;
     if (config != null) {
       return Row(
         children: [
@@ -1449,7 +1441,7 @@ class _MixConfigState extends State<MixConfig> {
           ),
           Icons.clear.onClick(() {
             setState(() {
-              widget.config.mediaConfig.audioConfig = null;
+              widget.config.mediaConfig?.audioConfig = null;
               _mediaConfigNullable();
             });
           }),
@@ -1462,7 +1454,7 @@ class _MixConfigState extends State<MixConfig> {
   void _showSetAudioConfig(BuildContext context) {
     TextEditingController bitrateInputController = TextEditingController();
 
-    AudioConfig config = widget.config.mediaConfig?.audioConfig;
+    AudioConfig? config = widget.config.mediaConfig?.audioConfig;
     bitrateInputController.text = '${config?.bitrate ?? 40}';
 
     showDialog(
@@ -1496,22 +1488,21 @@ class _MixConfigState extends State<MixConfig> {
             ],
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 FocusScope.of(context).requestFocus(FocusNode());
                 String bitrate = bitrateInputController.text;
                 if (bitrate.isEmpty) return 'Bitrate should not be null!'.toast();
-                AudioConfig config = AudioConfig();
-                config.bitrate = bitrate.toInt;
+                AudioConfig config = AudioConfig(bitrate.toInt as int);
                 if (widget.config.mediaConfig == null) widget.config.mediaConfig = MediaConfig();
                 setState(() {
-                  widget.config.mediaConfig.audioConfig = config;
+                  widget.config.mediaConfig?.audioConfig = config;
                 });
                 Navigator.pop(context);
               },
             ),
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -1524,7 +1515,7 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   Widget _buildVideoExtendConfig(BuildContext context) {
-    VideoExtend extend = widget.config.mediaConfig?.videoConfig?.extend;
+    VideoExtend? extend = widget.config.mediaConfig?.videoConfig?.extend;
     if (extend != null) {
       return Row(
         children: [
@@ -1543,7 +1534,7 @@ class _MixConfigState extends State<MixConfig> {
           ),
           Icons.clear.onClick(() {
             setState(() {
-              widget.config.mediaConfig.videoConfig.extend = null;
+              widget.config.mediaConfig?.videoConfig?.extend = null;
               _mediaConfigNullable();
             });
           }),
@@ -1554,10 +1545,10 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   void _mediaConfigNullable() {
-    if (widget.config.mediaConfig.videoConfig.extend == null && widget.config.mediaConfig.videoConfig.videoLayout == null && widget.config.mediaConfig.videoConfig.tinyVideoLayout == null) {
-      widget.config.mediaConfig.videoConfig = null;
+    if (widget.config.mediaConfig?.videoConfig?.extend == null && widget.config.mediaConfig?.videoConfig?.videoLayout == null && widget.config.mediaConfig?.videoConfig?.tinyVideoLayout == null) {
+      widget.config.mediaConfig?.videoConfig = null;
     }
-    if (widget.config.mediaConfig.videoConfig == null && widget.config.mediaConfig.audioConfig == null) {
+    if (widget.config.mediaConfig?.videoConfig == null && widget.config.mediaConfig?.audioConfig == null) {
       widget.config.mediaConfig = null;
     }
   }
@@ -1585,21 +1576,20 @@ class _MixConfigState extends State<MixConfig> {
             ],
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 FocusScope.of(context).requestFocus(FocusNode());
-                VideoExtend extend = VideoExtend();
-                extend.renderMode = mode;
+                VideoExtend extend = VideoExtend(mode);
                 if (widget.config.mediaConfig == null) widget.config.mediaConfig = MediaConfig();
-                if (widget.config.mediaConfig.videoConfig == null) widget.config.mediaConfig.videoConfig = VideoConfig();
+                if (widget.config.mediaConfig?.videoConfig == null) widget.config.mediaConfig?.videoConfig = VideoConfig();
                 setState(() {
-                  widget.config.mediaConfig.videoConfig.extend = extend;
+                  widget.config.mediaConfig?.videoConfig?.extend = extend;
                 });
                 Navigator.pop(context);
               },
             ),
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -1639,7 +1629,7 @@ class _MixConfigState extends State<MixConfig> {
       ),
     );
 
-    widget.config.customLayoutList?.customLayout?.forEach(
+    widget.config.customLayoutList?.customLayout.forEach(
       (layout) {
         list.add(
           Row(
@@ -1662,7 +1652,7 @@ class _MixConfigState extends State<MixConfig> {
               ),
               Icons.clear.onClick(() {
                 setState(() {
-                  widget.config.customLayoutList.customLayout.remove(layout);
+                  widget.config.customLayoutList?.customLayout.remove(layout);
                   _customNullable();
                 });
               }),
@@ -1683,7 +1673,7 @@ class _MixConfigState extends State<MixConfig> {
   }
 
   void _customNullable() {
-    if (widget.config.customLayoutList.customLayout.isEmpty) widget.config.customLayoutList = null;
+    if (widget.config.customLayoutList?.customLayout.isEmpty ?? true) widget.config.customLayoutList = null;
   }
 
   void _showSetSubLayout(BuildContext context) {
@@ -1820,7 +1810,7 @@ class _MixConfigState extends State<MixConfig> {
             ],
           ),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Ok'),
               onPressed: () {
                 FocusScope.of(context).requestFocus(FocusNode());
@@ -1836,22 +1826,16 @@ class _MixConfigState extends State<MixConfig> {
                 if (y.isEmpty) return 'Y should not be null!'.toast();
                 if (width.isEmpty) return 'Width should not be null!'.toast();
                 if (height.isEmpty) return 'Height should not be null!'.toast();
-                CustomLayout layout = CustomLayout();
-                layout.userId = uid;
-                layout.streamId = sid;
-                layout.x = x.toInt;
-                layout.y = y.toInt;
-                layout.width = width.toInt;
-                layout.height = height.toInt;
+                CustomLayout layout = CustomLayout(uid, sid, x.toInt as int, y.toInt as int, width.toInt as int, height.toInt as int);
                 if (widget.config.customLayoutList == null) widget.config.customLayoutList = CustomLayoutList([]);
                 setState(() {
-                  widget.config.customLayoutList.customLayout.removeWhere((element) => element.streamId == layout.streamId);
-                  widget.config.customLayoutList.customLayout.add(layout);
+                  widget.config.customLayoutList?.customLayout.removeWhere((element) => element.streamId == layout.streamId);
+                  widget.config.customLayoutList?.customLayout.add(layout);
                 });
                 Navigator.pop(context);
               },
             ),
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -1865,8 +1849,8 @@ class _MixConfigState extends State<MixConfig> {
 
   List<Stream> _streams() {
     List<Stream> list = [];
-    List<RCRTCRemoteUser> users = RCRTCEngine.getInstance().getRoom().remoteUserList;
-    users.forEach((user) {
+    List<RCRTCRemoteUser>? users = RCRTCEngine.getInstance().getRoom()?.remoteUserList;
+    users?.forEach((user) {
       List<RCRTCInputStream> streams = user.streamList;
       streams.forEach((stream) {
         if (stream.type == MediaType.video) {
@@ -1875,7 +1859,10 @@ class _MixConfigState extends State<MixConfig> {
       });
     });
     RCRTCEngine.getInstance().getDefaultVideoStream().then((stream) {
-      list.add(Stream(DefaultData.user.id, stream.streamId));
+      var user = DefaultData.user;
+      if (user != null && stream != null) {
+        list.add(Stream(user.id, stream.streamId));
+      }
     });
     return list;
   }
@@ -1891,12 +1878,12 @@ class _MixConfigState extends State<MixConfig> {
 
     widget.config.hostUserId = _mainUserIdInputController.text;
     widget.config.hostStreamId = _mainStreamIdInputController.text;
-    widget.callback?.call(widget.config);
+    widget.callback.call(widget.config);
   }
 
   void _reset() async {
-    _mainUserIdInputController.text = RCRTCEngine.getInstance().getRoom().localUser.id;
-    _mainStreamIdInputController.text = (await RCRTCEngine.getInstance().getDefaultVideoStream()).streamId;
+    _mainUserIdInputController.text = "${RCRTCEngine.getInstance().getRoom()?.localUser.id}";
+    _mainStreamIdInputController.text = "${(await RCRTCEngine.getInstance().getDefaultVideoStream())?.streamId}";
     widget.config.mode = MixLayoutMode.SUSPENSION;
     widget.config.mediaConfig = null;
     widget.config.customLayoutList = null;
@@ -1911,19 +1898,17 @@ class _MixConfigState extends State<MixConfig> {
 
 class CDNConfig extends StatefulWidget {
   CDNConfig({
-    @required this.id,
-    @required this.callback,
-  }) {
-    config.mediaConfig = MediaConfig();
-    config.mediaConfig.cdn = [];
-  }
+    required this.id,
+    required this.info,
+    required this.cdnList,
+  });
 
   @override
   _CDNConfigState createState() => _CDNConfigState(this);
 
-  final RCRTCMixConfig config = RCRTCMixConfig();
   final String id;
-  final Callback callback;
+  final List<CDNInfo> cdnList;
+  final RCRTCLiveInfo info;
 }
 
 class _CDNConfigState extends State<CDNConfig> {
@@ -1940,81 +1925,53 @@ class _CDNConfigState extends State<CDNConfig> {
     return Scaffold(
       appBar: AppBar(
         title: Text('配置CDN'),
-      ),
-      body: Column(
-        children: [
-          Divider(
-            height: 20.dp,
-            color: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.add,
+            ),
+            onPressed: () => _showAddCDN(context),
           ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      body: ListView.separated(
+        padding: EdgeInsets.all(20.dp),
+        itemCount: widget.cdnList.length,
+        itemBuilder: (context, index) {
+          CDNInfo cdn = widget.cdnList[index];
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                'CDN推流地址',
-                softWrap: true,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  color: Colors.black,
-                  decoration: TextDecoration.none,
+              Expanded(
+                child: Text(
+                  '${index + 1} 播放地址 \nRTMP地址：${cdn.rtmp} \nHLS地址：${cdn.hls} \nFLV地址：${cdn.flv}',
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: Colors.black,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ),
               VerticalDivider(
                 width: 10.dp,
                 color: Colors.transparent,
               ),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Button(
-                          '增加',
-                          size: 15.sp,
-                          callback: () => _showAddCDN(context),
-                        ),
-                        VerticalDivider(
-                          width: 10.dp,
-                          color: Colors.transparent,
-                        ),
-                        Button(
-                          '清空',
-                          size: 15.sp,
-                          callback: () => _clearCDNs(),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildCDNs(context),
-                    ),
-                  ],
-                ),
-              ),
+              Icons.clear.onClick(() {
+                setState(() {
+                  widget.info.removePublishStreamUrl(cdn.push);
+                  widget.cdnList.remove(cdn);
+                });
+              }),
             ],
-          ),
-          Divider(
-            height: 20.dp,
+          );
+        },
+        separatorBuilder: (context, index) {
+          return Divider(
+            height: 15.dp,
             color: Colors.transparent,
-          ),
-          Row(
-            children: [
-              Spacer(),
-              Button(
-                '提交',
-                callback: () => _ok(),
-              ),
-              Spacer(),
-            ],
-          ),
-          Divider(
-            height: 20.dp,
-            color: Colors.transparent,
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -2028,7 +1985,7 @@ class _CDNConfigState extends State<CDNConfig> {
           title: Text('请选择CDN'),
           content: _buildCDNSelector(context, list),
           actions: [
-            FlatButton(
+            TextButton(
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.pop(context);
@@ -2043,7 +2000,7 @@ class _CDNConfigState extends State<CDNConfig> {
   Future<List<CDN>> _loadCDNs(BuildContext context) {
     Loading.show(context);
     Completer<List<CDN>> completer = Completer();
-    List<CDN> list = List();
+    List<CDN> list = [];
     Http.get(
       '${GlobalConfig.host}/cdns',
       null,
@@ -2073,12 +2030,13 @@ class _CDNConfigState extends State<CDNConfig> {
         itemBuilder: (context, index) {
           return list[index].name.onClick(
             () async {
-              String url = await _loadCDN(context, list[index].id);
-              if (url.isEmpty)
+              CDNInfo? info = await _loadCDN(context, list[index].id);
+              if (info == null)
                 '获取CDN地址失败'.toast();
               else
                 setState(() {
-                  widget.config.mediaConfig.cdn.add(CDNPushUrl(url));
+                  widget.info.addPublishStreamUrl(info.push);
+                  widget.cdnList.add(info);
                 });
               Navigator.pop(context);
             },
@@ -2096,70 +2054,25 @@ class _CDNConfigState extends State<CDNConfig> {
     );
   }
 
-  Future<String> _loadCDN(BuildContext context, String id) async {
+  Future<CDNInfo?> _loadCDN(BuildContext context, String id) async {
     Loading.show(context);
-    String session = await RCRTCEngine.getInstance().getRoom().getSessionId();
-    Completer<String> completer = Completer();
+    String? session = await RCRTCEngine.getInstance().getRoom()?.getSessionId();
+    Completer<CDNInfo> completer = Completer();
     Http.get(
       '${GlobalConfig.host}/cdn/$id/sealLive/$session',
       null,
       (error, data) {
         Loading.dismiss(context);
-        completer.complete(data);
+        print("GPTest data = $data");
+        completer.complete(CDNInfo.fromJons(jsonDecode(data)));
       },
       (error) {
         Loading.dismiss(context);
-        completer.complete('');
+        completer.complete(null);
       },
       _token,
     );
     return completer.future;
-  }
-
-  void _clearCDNs() {
-    setState(() {
-      widget.config.mediaConfig.cdn.clear();
-    });
-  }
-
-  List<Widget> _buildCDNs(BuildContext context) {
-    List<Widget> list = [];
-    widget.config.mediaConfig.cdn.forEach(
-      (cdn) {
-        list.add(
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  '地址 ${list.length + 1}：${cdn.pushUrl}',
-                  softWrap: true,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    color: Colors.black,
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ),
-              VerticalDivider(
-                width: 10.dp,
-                color: Colors.transparent,
-              ),
-              Icons.clear.onClick(() {
-                setState(() {
-                  widget.config.mediaConfig.cdn.remove(cdn);
-                });
-              }),
-            ],
-          ),
-        );
-      },
-    );
-    return list;
-  }
-
-  void _ok() {
-    widget.callback?.call(widget.config);
   }
 
   final CDNConfig widget;
@@ -2169,7 +2082,7 @@ class _CDNConfigState extends State<CDNConfig> {
 
 class BoxFitChooser extends StatelessWidget {
   BoxFitChooser({
-    @required this.fit,
+    required this.fit,
     this.onSelected,
   });
 
@@ -2228,14 +2141,14 @@ class BoxFitChooser extends StatelessWidget {
         //   child: Text('None'),
         // ),
       ],
-      onChanged: (value) {
+      onChanged: (dynamic value) {
         onSelected?.call(value);
       },
     );
   }
 
   final BoxFit fit;
-  final void Function(BoxFit value) onSelected;
+  final void Function(BoxFit value)? onSelected;
 }
 
 class MessagePanel extends StatefulWidget {
@@ -2255,7 +2168,8 @@ class _MessagePanelState extends State<MessagePanel> {
     };
   }
 
-  void _received(Message message) {
+  void _received(Message? message) {
+    if (message == null) return;
     setState(() {
       _messages.add(message);
     });
@@ -2299,7 +2213,7 @@ class _MessagePanelState extends State<MessagePanel> {
               shrinkWrap: true,
               padding: EdgeInsets.symmetric(horizontal: 10.dp),
               itemBuilder: (context, index) {
-                return '${_messages[index].senderUserId}${_messages[index].senderUserId == DefaultData.user.id ? '(我)' : ''}:${_messages[index].content.conversationDigest()}'.toText();
+                return '${_messages[index].senderUserId}${_messages[index].senderUserId == DefaultData.user?.id ? '(我)' : ''}:${_messages[index].content?.conversationDigest()}'.toText();
               },
               separatorBuilder: (context, index) {
                 return Divider(

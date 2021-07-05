@@ -7,9 +7,9 @@ typedef RCRTCFileStreamOnEvent = void Function();
 
 class RCRTCFileVideoOutputStream extends RCRTCVideoOutputStream {
   static const tag = 'FileVideoOutputStream';
-  RCRTCFileStreamOnEvent onStart;
-  RCRTCFileStreamOnEvent onComplete;
-  RCRTCFileStreamOnEvent onFailed;
+  RCRTCFileStreamOnEvent? onStart;
+  RCRTCFileStreamOnEvent? onComplete;
+  RCRTCFileStreamOnEvent? onFailed;
 
   RCRTCFileVideoOutputStream.fromJson(stream) : super.fromJson(stream);
 
@@ -19,13 +19,13 @@ class RCRTCFileVideoOutputStream extends RCRTCVideoOutputStream {
     super.methodHandler(call);
     switch (call.method) {
       case 'onStart':
-        if (onStart != null) onStart();
+        onStart?.call();
         break;
       case 'onComplete':
-        if (onComplete != null) onComplete();
+        onComplete?.call();
         break;
       case 'onFailed':
-        if (onFailed != null) onFailed();
+        onFailed?.call();
         break;
     }
   }

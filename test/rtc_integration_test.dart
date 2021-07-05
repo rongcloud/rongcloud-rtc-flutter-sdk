@@ -23,7 +23,7 @@ void main() {
   group("Meeting Mode Testing", () {
     test("Connect IM", () async {
       RongIMClient.init(key);
-      bool ok = await connectIM();
+      bool ok = await (connectIM() as FutureOr<bool>);
       expect(ok, true);
     });
 
@@ -44,13 +44,13 @@ void main() {
     });
 
     test("Open Camera", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.startCamera();
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.startCamera();
     });
 
     test("Close Camera", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.stopCamera();
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.stopCamera();
     });
 
     test("Enable Speaker", () async {
@@ -66,44 +66,45 @@ void main() {
       expect(stream != null, true);
     });
 
-    int texture;
+    int texture = -1;
     test("Create Texture", () async {
       texture = await RCRTCEngine.getInstance().createVideoRenderer();
       expect(texture >= 0, true);
     });
 
     test("Set Texture", () async {
+      expect(texture >= 0, true);
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.setTextureView(texture);
+      await stream?.setTextureView(texture);
     });
 
     test("Set Video Config", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
       RCRTCVideoStreamConfig config = RCRTCVideoStreamConfig(200, 1000, RCRTCFps.fps_30, RCRTCVideoResolution.RESOLUTION_720_1280);
-      await stream.setVideoConfig(config);
+      await stream?.setVideoConfig(config);
     });
 
     test("Mute Video Stream", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      int code = await stream.mute(true);
+      int code = await stream?.mute(true) ?? -1;
       expect(code, 0);
     });
 
     test("Dis Mute Video Stream", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      int code = await stream.mute(false);
+      int code = await stream?.mute(false) ?? -1;
       expect(code, 0);
     });
 
     test("Mute Audio Stream", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await stream.mute(true);
+      int code = await stream?.mute(true) ?? -1;
       expect(code, 0);
     });
 
     test("Dis Mute Audio Stream", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await stream.mute(false);
+      int code = await stream?.mute(false) ?? -1;
       expect(code, 0);
     });
 
@@ -112,17 +113,17 @@ void main() {
     });
 
     test("Publish Normal Streams", () async {
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.publishDefaultStreams();
+      int? code = await RCRTCEngine.getInstance().getRoom()?.localUser.publishDefaultStreams();
       expect(code, 0);
     });
 
     test("UnPublish Streams", () async {
-      await RCRTCEngine.getInstance().getRoom().localUser.unPublishDefaultStreams();
+      await RCRTCEngine.getInstance().getRoom()?.localUser.unPublishDefaultStreams();
     });
 
     test("Publish Normal Video Streams", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.publishStream(stream);
+      int? code = await RCRTCEngine.getInstance().getRoom()?.localUser.publishStream(stream);
       expect(code, 0);
     });
 
@@ -188,67 +189,67 @@ void main() {
 
     test("UnPublish Normal Video Streams", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.unPublishStream(stream);
+      int? code = await RCRTCEngine.getInstance().getRoom()?.localUser.unPublishStream(stream);
       expect(code, 0);
     });
 
     test("Publish Normal Audio Streams", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.publishStream(stream);
+      int? code = await RCRTCEngine.getInstance().getRoom()?.localUser.publishStream(stream);
       expect(code, 0);
     });
 
     test("UnPublish Normal Audio Streams", () async {
       var stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await RCRTCEngine.getInstance().getRoom().localUser.unPublishStream(stream);
+      int? code = await RCRTCEngine.getInstance().getRoom()?.localUser.unPublishStream(stream);
       expect(code, 0);
     });
 
     test("Set Attribute Value", () async {
-      RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
+      RCRTCLocalUser? user = RCRTCEngine.getInstance().getRoom()?.localUser;
       MessageContent message = MessageContent();
-      int code = await user.setAttributeValue('Test', '1', message);
+      int? code = await user?.setAttributeValue('Test', '1', message);
       expect(code, 0);
     });
 
     test("Get Attribute Value", () async {
-      RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
-      Map<String, String> map = await user.getAttributes(['Test']);
-      expect(map.isNotEmpty, true);
+      RCRTCLocalUser? user = RCRTCEngine.getInstance().getRoom()?.localUser;
+      Map<String, String>? map = await user?.getAttributes(['Test']);
+      expect(map?.isNotEmpty, true);
     });
 
     test("Delete Attribute Value", () async {
-      RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
+      RCRTCLocalUser? user = RCRTCEngine.getInstance().getRoom()?.localUser;
       MessageContent message = MessageContent();
-      int code = await user.deleteAttributes(['Test'], message);
+      int? code = await user?.deleteAttributes(['Test'], message);
       expect(code, 0);
     });
 
     test("Subscribe Remote User Streams", () {
-      var room = RCRTCEngine.getInstance().getRoom();
-      room.remoteUserList.forEach((user) async {
-        int code = await room.localUser.subscribeStreams(user.streamList);
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+      room?.remoteUserList.forEach((user) async {
+        int? code = await room.localUser.subscribeStreams(user.streamList);
         expect(code, 0);
       });
     });
 
     test("Switch Tiny Remote User Streams", () {
-      var room = RCRTCEngine.getInstance().getRoom();
-      room.remoteUserList.forEach((user) async {
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+      room?.remoteUserList.forEach((user) async {
         user.switchToTinyStream();
       });
     });
 
     test("Switch Normal Remote User Streams", () {
-      var room = RCRTCEngine.getInstance().getRoom();
-      room.remoteUserList.forEach((user) async {
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+      room?.remoteUserList.forEach((user) async {
         user.switchToNormalStream();
       });
     });
 
     test("Unsubscribe Remote User Streams", () {
-      var room = RCRTCEngine.getInstance().getRoom();
-      room.remoteUserList.forEach((user) async {
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+      room?.remoteUserList.forEach((user) async {
         int code = await room.localUser.unsubscribeStreams(user.streamList);
         expect(code, 0);
       });
@@ -288,30 +289,30 @@ void main() {
     });
 
     test("Set Room Attribute Value", () async {
-      RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
       MessageContent message = MessageContent();
-      int code = await room.setRoomAttributeValue('Test', '1', message);
+      int? code = await room?.setRoomAttributeValue('Test', '1', message);
       expect(code, 0);
     });
 
     test("Get Room Attribute Value", () async {
-      RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
-      var map = await room.getRoomAttributes(['Test']);
-      expect(map.isNotEmpty, true);
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+      var map = await room?.getRoomAttributes(['Test']);
+      expect(map?.isNotEmpty, true);
     });
 
     test("Delete Room Attribute Value", () async {
-      RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
       MessageContent message = MessageContent();
-      int code = await room.deleteRoomAttributes(['Test'], message);
+      int? code = await room?.deleteRoomAttributes(['Test'], message);
       expect(code, 0);
     });
 
     test("Send Message", () async {
-      RCRTCRoom room = RCRTCEngine.getInstance().getRoom();
+      RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
       MessageContent message = MessageContent();
       Completer completer = Completer();
-      room.sendMessage(message, (id) {
+      room?.sendMessage(message, (id) {
         completer.complete(true);
       }, (id, code) {
         completer.complete(false);
@@ -320,54 +321,54 @@ void main() {
     });
 
     test("Open Camera", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.startCamera();
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.startCamera();
     });
 
     test("Switch Camera", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      bool front = await stream.switchCamera();
-      expect(front, stream.isFrontCamera());
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      bool? front = await stream?.switchCamera();
+      expect(front, stream?.isFrontCamera());
     });
 
     test("Set Camera Capture Orientation", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.setCameraCaptureOrientation(RCRTCCameraCaptureOrientation.LandscapeLeft);
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.setCameraCaptureOrientation(RCRTCCameraCaptureOrientation.LandscapeLeft);
     });
 
     test("Enable Tiny Stream", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.enableTinyStream(true);
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.enableTinyStream(true);
     });
 
     test("Disable Tiny Stream", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.enableTinyStream(false);
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.enableTinyStream(false);
     });
 
     test("Disable Microphone", () async {
-      RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await stream.setMicrophoneDisable(true);
+      RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+      int code = await stream?.setMicrophoneDisable(true) ?? -1;
       expect(code, 0);
     });
 
     test("Enable Microphone", () async {
-      RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      int code = await stream.setMicrophoneDisable(false);
+      RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+      int code = await stream?.setMicrophoneDisable(false) ?? -1;
       expect(code, 0);
     });
 
     test("Change Volume", () async {
-      RCRTCMicOutputStream stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
-      await stream.adjustRecordingVolume(80);
-      int volume = await stream.getRecordingVolume();
+      RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+      await stream?.adjustRecordingVolume(80);
+      int volume = await stream?.getRecordingVolume() ?? -1;
       expect(volume, 80);
     });
 
-    RCRTCLiveInfo _info;
+    late RCRTCLiveInfo _info;
     test("Publish Live Streams", () async {
       Completer completer = Completer();
-      RCRTCEngine.getInstance().getRoom().localUser.publishDefaultLiveStreams((info) {
+      RCRTCEngine.getInstance().getRoom()?.localUser.publishDefaultLiveStreams((info) {
         _info = info;
         completer.complete(true);
       }, (code, message) {
@@ -377,12 +378,15 @@ void main() {
     });
 
     test("Change Mix Config", () async {
-      RCRTCMixConfig config = RCRTCMixConfig();
-      RCRTCLocalUser user = RCRTCEngine.getInstance().getRoom().localUser;
-      config.mode = MixLayoutMode.ADAPTIVE;
-      config.hostUserId = user.id;
+      RCRTCLocalUser? user = RCRTCEngine.getInstance().getRoom()?.localUser;
+      expect(user != null, true);
+      String uid = user!.id;
       List<RCRTCOutputStream> streams = await user.getStreams();
-      config.hostStreamId = streams.whereType<RCRTCVideoOutputStream>().first.streamId;
+      String sid = streams.whereType<RCRTCVideoOutputStream>().first.streamId;
+      RCRTCMixConfig config = RCRTCMixConfig();
+      config.mode = MixLayoutMode.ADAPTIVE;
+      config.hostUserId = uid;
+      config.hostStreamId = sid;
       int code = await _info.setMixConfig(config);
       expect(code, 0);
     });
@@ -398,12 +402,12 @@ void main() {
     // });
 
     test("UnPublish Streams", () async {
-      await RCRTCEngine.getInstance().getRoom().localUser.unPublishDefaultStreams();
+      await RCRTCEngine.getInstance().getRoom()?.localUser.unPublishDefaultStreams();
     });
 
     test("Close Camera", () async {
-      RCRTCCameraOutputStream stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
-      await stream.stopCamera();
+      RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+      await stream?.stopCamera();
     });
 
     test("UnInit Engine", () async {

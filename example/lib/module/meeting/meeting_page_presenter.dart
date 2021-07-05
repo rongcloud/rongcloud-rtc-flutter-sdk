@@ -1,6 +1,6 @@
-import 'package:FlutterRTC/data/data.dart';
-import 'package:FlutterRTC/frame/template/mvp/model.dart';
-import 'package:FlutterRTC/frame/template/mvp/presenter.dart';
+import 'package:rc_rtc_flutter_example/data/data.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/model.dart';
+import 'package:rc_rtc_flutter_example/frame/template/mvp/presenter.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rongcloud_rtc_plugin/rcrtc_error_code.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
@@ -16,10 +16,10 @@ class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Pre
 
   @override
   Future<void> init(BuildContext context) async {
-    Map<String, dynamic> arguments = ModalRoute.of(context).settings.arguments;
+    Map<String, dynamic> arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     Config config = Config.fromJson(arguments);
 
-    view?.onLocalViewCreated(await model?.createLocalView());
+    view.onLocalViewCreated(await model.createLocalView());
 
     await changeVideoConfig(config.videoConfig);
     await changeMic(config.mic);
@@ -34,103 +34,103 @@ class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Pre
 
     await changeTinyVideoConfig(tinyConfig);
 
-    var room = RCRTCEngine.getInstance().getRoom();
-    room.remoteUserList.forEach((user) {
-      view?.onUserJoin(User.remote(user.id));
+    RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+    room?.remoteUserList.forEach((user) {
+      view.onUserJoin(User.remote(user.id));
       var audios = user.streamList.whereType<RCRTCAudioInputStream>();
-      if (audios.isNotEmpty) view?.onUserAudioStatusChanged(user.id, true);
+      if (audios.isNotEmpty) view.onUserAudioStatusChanged(user.id, true);
       var videos = user.streamList.whereType<RCRTCVideoInputStream>();
-      if (videos.isNotEmpty) view?.onUserVideoStatusChanged(user.id, true);
+      if (videos.isNotEmpty) view.onUserVideoStatusChanged(user.id, true);
     });
-    room.onRemoteUserJoined = (user) {
-      view?.onUserJoin(User.remote(user.id));
+    room?.onRemoteUserJoined = (user) {
+      view.onUserJoin(User.remote(user.id));
     };
-    room.onRemoteUserOffline = (user) {
-      view?.onUserLeft(user.id);
+    room?.onRemoteUserOffline = (user) {
+      view.onUserLeft(user.id);
     };
-    room.onRemoteUserLeft = (user) {
-      view?.onUserLeft(user.id);
+    room?.onRemoteUserLeft = (user) {
+      view.onUserLeft(user.id);
     };
-    room.onRemoteUserPublishResource = (user, streams) {
+    room?.onRemoteUserPublishResource = (user, streams) {
       var audios = streams.whereType<RCRTCAudioInputStream>();
-      if (audios.isNotEmpty) view?.onUserAudioStatusChanged(user.id, true);
+      if (audios.isNotEmpty) view.onUserAudioStatusChanged(user.id, true);
       var videos = streams.whereType<RCRTCVideoInputStream>();
-      if (videos.isNotEmpty) view?.onUserVideoStatusChanged(user.id, true);
+      if (videos.isNotEmpty) view.onUserVideoStatusChanged(user.id, true);
     };
-    room.onRemoteUserUnPublishResource = (user, streams) {
+    room?.onRemoteUserUnPublishResource = (user, streams) {
       var audios = streams.whereType<RCRTCAudioInputStream>();
-      if (audios.isNotEmpty) view?.onUserAudioStatusChanged(user.id, false);
+      if (audios.isNotEmpty) view.onUserAudioStatusChanged(user.id, false);
       var videos = streams.whereType<RCRTCVideoInputStream>();
-      if (videos.isNotEmpty) view?.onUserVideoStatusChanged(user.id, false);
+      if (videos.isNotEmpty) view.onUserVideoStatusChanged(user.id, false);
     };
   }
 
   @override
   Future<bool> changeMic(bool open) {
-    return model?.changeMic(open);
+    return model.changeMic(open);
   }
 
   @override
   Future<bool> changeCamera(bool open) {
-    return model?.changeCamera(open);
+    return model.changeCamera(open);
   }
 
   @override
   Future<bool> changeAudio(bool publish) {
-    return model?.changeAudio(publish);
+    return model.changeAudio(publish);
   }
 
   @override
   Future<bool> changeVideo(bool publish) {
-    return model?.changeVideo(publish);
+    return model.changeVideo(publish);
   }
 
   @override
   Future<bool> changeFrontCamera(bool front) {
-    return model?.changeFrontCamera(front);
+    return model.changeFrontCamera(front);
   }
 
   @override
   Future<bool> changeSpeaker(bool open) {
-    return model?.changeSpeaker(open);
+    return model.changeSpeaker(open);
   }
 
   @override
   Future<void> changeVideoConfig(RCRTCVideoStreamConfig config) async {
-    await model?.changeVideoConfig(config);
+    await model.changeVideoConfig(config);
   }
 
   @override
   Future<bool> changeTinyVideoConfig(RCRTCVideoStreamConfig config) {
-    return model?.changeTinyVideoConfig(config);
+    return model.changeTinyVideoConfig(config);
   }
 
   @override
   void switchToNormalStream(String id) {
-    model?.switchToNormalStream(id);
+    model.switchToNormalStream(id);
   }
 
   @override
   void switchToTinyStream(String id) {
-    model?.switchToTinyStream(id);
+    model.switchToTinyStream(id);
   }
 
   @override
-  Future<RCRTCAudioInputStream> changeRemoteAudioStatus(String id, bool subscribe) {
-    return model?.changeRemoteAudioStatus(id, subscribe);
+  Future<RCRTCAudioInputStream?> changeRemoteAudioStatus(String id, bool subscribe) {
+    return model.changeRemoteAudioStatus(id, subscribe);
   }
 
   @override
-  Future<RCRTCVideoInputStream> changeRemoteVideoStatus(String id, bool subscribe) {
-    return model?.changeRemoteVideoStatus(id, subscribe);
+  Future<RCRTCVideoInputStream?> changeRemoteVideoStatus(String id, bool subscribe) {
+    return model.changeRemoteVideoStatus(id, subscribe);
   }
 
   @override
   void exit() async {
-    int code = await model?.exit();
+    int code = await model.exit();
     if (code != RCRTCErrorCode.OK)
-      view?.onExitWithError(code);
+      view.onExitWithError(code);
     else
-      view?.onExit();
+      view.onExit();
   }
 }

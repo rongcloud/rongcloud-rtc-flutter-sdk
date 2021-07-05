@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:FlutterRTC/frame/utils/local_storage.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/local_storage.dart';
 import 'package:rongcloud_rtc_plugin/rongcloud_rtc_plugin.dart';
 
 import 'constants.dart';
 
 class Result {
   final int code;
-  final String content;
+  final String? content;
 
   Result(this.code, this.content);
 }
@@ -15,20 +15,19 @@ class Result {
 class User {
   String id;
   String name;
-  String key;
-  String navigate;
-  String file;
-  String media;
-  String token;
+  String? key;
+  String? navigate;
+  String? file;
+  String? media;
+  String? token;
   bool audio;
   bool video;
 
   User.remote(
     this.id,
-  ) {
-    audio = false;
-    video = false;
-  }
+  )   : this.name = 'Unknown',
+        this.audio = false,
+        this.video = false;
 
   User.create(
     this.id,
@@ -37,7 +36,9 @@ class User {
     this.file,
     this.media,
     this.token,
-  ) : this.name = 'Unknown';
+  )   : this.name = 'Unknown',
+        this.audio = false,
+        this.video = false;
 
   User.fromJson(Map<String, dynamic> json)
       : id = json['id'],
@@ -46,7 +47,9 @@ class User {
         navigate = json['navigate'],
         file = json['file'],
         media = json['media'],
-        token = json['token'];
+        token = json['token'],
+        this.audio = false,
+        this.video = false;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -142,6 +145,19 @@ class CDN {
   final String name;
 }
 
+class CDNInfo {
+  CDNInfo.fromJons(Map<String, dynamic> json)
+      : push = json['push'],
+        rtmp = json['rtmp'],
+        hls = json['hls'],
+        flv = json['flv'];
+
+  final String push;
+  final String rtmp;
+  final String hls;
+  final String flv;
+}
+
 class Stream {
   Stream(
     this.user,
@@ -154,7 +170,7 @@ class Stream {
 
 class DefaultData {
   static void loadUsers() {
-    String json = LocalStorage.getString('users');
+    String? json = LocalStorage.getString('users');
     if (json != null && json.isNotEmpty) {
       var list = jsonDecode(json);
       for (var user in list) _users.add(User.fromJson(user));
@@ -167,19 +183,19 @@ class DefaultData {
     LocalStorage.setString("users", json);
   }
 
-  static set user(User user) {
+  static set user(User? user) {
+    if (user == null) return;
     _user = user;
-    _users.removeWhere(
-        (element) => "${user.id}${user.name}${user.key}" == "${element.id}${element.name}${element.key}");
+    _users.removeWhere((element) => "${user.id}${user.name}${user.key}" == "${element.id}${element.name}${element.key}");
     _users.add(user);
     String json = jsonEncode(_users);
     LocalStorage.setString("users", json);
   }
 
-  static User get user => _user;
+  static User? get user => _user;
 
   static List<User> get users => _users;
 
-  static User _user;
+  static User? _user;
   static List<User> _users = [];
 }

@@ -1,4 +1,4 @@
-import 'package:FlutterRTC/frame/utils/local_storage.dart';
+import 'package:rc_rtc_flutter_example/frame/utils/local_storage.dart';
 import 'package:context_holder/context_holder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

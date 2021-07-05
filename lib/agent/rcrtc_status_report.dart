@@ -49,7 +49,7 @@ class StatusReport {
         this.googAvailableReceiveBandwidth = "${map['googAvailableReceiveBandwidth']}",
         this.googAvailableSendBandwidth = "${map['googAvailableSendBandwidth']}",
         this.ipAddress = map.containsKey('ipAddress') ? map['ipAddress'] : 'Unknown',
-        this.networkType = map['networkType'],
+        this.networkType = "${map['networkType']}",
         this.packetsDiscardedOnSend = "${map['packetsDiscardedOnSend']}",
         this.rtt = "${map['rtt']}" {
     Map<String, dynamic> jsonAudioRcvs = map['statusAudioRcvs'];
@@ -138,19 +138,19 @@ class StatusBean {
                 ? '${map['audioLevel']}'
                 : '0',
         this.bitRate = "${map['bitRate']}",
-        this.codecImplementationName = map['codecImplementationName'],
-        this.codecName = map['codecName'],
-        this.frameHeight = map['frameHeight'],
-        this.frameRate = map['frameRate'],
-        this.frameWidth = map['frameWidth'],
+        this.codecImplementationName = map.containsKey('codecImplementationName') ? map['codecImplementationName'] : 'Unknown',
+        this.codecName = map.containsKey('codecName') ? map['codecName'] : 'Unknown',
+        this.frameWidth = map.containsKey('frameWidth') ? map['frameWidth'] : 0,
+        this.frameHeight = map.containsKey('frameHeight') ? map['frameHeight'] : 0,
+        this.frameRate = map.containsKey('frameRate') ? map['frameRate'] : 0,
         // this.isSend = map['isSend'],
         // this.googFirsReceived = map['googFirsReceived'],
         // this.googPlisReceived = map['googPlisReceived'],
-        this.googJitterReceived = map['googJitterReceived'],
+        this.googJitterReceived = map.containsKey('googJitterReceived') ? map['googJitterReceived'] : 0,
         this.googNacksReceived = "${map['googNacksReceived']}",
-        this.googRenderDelayMs = map['googRenderDelayMs'],
-        this.uid = map['uid'],
-        this.mediaType = map['mediaType'],
+        this.googRenderDelayMs = map.containsKey('googRenderDelayMs') ? map['googRenderDelayMs'] : 0,
+        this.uid = "${map['uid']}",
+        this.mediaType = "${map['mediaType']}",
         this.packetLostRate = "${map['packetLostRate']}";
 }
 
