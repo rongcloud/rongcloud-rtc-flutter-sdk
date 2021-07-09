@@ -63,6 +63,22 @@ class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Pre
       var videos = streams.whereType<RCRTCVideoInputStream>();
       if (videos.isNotEmpty) view.onUserVideoStatusChanged(user.id, false);
     };
+    room?.onRemoteUserDisableMicrophone = (user, stream, disable) {
+      print("onRemoteUserDisableMicrophone disable = $disable");
+    };
+    room?.onRemoteUserDisableCamera = (user, stream, disable) {
+      print("onRemoteUserDisableCamera disable = $disable");
+    };
+  }
+
+  @override
+  Future<bool> muteAudio(bool mute) {
+    return model.muteAudio(mute);
+  }
+
+  @override
+  Future<bool> muteVideo(bool mute) {
+    return model.muteVideo(mute);
   }
 
   @override

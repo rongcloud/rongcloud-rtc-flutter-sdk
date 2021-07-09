@@ -18,9 +18,9 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.4";
+static NSString * const VER = @"5.1.4+1";
 
-@interface RCFlutterEngine () <NSCopying, RCRTCStatusReportDelegate>
+@interface RCFlutterEngine () <NSCopying, RCRTCEngineEventDelegate, RCRTCStatusReportDelegate>
 
 /**
  rtc room
@@ -41,8 +41,10 @@ static NSString * const VER = @"5.1.4";
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     if ([call.method isEqualToString:KInit]) {
+        [self initEngine];
         result(nil);
     } else if ([call.method isEqualToString:KUnInit]) {
+        [self unInitEngine];
         result(nil);
     } else if ([call.method isEqualToString:KJoinRoom]) {
         [self joinRTCRoom:call result:result];
@@ -104,6 +106,21 @@ SingleInstanceM(Engine);
 }
 
 #pragma mark - 调用原生
+
+- (void)initEngine {
+    [[RCRTCEngine sharedInstance] setDelegate:self];
+}
+
+- (void)unInitEngine {
+    [[RCRTCEngine sharedInstance] setDelegate:nil];
+}
+
+- (void)didKicked:(NSString *)roomId reason:(RCRTCKickedReason)reason {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:roomId forKey:@"id"];
+    [dic setObject:@((int)reason) forKey:@"reason"];
+    [_channel invokeMethod:@"onKicked" arguments:dic];
+}
 
 - (void)joinRTCRoom:(FlutterMethodCall *)call result:(FlutterResult)result {
     [self allocInstance];

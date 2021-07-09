@@ -18,6 +18,20 @@ class MeetingPageModel extends AbstractModel implements Model {
   }
 
   @override
+  Future<bool> muteAudio(bool mute) async {
+    RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
+    await stream?.mute(mute);
+    return stream?.isMute() ?? true;
+  }
+
+  @override
+  Future<bool> muteVideo(bool mute) async {
+    RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+    await stream?.mute(mute);
+    return stream?.isMute() ?? true;
+  }
+
+  @override
   Future<bool> changeMic(bool open) async {
     RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
     if (open) {

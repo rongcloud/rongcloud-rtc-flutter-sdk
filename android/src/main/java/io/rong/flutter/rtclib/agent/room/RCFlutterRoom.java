@@ -154,7 +154,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("inputStream", inputStream);
-            jsonObj.put("enable", !mute);
+            jsonObj.put("mute", mute);
             String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                     () -> channel.invokeMethod("onRemoteUserMuteAudio", jsonStr)
@@ -175,7 +175,7 @@ public class RCFlutterRoom implements MethodCallHandler {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("remoteUser", remoteUser);
             jsonObj.put("inputStream", inputStream);
-            jsonObj.put("enable", !mute);
+            jsonObj.put("mute", mute);
             String jsonStr = JSON.toJSONString(jsonObj, SerializerFeature.DisableCircularReferenceDetect);
             UIThreadHandler.post(
                     () -> channel.invokeMethod("onRemoteUserMuteVideo", jsonStr)

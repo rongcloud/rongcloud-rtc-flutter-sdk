@@ -69,6 +69,8 @@ class Config {
   bool camera;
   bool audio;
   bool video;
+  bool audioMute;
+  bool videoMute;
   bool frontCamera;
   bool speaker;
   int minVideoKbps;
@@ -83,6 +85,8 @@ class Config {
         camera = false,
         audio = false,
         video = false,
+        audioMute = false,
+        videoMute = false,
         frontCamera = true,
         speaker = false,
         minVideoKbps = 3,
@@ -105,6 +109,8 @@ class Config {
         'camera': camera,
         'audio': audio,
         'video': video,
+        'audioMute': audioMute,
+        'videoMute': videoMute,
         'frontCamera': frontCamera,
         'speaker': speaker,
         'minVideoKbps': minVideoKbps,
@@ -120,6 +126,8 @@ class Config {
         camera = json['camera'],
         audio = json['audio'],
         video = json['video'],
+        audioMute = json['audioMute'],
+        videoMute = json['videoMute'],
         frontCamera = json['frontCamera'],
         speaker = json['speaker'],
         minVideoKbps = json['minVideoKbps'],

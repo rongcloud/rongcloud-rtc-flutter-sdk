@@ -109,6 +109,35 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                   ),
                                 ),
                               ),
+                              // Align(
+                              //   alignment: Alignment.bottomRight,
+                              //   child: Padding(
+                              //     padding: EdgeInsets.only(
+                              //       right: 5.dp,
+                              //       bottom: 5.dp,
+                              //     ),
+                              //     child: Row(
+                              //       mainAxisSize: MainAxisSize.min,
+                              //       mainAxisAlignment: MainAxisAlignment.end,
+                              //       children: [
+                              //         IconButton(
+                              //           icon: Icon(
+                              //             _config.audioMute ? Icons.music_off_sharp : Icons.music_note_sharp,
+                              //             color: Colors.white,
+                              //           ),
+                              //           onPressed: _config.audio ? () => _muteAudio(context) : null,
+                              //         ),
+                              //         IconButton(
+                              //           icon: Icon(
+                              //             _config.videoMute ? Icons.videocam_off_sharp : Icons.videocam_sharp,
+                              //             color: Colors.white,
+                              //           ),
+                              //           onPressed: _config.video ? () => _muteVideo(context) : null,
+                              //         ),
+                              //       ],
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -464,6 +493,20 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
       onWillPop: () => _exit(),
     );
   }
+
+  // void _muteAudio(BuildContext context) async {
+  //   bool mute = await presenter.muteAudio(!_config.audioMute);
+  //   setState(() {
+  //     _config.audioMute = mute;
+  //   });
+  // }
+  //
+  // void _muteVideo(BuildContext context) async {
+  //   bool mute = await presenter.muteVideo(!_config.videoMute);
+  //   setState(() {
+  //     _config.videoMute = mute;
+  //   });
+  // }
 
   void _changeMic(bool open) async {
     bool result = await presenter.changeMic(open);

@@ -22,6 +22,8 @@ class RCRTCRoom {
   Function(RCRTCRemoteUser remoteUser)? onRemoteUserLeft;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList)? onRemoteUserPublishResource;
   Function(RCRTCRemoteUser remoteUser, List<RCRTCInputStream> streamList)? onRemoteUserUnPublishResource;
+  Function(RCRTCRemoteUser remoteUser, RCRTCInputStream stream, bool disable)? onRemoteUserDisableMicrophone;
+  Function(RCRTCRemoteUser remoteUser, RCRTCInputStream stream, bool disable)? onRemoteUserDisableCamera;
   Function(List<RCRTCInputStream> streamList)? onPublishLiveStreams;
   Function(List<RCRTCInputStream> streamList)? onUnPublishLiveStreams;
   Function(Message message)? onReceiveMessage;
@@ -53,6 +55,12 @@ class RCRTCRoom {
         break;
       case 'onRemoteUserUnPublishResource':
         _handleOnRemoteUserUnPublishResource(call.arguments);
+        break;
+      case 'onRemoteUserMuteAudio':
+        _handleOnRemoteUserMuteAudio(call.arguments);
+        break;
+      case 'onRemoteUserMuteVideo':
+        _handleOnRemoteUserMuteVideo(call.arguments);
         break;
       case 'onRemoteUserPublishLiveResource':
         _handleOnPublishLiveStreams(call.arguments);
@@ -146,6 +154,52 @@ class RCRTCRoom {
     }
     for (RCRTCStream stream in targetStreamList) targetUser!.streamList.remove(stream);
     onRemoteUserUnPublishResource?.call(targetUser!, targetStreamList);
+  }
+
+  void _handleOnRemoteUserMuteAudio(String jsonStr) {
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    String userId = jsonObj['remoteUser']['id'];
+    RCRTCRemoteUser? targetUser;
+    for (RCRTCRemoteUser user in remoteUserList) {
+      if (user.id == userId) {
+        targetUser = user;
+        break;
+      }
+    }
+    RCRTCInputStream? targetStream;
+    String streamId = jsonObj['inputStream']['streamId'];
+    int type = jsonObj['inputStream']['type'];
+    for (RCRTCInputStream stream in targetUser!.streamList) {
+      if (stream.streamId == streamId && stream.type.index == type) {
+        targetStream = stream;
+        break;
+      }
+    }
+    bool mute = jsonObj['mute'];
+    onRemoteUserDisableMicrophone?.call(targetUser, targetStream!, mute);
+  }
+
+  void _handleOnRemoteUserMuteVideo(String jsonStr) {
+    Map<String, dynamic> jsonObj = jsonDecode(jsonStr);
+    String userId = jsonObj['remoteUser']['id'];
+    RCRTCRemoteUser? targetUser;
+    for (RCRTCRemoteUser user in remoteUserList) {
+      if (user.id == userId) {
+        targetUser = user;
+        break;
+      }
+    }
+    RCRTCInputStream? targetStream;
+    String streamId = jsonObj['inputStream']['streamId'];
+    int type = jsonObj['inputStream']['type'];
+    for (RCRTCInputStream stream in targetUser!.streamList) {
+      if (stream.streamId == streamId && stream.type.index == type) {
+        targetStream = stream;
+        break;
+      }
+    }
+    bool mute = jsonObj['mute'];
+    onRemoteUserDisableCamera?.call(targetUser, targetStream!, mute);
   }
 
   void _handleOnPublishLiveStreams(String jsonStr) {

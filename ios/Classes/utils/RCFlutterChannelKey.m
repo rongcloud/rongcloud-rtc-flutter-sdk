@@ -150,6 +150,12 @@ NSString * const kOnRemoteUserPublishStream = @"onRemoteUserPublishResource";
 // on remote user unpublish stream
 NSString * const KOnRemoteUserUnPublishStream = @"onRemoteUserUnPublishResource";
 
+
+NSString * const KOnRemoteUserMuteAudio = @"onRemoteUserMuteAudio";
+
+
+NSString * const KOnRemoteUserMuteVideo = @"onRemoteUserMuteVideo";
+
 // on remote user publish Live stream
 NSString * const kOnRemoteUserPublishLiveStream = @"onRemoteUserPublishLiveResource";
 

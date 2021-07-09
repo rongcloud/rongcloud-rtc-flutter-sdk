@@ -24,6 +24,10 @@ abstract class View implements IView {
 abstract class Model implements IModel {
   Future<UserView> createLocalView();
 
+  Future<bool> muteAudio(bool mute);
+
+  Future<bool> muteVideo(bool mute);
+
   Future<bool> changeMic(bool open);
 
   Future<bool> changeCamera(bool open);
@@ -52,6 +56,10 @@ abstract class Model implements IModel {
 }
 
 abstract class Presenter implements IPresenter {
+  Future<bool> muteAudio(bool mute);
+
+  Future<bool> muteVideo(bool mute);
+
   Future<bool> changeMic(bool open);
 
   Future<bool> changeCamera(bool open);

@@ -153,6 +153,12 @@ FOUNDATION_EXTERN NSString * const KOnRemoteUserUnPublishStream;
 // on remote user publish Live stream
 FOUNDATION_EXTERN NSString * const kOnRemoteUserPublishLiveStream;
 
+
+FOUNDATION_EXTERN NSString * const KOnRemoteUserMuteAudio;
+
+
+FOUNDATION_EXTERN NSString * const KOnRemoteUserMuteVideo;
+
 // on remote user unpublish Live stream
 FOUNDATION_EXTERN NSString * const KOnRemoteUserUnPublishLiveStream;
 

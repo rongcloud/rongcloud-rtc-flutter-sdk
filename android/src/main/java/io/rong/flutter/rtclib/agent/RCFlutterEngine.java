@@ -16,6 +16,7 @@ import java.util.Objects;
 import cn.rongcloud.rtc.api.RCRTCConfig;
 import cn.rongcloud.rtc.api.RCRTCEngine;
 import cn.rongcloud.rtc.api.RCRTCRoom;
+import cn.rongcloud.rtc.api.callback.IRCRTCEngineEventListener;
 import cn.rongcloud.rtc.api.callback.IRCRTCResultCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCResultDataCallback;
 import cn.rongcloud.rtc.api.callback.IRCRTCStatusReportListener;
@@ -60,7 +61,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.4";
+    private static final String VER = "5.1.4+1";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
@@ -168,11 +169,14 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         RCRTCConfig config = RCRTCConfig.Builder.create().build();
         Log.d(TAG, "init: ");
         RCRTCEngine.getInstance().init(context, config);
+        RCRTCEngine.getInstance().registerEventListener(new EngineEventListener());
         UIThreadHandler.success(result, 0);
     }
 
     private void unInit(Result result) {
         Log.d(TAG, "unInit: ");
+
+        RCRTCEngine.getInstance().unregisterEventListener();
 
         if (cameraOutputStream != null) {
             cameraOutputStream.release();
@@ -476,5 +480,19 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         UIThreadHandler.post(
                 () -> channel.invokeMethod("onFailed", json.toJSONString())
         );
+    }
+
+    private class EngineEventListener extends IRCRTCEngineEventListener {
+
+        @Override
+        public void onKicked(String roomId, RCRTCParamsType.RCRTCKickedReason kickedReason) {
+            final HashMap<String, Object> arguments = new HashMap<>();
+            arguments.put("roomId", roomId);
+            arguments.put("reason", kickedReason.ordinal());
+            UIThreadHandler.post(
+                    () -> RCFlutterEngine.this.channel.invokeMethod("onKicked", arguments)
+            );
+        }
+
     }
 }

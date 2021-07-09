@@ -20,6 +20,13 @@ enum AVStreamType {
   audio_video_tiny,
 }
 
+enum KickedReason {
+  server,
+  im_disconnected,
+  im_logout,
+  other_client_login,
+}
+
 class RCRTCEngine {
   static const String version = '5.1.0';
 
@@ -32,6 +39,8 @@ class RCRTCEngine {
   RCRTCRoom? _room;
   IRCRTCStatusReportListener? _statusReportListener;
 
+  Function(String? roomId, KickedReason reason)? onKicked;
+
   static RCRTCEngine getInstance() {
     if (_instance == null) _instance = RCRTCEngine();
     return _instance!;
@@ -43,10 +52,20 @@ class RCRTCEngine {
 
   Future<dynamic> _handlerMethod(MethodCall call) async {
     switch (call.method) {
+      case "onKicked":
+        _handleOnKicked(call);
+        break;
       case "onConnectionStats":
         _handlerOnConnectionStats(call);
         break;
     }
+  }
+
+  void _handleOnKicked(MethodCall call) {
+    Map<dynamic, dynamic> arguments = jsonDecode(call.arguments);
+    String? id = arguments['id'];
+    int reason = arguments['reason'];
+    onKicked?.call(id, KickedReason.values[reason]);
   }
 
   _handlerOnConnectionStats(MethodCall call) {

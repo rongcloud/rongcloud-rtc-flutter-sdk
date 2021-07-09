@@ -100,6 +100,46 @@
     });
 }
 
+- (void)stream:(RCRTCInputStream *)stream didAudioMute:(BOOL)mute {
+    NSString *userId = stream.userId;
+    NSString *streamId = stream.streamId;
+    RTCMediaType mediaType = stream.mediaType;
+    RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];
+    RCFlutterInputStream *remoteStream = nil;
+    for (RCFlutterInputStream *stream in remoteUser.remoteAVStreams) {
+        if ([stream.rtcInputStream.streamId isEqualToString:streamId] && stream.rtcInputStream.mediaType == mediaType) {
+            remoteStream = stream;
+            break;
+        }
+    }
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setValue:[remoteUser toDesc] forKey:@"remoteUser"];
+    [dic setValue:[remoteStream toDesc] forKey:@"inputStream"];
+    [dic setValue:@(mute) forKey:@"mute"];
+    NSString *json = [RCFlutterTools dictionaryToJson:dic];
+    [self.methodChannel invokeMethod:KOnRemoteUserMuteAudio arguments:json];
+}
+
+- (void)stream:(RCRTCInputStream *)stream didVideoEnable:(BOOL)enable {
+    NSString *userId = stream.userId;
+    NSString *streamId = stream.streamId;
+    RTCMediaType mediaType = stream.mediaType;
+    RCFlutterRemoteUser *remoteUser = [self getRemoteUserFromUserId:userId];
+    RCFlutterInputStream *remoteStream = nil;
+    for (RCFlutterInputStream *stream in remoteUser.remoteAVStreams) {
+        if ([stream.rtcInputStream.streamId isEqualToString:streamId] && stream.rtcInputStream.mediaType == mediaType) {
+            remoteStream = stream;
+            break;
+        }
+    }
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setValue:[remoteUser toDesc] forKey:@"remoteUser"];
+    [dic setValue:[remoteStream toDesc] forKey:@"inputStream"];
+    [dic setValue:@(!enable) forKey:@"mute"];
+    NSString *json = [RCFlutterTools dictionaryToJson:dic];
+    [self.methodChannel invokeMethod:KOnRemoteUserMuteAudio arguments:json];
+}
+
 -(void)didPublishLiveStreams:(NSArray<RCRTCInputStream *> *)streams {
     dispatch_to_workQueue(^{
         self.rtcRoom = [RCRTCEngine sharedInstance].room;
