@@ -65,6 +65,7 @@ class User {
 class Config {
   bool enableTinyStream;
   bool mirror;
+  bool encoderMirror;
   bool mic;
   bool camera;
   bool audio;
@@ -81,6 +82,7 @@ class Config {
   Config.config()
       : enableTinyStream = true,
         mirror = true,
+        encoderMirror = false,
         mic = false,
         camera = false,
         audio = false,
@@ -105,6 +107,7 @@ class Config {
   Map<String, dynamic> toJson() => {
         'enableTinyStream': enableTinyStream,
         'mirror': mirror,
+        'encoderMirror': encoderMirror,
         'mic': mic,
         'camera': camera,
         'audio': audio,
@@ -122,6 +125,7 @@ class Config {
   Config.fromJson(Map<String, dynamic> json)
       : enableTinyStream = json['enableTinyStream'],
         mirror = json['mirror'],
+        encoderMirror = json['encoderMirror'],
         mic = json['mic'],
         camera = json['camera'],
         audio = json['audio'],

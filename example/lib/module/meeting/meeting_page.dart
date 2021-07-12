@@ -109,35 +109,42 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
                                   ),
                                 ),
                               ),
-                              // Align(
-                              //   alignment: Alignment.bottomRight,
-                              //   child: Padding(
-                              //     padding: EdgeInsets.only(
-                              //       right: 5.dp,
-                              //       bottom: 5.dp,
-                              //     ),
-                              //     child: Row(
-                              //       mainAxisSize: MainAxisSize.min,
-                              //       mainAxisAlignment: MainAxisAlignment.end,
-                              //       children: [
-                              //         IconButton(
-                              //           icon: Icon(
-                              //             _config.audioMute ? Icons.music_off_sharp : Icons.music_note_sharp,
-                              //             color: Colors.white,
-                              //           ),
-                              //           onPressed: _config.audio ? () => _muteAudio(context) : null,
-                              //         ),
-                              //         IconButton(
-                              //           icon: Icon(
-                              //             _config.videoMute ? Icons.videocam_off_sharp : Icons.videocam_sharp,
-                              //             color: Colors.white,
-                              //           ),
-                              //           onPressed: _config.video ? () => _muteVideo(context) : null,
-                              //         ),
-                              //       ],
-                              //     ),
-                              //   ),
-                              // ),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: 5.dp,
+                                    bottom: 5.dp,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          _config.encoderMirror ? Icons.switch_left : Icons.switch_right,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: _config.camera && _config.video ? () => _setEncoderMirror(context) : null,
+                                      ),
+                                      // IconButton(
+                                      //   icon: Icon(
+                                      //     _config.audioMute ? Icons.music_off_sharp : Icons.music_note_sharp,
+                                      //     color: Colors.white,
+                                      //   ),
+                                      //   onPressed: _config.audio ? () => _muteAudio(context) : null,
+                                      // ),
+                                      // IconButton(
+                                      //   icon: Icon(
+                                      //     _config.videoMute ? Icons.videocam_off_sharp : Icons.videocam_sharp,
+                                      //     color: Colors.white,
+                                      //   ),
+                                      //   onPressed: _config.video ? () => _muteVideo(context) : null,
+                                      // ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -492,6 +499,12 @@ class _MeetingPageState extends AbstractViewState<MeetingPagePresenter, MeetingP
       ),
       onWillPop: () => _exit(),
     );
+  }
+
+  void _setEncoderMirror(BuildContext context) async {
+    _config.encoderMirror = !_config.encoderMirror;
+    await presenter.setEncoderMirror(_config.encoderMirror);
+    setState(() {});
   }
 
   // void _muteAudio(BuildContext context) async {

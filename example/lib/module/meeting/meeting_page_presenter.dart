@@ -72,6 +72,11 @@ class MeetingPagePresenter extends AbstractPresenter<View, Model> implements Pre
   }
 
   @override
+  Future<void> setEncoderMirror(bool mirror) {
+    return model.setEncoderMirror(mirror);
+  }
+
+  @override
   Future<bool> muteAudio(bool mute) {
     return model.muteAudio(mute);
   }

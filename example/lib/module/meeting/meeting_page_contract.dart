@@ -24,6 +24,8 @@ abstract class View implements IView {
 abstract class Model implements IModel {
   Future<UserView> createLocalView();
 
+  Future<void> setEncoderMirror(bool mirror);
+
   Future<bool> muteAudio(bool mute);
 
   Future<bool> muteVideo(bool mute);
@@ -56,6 +58,8 @@ abstract class Model implements IModel {
 }
 
 abstract class Presenter implements IPresenter {
+  Future<void> setEncoderMirror(bool mirror);
+
   Future<bool> muteAudio(bool mute);
 
   Future<bool> muteVideo(bool mute);

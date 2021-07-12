@@ -112,4 +112,8 @@ class RCRTCCameraOutputStream extends RCRTCVideoOutputStream {
     };
     await channel.invokeMethod("setCameraCaptureOrientation", arguments);
   }
+
+  Future<void> setEncoderMirror(bool mirror) async {
+    await channel.invokeMethod("setEncoderMirror", mirror);
+  }
 }

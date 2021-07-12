@@ -68,6 +68,9 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
       case "setCameraCaptureOrientation":
         setCameraCaptureOrientation(call, result);
         break;
+      case "setEncoderMirror":
+        setEncoderMirror(call, result);
+        break;
     }
   }
 
@@ -202,6 +205,12 @@ public class RCFlutterCameraOutputStream extends RCFlutterVideoOutputStream {
         cameraOutputStream.setCameraDisplayOrientation(0);
         break;
     }
+    UIThreadHandler.success(result, null);
+  }
+
+  private void setEncoderMirror(MethodCall call, Result result) {
+    boolean enabled = (boolean) call.arguments;
+    cameraOutputStream.setEncoderMirror(enabled);
     UIThreadHandler.success(result, null);
   }
 

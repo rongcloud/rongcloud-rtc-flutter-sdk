@@ -67,6 +67,8 @@ NSString * const KSetCameraFocusPositionInPreview = @"setCameraFocusPositionInPr
 
 NSString * const KSetCameraCaptureOrientation = @"setCameraCaptureOrientation";
 
+NSString * const KSetEncoderMirror = @"setEncoderMirror";
+
 // mute
 NSString * const KMute = @"mute";
 

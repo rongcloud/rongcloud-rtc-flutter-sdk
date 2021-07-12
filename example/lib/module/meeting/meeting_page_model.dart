@@ -18,6 +18,12 @@ class MeetingPageModel extends AbstractModel implements Model {
   }
 
   @override
+  Future<void> setEncoderMirror(bool mirror) async {
+    RCRTCCameraOutputStream? stream = await RCRTCEngine.getInstance().getDefaultVideoStream();
+    await stream?.setEncoderMirror(mirror);
+  }
+
+  @override
   Future<bool> muteAudio(bool mute) async {
     RCRTCMicOutputStream? stream = await RCRTCEngine.getInstance().getDefaultAudioStream();
     await stream?.mute(mute);

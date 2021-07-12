@@ -69,6 +69,8 @@
         [self setCameraExposurePositionInPreview:call result:result];
     } else if ([call.method isEqualToString:KSetCameraCaptureOrientation]) {
         [self setCameraCaptureOrientation:call result:result];
+    } else if ([call.method isEqualToString:KSetEncoderMirror]) {
+        [self setEncoderMirror:call result:result];
     } else if ([call.method isEqualToString:KMute]){
         [super handleMethodCall:call result:result];
     } else {
@@ -112,6 +114,12 @@
     NSDictionary *dic = call.arguments;
     int orientation = [dic[@"orientation"] intValue] + 1;
     [[RCRTCEngine sharedInstance].defaultVideoStream setVideoOrientation:(AVCaptureVideoOrientation)orientation];
+    result(nil);
+}
+
+- (void)setEncoderMirror:(FlutterMethodCall *)call result:(FlutterResult)result {
+    BOOL mirror = [call.arguments boolValue];
+    [[RCRTCEngine sharedInstance].defaultVideoStream setIsEncoderMirror:mirror];
     result(nil);
 }
 

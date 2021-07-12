@@ -67,6 +67,8 @@ FOUNDATION_EXTERN NSString * const KSetCameraFocusPositionInPreview;
 
 FOUNDATION_EXTERN NSString * const KSetCameraCaptureOrientation;
 
+FOUNDATION_EXTERN NSString * const KSetEncoderMirror;
+
 // mute
 FOUNDATION_EXTERN NSString * const KMute;
 
