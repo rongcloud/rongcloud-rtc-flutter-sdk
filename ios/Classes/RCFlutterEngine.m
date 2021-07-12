@@ -18,7 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.4+1";
+static NSString * const VER = @"5.1.4+3";
 
 @interface RCFlutterEngine () <NSCopying, RCRTCEngineEventDelegate, RCRTCStatusReportDelegate>
 

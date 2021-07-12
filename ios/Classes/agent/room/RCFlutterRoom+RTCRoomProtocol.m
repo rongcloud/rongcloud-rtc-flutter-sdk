@@ -135,9 +135,10 @@
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     [dic setValue:[remoteUser toDesc] forKey:@"remoteUser"];
     [dic setValue:[remoteStream toDesc] forKey:@"inputStream"];
-    [dic setValue:@(!enable) forKey:@"mute"];
+    BOOL mute = !enable;
+    [dic setValue:@(mute) forKey:@"mute"];
     NSString *json = [RCFlutterTools dictionaryToJson:dic];
-    [self.methodChannel invokeMethod:KOnRemoteUserMuteAudio arguments:json];
+    [self.methodChannel invokeMethod:KOnRemoteUserMuteVideo arguments:json];
 }
 
 -(void)didPublishLiveStreams:(NSArray<RCRTCInputStream *> *)streams {

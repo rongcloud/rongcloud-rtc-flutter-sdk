@@ -61,7 +61,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.4+1";
+    private static final String VER = "5.1.4+3";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
