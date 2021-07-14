@@ -62,8 +62,8 @@ class RCRTCEngine {
   }
 
   void _handleOnKicked(MethodCall call) {
-    Map<dynamic, dynamic> arguments = jsonDecode(call.arguments);
-    String? id = arguments['id'];
+    Map<dynamic, dynamic> arguments = call.arguments;
+    String? id = arguments.containsKey('id') ? arguments['id'] : null;
     int reason = arguments['reason'];
     onKicked?.call(id, KickedReason.values[reason]);
   }

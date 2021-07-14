@@ -18,7 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.4+3";
+static NSString * const VER = @"5.1.4+4";
 
 @interface RCFlutterEngine () <NSCopying, RCRTCEngineEventDelegate, RCRTCStatusReportDelegate>
 
@@ -117,7 +117,9 @@ SingleInstanceM(Engine);
 
 - (void)didKicked:(NSString *)roomId reason:(RCRTCKickedReason)reason {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    [dic setObject:roomId forKey:@"id"];
+    if (roomId) {
+        [dic setObject:roomId forKey:@"id"];
+    }
     [dic setObject:@((int)reason) forKey:@"reason"];
     [_channel invokeMethod:@"onKicked" arguments:dic];
 }

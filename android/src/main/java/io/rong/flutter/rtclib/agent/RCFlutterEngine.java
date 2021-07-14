@@ -61,7 +61,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.4+3";
+    private static final String VER = "5.1.4+4";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
@@ -487,7 +487,9 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
         @Override
         public void onKicked(String roomId, RCRTCParamsType.RCRTCKickedReason kickedReason) {
             final HashMap<String, Object> arguments = new HashMap<>();
-            arguments.put("roomId", roomId);
+            if (roomId != null) {
+                arguments.put("roomId", roomId);
+            }
             arguments.put("reason", kickedReason.ordinal());
             UIThreadHandler.post(
                     () -> RCFlutterEngine.this.channel.invokeMethod("onKicked", arguments)
