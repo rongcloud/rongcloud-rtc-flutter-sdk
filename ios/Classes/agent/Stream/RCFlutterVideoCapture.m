@@ -208,4 +208,19 @@ SingleInstanceM(VideoCapture);
    
 }
 
+- (NSDictionary *)toDesc {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    if (self.rtcVideoCapture) {
+        dic[@"tag"] = self.rtcVideoCapture.tag;
+        dic[@"type"] = @(self.rtcVideoCapture.mediaType);
+        dic[@"userId"] = self.rtcVideoCapture.userId;
+        dic[@"streamId"] = self.rtcVideoCapture.streamId;
+        BOOL front = self.rtcVideoCapture.cameraPosition == RCRTCCaptureDeviceFront;
+        [dic setObject:@(front) forKey:@"frontCamera"];
+        [dic setObject:[NSNumber numberWithBool:self.rtcVideoCapture.resourceState] forKey:@"state"];
+        [dic setObject:[NSNumber numberWithBool:self.rtcVideoCapture.isMute] forKey:@"mute"];
+    }
+    return dic;
+}
+
 @end
