@@ -72,6 +72,8 @@ FOUNDATION_EXTERN NSString * const KSetEncoderMirror;
 // mute
 FOUNDATION_EXTERN NSString * const KMute;
 
+FOUNDATION_EXTERN NSString * const KGetResourceState;
+
 // setMicrophoneDisable
 FOUNDATION_EXTERN NSString * const KSetMicrophoneDisable;
 

@@ -72,6 +72,8 @@ NSString * const KSetEncoderMirror = @"setEncoderMirror";
 // mute
 NSString * const KMute = @"mute";
 
+NSString * const KGetResourceState = @"getResourceState";
+
 // setMicrophoneDisable
 NSString * const KSetMicrophoneDisable = @"setMicrophoneDisable";
 

@@ -40,6 +40,9 @@
         NSNumber *mute = (NSNumber *) (call.arguments);
         [self setMute:mute.boolValue];
         result([NSNumber numberWithInt:0]);
+    } else if ([call.method isEqualToString:KGetResourceState]) {
+        int state = (int)self.rtcStream.resourceState;
+        result([NSNumber numberWithInt:state]);
     }
 }
 
