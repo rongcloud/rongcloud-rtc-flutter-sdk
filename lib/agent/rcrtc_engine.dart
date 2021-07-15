@@ -129,12 +129,14 @@ class RCRTCEngine {
   }
 
   Future<RCRTCCameraOutputStream?> getDefaultVideoStream() async {
-    _cameraOutputStream = _cameraOutputStream ?? RCRTCCameraOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultVideoStream')));
+    String? result = await _channel.invokeMethod('getDefaultVideoStream');
+    _cameraOutputStream = _cameraOutputStream ?? (result != null ? RCRTCCameraOutputStream.fromJson(jsonDecode(result)) : null);
     return _cameraOutputStream;
   }
 
   Future<RCRTCMicOutputStream?> getDefaultAudioStream() async {
-    _audioOutputStream = _audioOutputStream ?? RCRTCMicOutputStream.fromJson(jsonDecode(await _channel.invokeMethod('getDefaultAudioStream')));
+    String? result = await _channel.invokeMethod('getDefaultAudioStream');
+    _audioOutputStream = _audioOutputStream ?? (result != null ? RCRTCMicOutputStream.fromJson(jsonDecode(result)) : null);
     return _audioOutputStream;
   }
 

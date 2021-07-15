@@ -15,6 +15,23 @@ class AudiencePagePresenter extends AbstractPresenter<View, Model> implements Pr
   @override
   Future<void> init(BuildContext context) async {
     await changeSpeaker(false);
+
+    RCRTCRoom? room = RCRTCEngine.getInstance().getRoom();
+    var host = room?.remoteUserList.first;
+    var audios = host?.streamList.whereType<RCRTCAudioInputStream>();
+    var videos = host?.streamList.whereType<RCRTCVideoInputStream>();
+    if (audios?.isNotEmpty ?? false) {
+      RCRTCResourceState audioState = await audios!.first.getResourceState();
+      print('Audience: Host ${host?.id} audio stream state = $audioState');
+    } else {
+      print('Audience: Host ${host?.id} unpublish audio stream');
+    }
+    if (videos?.isNotEmpty ?? false) {
+      RCRTCResourceState videoState = await videos!.first.getResourceState();
+      print('Audience: Host ${host?.id} video stream state = $videoState');
+    } else {
+      print('Audience: Host ${host?.id} unpublish video stream');
+    }
   }
 
   @override

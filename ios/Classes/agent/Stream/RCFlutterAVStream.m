@@ -76,8 +76,9 @@
 }
 
 - (NSDictionary *)toDesc {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    NSMutableDictionary *dic = nil;
     if (self.rtcStream) {
+        dic = [NSMutableDictionary dictionary];
         dic[@"tag"] = self.rtcStream.tag;
         dic[@"type"] = @(self.rtcStream.mediaType);
         dic[@"userId"] = self.rtcStream.userId;

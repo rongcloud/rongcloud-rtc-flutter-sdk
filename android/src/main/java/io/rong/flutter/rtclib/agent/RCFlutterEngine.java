@@ -61,7 +61,7 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
 
     private static final String TAG = "RCFlutterEngine";
 
-    private static final String VER = "5.1.4+6";
+    private static final String VER = "5.1.4+7";
 
     private static final String ASSETS_PREFIX = "file:///android_asset/";
     private BinaryMessenger bMsg;
@@ -281,8 +281,12 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                     stream = RCRTCEngine.getInstance().getDefaultVideoStream();
                     current = System.currentTimeMillis();
                 }
-                cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
-                UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
+                if (stream != null) {
+                    cameraOutputStream = new RCFlutterCameraOutputStream(bMsg, stream);
+                    UIThreadHandler.success(result, JSON.toJSONString(cameraOutputStream));
+                } else {
+                    UIThreadHandler.success(result, null);
+                }
             }
             )).start();
         } else {
@@ -301,8 +305,12 @@ public class RCFlutterEngine extends IRCRTCStatusReportListener implements Metho
                     stream = RCRTCEngine.getInstance().getDefaultAudioStream();
                     current = System.currentTimeMillis();
                 }
-                micOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
-                UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
+                if (stream != null) {
+                    micOutputStream = new RCFlutterMicOutputStream(bMsg, stream);
+                    UIThreadHandler.success(result, JSON.toJSONString(micOutputStream));
+                } else {
+                    UIThreadHandler.success(result, null);
+                }
             }
             )).start();
         } else {

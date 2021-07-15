@@ -18,7 +18,7 @@
 #import "RCFlutterAudioEffectManager+Private.h"
 #import "RCFlutterAudioMixer.h"
 
-static NSString * const VER = @"5.1.4+6";
+static NSString * const VER = @"5.1.4+7";
 
 @interface RCFlutterEngine () <NSCopying, RCRTCEngineEventDelegate, RCRTCStatusReportDelegate>
 
@@ -212,14 +212,14 @@ SingleInstanceM(Engine);
 - (void)getDefaultVideoStream:(FlutterResult)result{
     RCFlutterVideoCapture *video = self.defaultVideoStream;
     NSDictionary *desc = [video toDesc];
-    NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+    NSString *jsonObj = desc ? [RCFlutterTools dictionaryToJson:desc] : nil;
     result(jsonObj);
 }
 
 - (void)getDefaultAudioStream:(FlutterResult)result{
     RCFlutterAudioCapture *audio = self.defaultAudioStream;
     NSDictionary *desc = [audio toDesc];
-    NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+    NSString *jsonObj = desc ? [RCFlutterTools dictionaryToJson:desc] : nil;
     result(jsonObj);
 }
 
@@ -230,7 +230,7 @@ SingleInstanceM(Engine);
     [output registerStream:stream];
     [output registerStreamChannel];
     NSDictionary *desc = [output toDesc];
-    NSString *jsonObj = [RCFlutterTools dictionaryToJson:desc];
+    NSString *jsonObj = desc ? [RCFlutterTools dictionaryToJson:desc] : nil;
     [_createdOutputStreams setObject:output
                               forKey:[NSString stringWithFormat:@"%@_%d_%@", output.streamId, (int) output.streamType, tag]];
     result(jsonObj);

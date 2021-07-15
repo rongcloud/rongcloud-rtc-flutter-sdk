@@ -209,8 +209,9 @@ SingleInstanceM(VideoCapture);
 }
 
 - (NSDictionary *)toDesc {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    NSMutableDictionary *dic = nil;
     if (self.rtcVideoCapture) {
+        dic = [NSMutableDictionary dictionary];
         dic[@"tag"] = self.rtcVideoCapture.tag;
         dic[@"type"] = @(self.rtcVideoCapture.mediaType);
         dic[@"userId"] = self.rtcVideoCapture.userId;
